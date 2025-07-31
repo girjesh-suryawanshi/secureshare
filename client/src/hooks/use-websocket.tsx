@@ -40,6 +40,11 @@ export function useWebSocket(): WebSocketHook {
 
           if (message.type === 'connection-id') {
             setConnectionId(message.connectionId);
+          } else if (['offer', 'answer', 'ice-candidate'].includes(message.type)) {
+            // Forward WebRTC signaling messages to the WebRTC hook
+            if ((window as any).handleWebRTCSignaling) {
+              (window as any).handleWebRTCSignaling(message);
+            }
           }
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);

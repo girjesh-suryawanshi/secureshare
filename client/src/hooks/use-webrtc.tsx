@@ -282,67 +282,72 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
     });
   }, [incomingFileRequests, dataChannels, toast]);
 
-  // Handle incoming signaling messages
+  // Handle incoming signaling messages via ref to avoid stale closures
+  const handleSignalingMessage = useCallback(async (message: any) => {
+    const { type, fromId, data } = message;
+
+    switch (type) {
+      case 'offer':
+        try {
+          const pc = createPeerConnection(fromId);
+          setPeerConnections(prev => new Map(prev).set(fromId, pc));
+
+          // Set up data channel handler for incoming connections
+          pc.ondatachannel = (event) => {
+            setupDataChannel(event.channel, fromId);
+          };
+
+          await pc.setRemoteDescription(data);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+
+          sendSignalingMessage({
+            type: 'answer',
+            targetId: fromId,
+            data: answer,
+          });
+        } catch (error) {
+          console.error('Error handling offer:', error);
+        }
+        break;
+
+      case 'answer':
+        try {
+          setPeerConnections(prev => {
+            const pc = prev.get(fromId);
+            if (pc) {
+              pc.setRemoteDescription(data);
+            }
+            return prev;
+          });
+        } catch (error) {
+          console.error('Error handling answer:', error);
+        }
+        break;
+
+      case 'ice-candidate':
+        try {
+          setPeerConnections(prev => {
+            const pc = prev.get(fromId);
+            if (pc) {
+              pc.addIceCandidate(data);
+            }
+            return prev;
+          });
+        } catch (error) {
+          console.error('Error handling ICE candidate:', error);
+        }
+        break;
+    }
+  }, [createPeerConnection, setupDataChannel, sendSignalingMessage]);
+
+  // Expose the handler for use by parent component
   useEffect(() => {
-    const handleSignalingMessage = async (message: any) => {
-      const { type, fromId, data } = message;
-
-      switch (type) {
-        case 'offer':
-          try {
-            const pc = createPeerConnection(fromId);
-            setPeerConnections(prev => new Map(prev).set(fromId, pc));
-
-            // Set up data channel handler for incoming connections
-            pc.ondatachannel = (event) => {
-              setupDataChannel(event.channel, fromId);
-            };
-
-            await pc.setRemoteDescription(data);
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-
-            sendSignalingMessage({
-              type: 'answer',
-              targetId: fromId,
-              data: answer,
-            });
-          } catch (error) {
-            console.error('Error handling offer:', error);
-          }
-          break;
-
-        case 'answer':
-          try {
-            const pc = peerConnections.get(fromId);
-            if (pc) {
-              await pc.setRemoteDescription(data);
-            }
-          } catch (error) {
-            console.error('Error handling answer:', error);
-          }
-          break;
-
-        case 'ice-candidate':
-          try {
-            const pc = peerConnections.get(fromId);
-            if (pc) {
-              await pc.addIceCandidate(data);
-            }
-          } catch (error) {
-            console.error('Error handling ICE candidate:', error);
-          }
-          break;
-      }
-    };
-
-    // This would be connected to the WebSocket message handler
-    window.addEventListener('webrtc-signaling', handleSignalingMessage as any);
-    
+    (window as any).handleWebRTCSignaling = handleSignalingMessage;
     return () => {
-      window.removeEventListener('webrtc-signaling', handleSignalingMessage as any);
+      delete (window as any).handleWebRTCSignaling;
     };
-  }, [createPeerConnection, setupDataChannel, sendSignalingMessage, peerConnections]);
+  }, [handleSignalingMessage]);
 
   return {
     peerConnections,

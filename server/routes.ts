@@ -20,7 +20,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cleanup disconnected clients every 30 seconds
   setInterval(() => {
     const now = new Date();
-    for (const [id, client] of clients.entries()) {
+    const clientsArray = Array.from(clients.entries());
+    for (const [id, client] of clientsArray) {
       if (now.getTime() - client.lastSeen.getTime() > 60000) { // 1 minute timeout
         if (client.ws.readyState === WebSocket.OPEN) {
           client.ws.close();

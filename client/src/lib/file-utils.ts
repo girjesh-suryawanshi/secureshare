@@ -125,7 +125,8 @@ export async function createFileChunks(file: File): Promise<string[]> {
   for (let offset = 0; offset < file.size; offset += chunkSize) {
     const chunk = file.slice(offset, offset + chunkSize);
     const arrayBuffer = await chunk.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const base64 = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
     chunks.push(base64);
   }
   
