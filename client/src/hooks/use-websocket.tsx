@@ -1,19 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { SignalingMessage } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 export interface WebSocketHook {
   isConnected: boolean;
-  connectionId: string | null;
   sendMessage: (message: any) => void;
-  lastMessage: any;
+  onFileAvailable: (callback: (file: { code: string; fileName: string; fileSize: number; fileType: string }) => void) => void;
+  onFileData: (callback: (data: { code: string; data: string }) => void) => void;
+  onFileNotFound: (callback: (code: string) => void) => void;
 }
 
 export function useWebSocket(): WebSocketHook {
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionId, setConnectionId] = useState<string | null>(null);
-  const [lastMessage, setLastMessage] = useState<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const fileAvailableCallbackRef = useRef<((file: any) => void) | null>(null);
+  const fileDataCallbackRef = useRef<((data: any) => void) | null>(null);
+  const fileNotFoundCallbackRef = useRef<((code: string) => void) | null>(null);
+  const { toast } = useToast();
 
   const connect = useCallback(() => {
     try {
@@ -36,15 +39,37 @@ export function useWebSocket(): WebSocketHook {
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          setLastMessage(message);
 
-          if (message.type === 'connection-id') {
-            setConnectionId(message.connectionId);
-          } else if (['offer', 'answer', 'ice-candidate'].includes(message.type)) {
-            // Forward WebRTC signaling messages to the WebRTC hook
-            if ((window as any).handleWebRTCSignaling) {
-              (window as any).handleWebRTCSignaling(message);
-            }
+          switch (message.type) {
+            case 'file-available':
+              if (fileAvailableCallbackRef.current) {
+                fileAvailableCallbackRef.current(message);
+              }
+              break;
+            
+            case 'file-data':
+              if (fileDataCallbackRef.current) {
+                fileDataCallbackRef.current(message);
+              }
+              break;
+            
+            case 'file-not-found':
+              if (fileNotFoundCallbackRef.current) {
+                fileNotFoundCallbackRef.current(message.code);
+              }
+              break;
+
+            case 'file-registered':
+              // File was successfully registered
+              break;
+
+            case 'error':
+              toast({
+                title: "Error",
+                description: message.message,
+                variant: "destructive",
+              });
+              break;
           }
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
@@ -70,7 +95,7 @@ export function useWebSocket(): WebSocketHook {
       // Attempt to reconnect after 3 seconds
       reconnectTimeoutRef.current = setTimeout(connect, 3000);
     }
-  }, []);
+  }, [toast]);
 
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -78,6 +103,18 @@ export function useWebSocket(): WebSocketHook {
     } else {
       console.warn('WebSocket is not connected. Message not sent:', message);
     }
+  }, []);
+
+  const onFileAvailable = useCallback((callback: (file: any) => void) => {
+    fileAvailableCallbackRef.current = callback;
+  }, []);
+
+  const onFileData = useCallback((callback: (data: any) => void) => {
+    fileDataCallbackRef.current = callback;
+  }, []);
+
+  const onFileNotFound = useCallback((callback: (code: string) => void) => {
+    fileNotFoundCallbackRef.current = callback;
   }, []);
 
   useEffect(() => {
@@ -95,8 +132,9 @@ export function useWebSocket(): WebSocketHook {
 
   return {
     isConnected,
-    connectionId,
     sendMessage,
-    lastMessage,
+    onFileAvailable,
+    onFileData,
+    onFileNotFound,
   };
 }

@@ -1,69 +1,46 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { nanoid } from "nanoid";
-import { SignalingMessageSchema } from "@shared/schema";
-
-interface Client {
-  id: string;
-  ws: WebSocket;
-  lastSeen: Date;
-}
+import { MessageSchema, type FileRegistry } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
-  // WebSocket server for signaling
+  // WebSocket server for file sharing
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-  const clients = new Map<string, Client>();
+  const fileRegistry = new Map<string, FileRegistry>();
 
-  // Cleanup disconnected clients every 30 seconds
+  // Clean up old files every 10 minutes (files expire after 1 hour)
   setInterval(() => {
     const now = new Date();
-    const clientsArray = Array.from(clients.entries());
-    for (const [id, client] of clientsArray) {
-      if (now.getTime() - client.lastSeen.getTime() > 60000) { // 1 minute timeout
-        if (client.ws.readyState === WebSocket.OPEN) {
-          client.ws.close();
-        }
-        clients.delete(id);
+    const registryArray = Array.from(fileRegistry.entries());
+    for (const [code, fileData] of registryArray) {
+      if (now.getTime() - fileData.createdAt.getTime() > 60 * 60 * 1000) { // 1 hour
+        fileRegistry.delete(code);
+        console.log(`Cleaned up expired file: ${code}`);
       }
     }
-  }, 30000);
+  }, 10 * 60 * 1000);
 
   wss.on('connection', (ws) => {
-    const clientId = nanoid(10).toUpperCase().replace(/(.{3})/g, '$1-').slice(0, -1); // Format: ABC-123-XYZ
-    const client: Client = {
-      id: clientId,
-      ws,
-      lastSeen: new Date(),
-    };
-    
-    clients.set(clientId, client);
-    console.log(`Client connected: ${clientId}`);
-
-    // Send connection ID to client
-    ws.send(JSON.stringify({
-      type: 'connection-id',
-      connectionId: clientId,
-    }));
+    console.log('Client connected');
 
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString());
-        const validatedMessage = SignalingMessageSchema.parse(message);
-        
-        client.lastSeen = new Date();
+        const validatedMessage = MessageSchema.parse(message);
 
         switch (validatedMessage.type) {
-          case 'connection-request':
-            handleConnectionRequest(validatedMessage, client);
+          case 'register-file':
+            handleRegisterFile(validatedMessage, ws);
             break;
           
-          case 'offer':
-          case 'answer':
-          case 'ice-candidate':
-            relaySignalingMessage(validatedMessage, client);
+          case 'request-file':
+            handleRequestFile(validatedMessage, ws);
+            break;
+          
+          case 'file-data':
+            handleFileData(validatedMessage, ws);
             break;
           
           default:
@@ -79,72 +56,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     ws.on('close', () => {
-      console.log(`Client disconnected: ${clientId}`);
-      clients.delete(clientId);
+      console.log('Client disconnected');
     });
 
     ws.on('error', (error) => {
-      console.error(`WebSocket error for client ${clientId}:`, error);
-      clients.delete(clientId);
+      console.error('WebSocket error:', error);
     });
   });
 
-  function handleConnectionRequest(message: any, sender: Client) {
-    const { targetId, connectionId } = message;
-    const targetClient = clients.get(targetId);
-
-    if (!targetClient) {
-      sender.ws.send(JSON.stringify({
-        type: 'connection-response',
-        success: false,
-        error: 'Target device not found or offline',
+  function handleRegisterFile(message: any, ws: WebSocket) {
+    const { code, fileName, fileSize, fileType } = message;
+    
+    if (!code || !fileName || !fileSize || !fileType) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Missing required fields',
       }));
       return;
     }
 
-    if (targetClient.ws.readyState !== WebSocket.OPEN) {
-      sender.ws.send(JSON.stringify({
-        type: 'connection-response',
-        success: false,
-        error: 'Target device is not available',
-      }));
-      return;
-    }
+    // Store file metadata (actual file data will come in chunks)
+    fileRegistry.set(code, {
+      code,
+      fileName,
+      fileSize,
+      fileType,
+      data: '', // Will be populated by file-data messages
+      createdAt: new Date(),
+    });
 
-    // Forward connection request to target
-    targetClient.ws.send(JSON.stringify({
-      type: 'incoming-connection',
-      fromId: connectionId,
-      fromConnectionId: sender.id,
-    }));
-
-    sender.ws.send(JSON.stringify({
-      type: 'connection-response',
-      success: true,
-      message: 'Connection request sent',
+    console.log(`File registered with code: ${code} - ${fileName}`);
+    
+    ws.send(JSON.stringify({
+      type: 'file-registered',
+      code,
     }));
   }
 
-  function relaySignalingMessage(message: any, sender: Client) {
-    const { targetId } = message;
-    if (!targetId) return;
-
-    const targetClient = clients.get(targetId);
-    if (targetClient && targetClient.ws.readyState === WebSocket.OPEN) {
-      // Add sender ID to the message
-      const relayedMessage = {
-        ...message,
-        fromId: sender.id,
-      };
-      targetClient.ws.send(JSON.stringify(relayedMessage));
+  function handleRequestFile(message: any, ws: WebSocket) {
+    const { code } = message;
+    
+    if (!code) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Code is required',
+      }));
+      return;
     }
+
+    const fileData = fileRegistry.get(code);
+    if (!fileData) {
+      ws.send(JSON.stringify({
+        type: 'file-not-found',
+        code,
+      }));
+      return;
+    }
+
+    // Send file metadata first
+    ws.send(JSON.stringify({
+      type: 'file-available',
+      code,
+      fileName: fileData.fileName,
+      fileSize: fileData.fileSize,
+      fileType: fileData.fileType,
+    }));
+
+    // If file data is available, send it immediately
+    if (fileData.data) {
+      ws.send(JSON.stringify({
+        type: 'file-data',
+        code,
+        fileName: fileData.fileName,
+        data: fileData.data,
+      }));
+    }
+
+    console.log(`File requested with code: ${code}`);
+  }
+
+  function handleFileData(message: any, ws: WebSocket) {
+    const { code, data } = message;
+    
+    if (!code || !data) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Code and data are required',
+      }));
+      return;
+    }
+
+    const fileData = fileRegistry.get(code);
+    if (!fileData) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'File not registered',
+      }));
+      return;
+    }
+
+    // Store the file data
+    fileData.data = data;
+    fileRegistry.set(code, fileData);
+
+    console.log(`File data stored for code: ${code}`);
+    
+    ws.send(JSON.stringify({
+      type: 'file-stored',
+      code,
+    }));
   }
 
   // Health check endpoint
   app.get('/api/health', (req, res) => {
     res.json({
       status: 'ok',
-      connectedClients: clients.size,
+      activeFiles: fileRegistry.size,
       timestamp: new Date().toISOString(),
     });
   });
