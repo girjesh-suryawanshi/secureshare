@@ -14,10 +14,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setInterval(() => {
     const now = new Date();
     const registryArray = Array.from(fileRegistry.entries());
-    for (const [code, fileData] of registryArray) {
-      if (now.getTime() - fileData.createdAt.getTime() > 60 * 60 * 1000) { // 1 hour
+    for (const [code, registry] of registryArray) {
+      if (now.getTime() - registry.createdAt.getTime() > 60 * 60 * 1000) { // 1 hour
         fileRegistry.delete(code);
-        console.log(`Cleaned up expired file: ${code}`);
+        console.log(`Cleaned up expired files: ${code}`);
       }
     }
   }, 10 * 60 * 1000);
@@ -65,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   function handleRegisterFile(message: any, ws: WebSocket) {
-    const { code, fileName, fileSize, fileType } = message;
+    const { code, fileName, fileSize, fileType, fileIndex, totalFiles } = message;
     
     if (!code || !fileName || !fileSize || !fileType) {
       ws.send(JSON.stringify({
@@ -75,17 +75,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
-    // Store file metadata (actual file data will come in chunks)
-    fileRegistry.set(code, {
-      code,
+    // Get or create file registry entry
+    let registry = fileRegistry.get(code);
+    if (!registry) {
+      registry = {
+        code,
+        files: [],
+        totalFiles: totalFiles || 1,
+        createdAt: new Date(),
+      };
+      fileRegistry.set(code, registry);
+    }
+
+    // Add or update file in registry
+    const existingFileIndex = registry.files.findIndex(f => f.fileIndex === (fileIndex || 0));
+    const fileData = {
       fileName,
       fileSize,
       fileType,
       data: '', // Will be populated by file-data messages
-      createdAt: new Date(),
-    });
+      fileIndex: fileIndex || 0,
+    };
 
-    console.log(`File registered with code: ${code} - ${fileName}`);
+    if (existingFileIndex >= 0) {
+      registry.files[existingFileIndex] = fileData;
+    } else {
+      registry.files.push(fileData);
+    }
+
+    console.log(`File registered with code: ${code} - ${fileName} (${fileIndex + 1}/${totalFiles})`);
     
     ws.send(JSON.stringify({
       type: 'file-registered',
@@ -104,8 +122,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
-    const fileData = fileRegistry.get(code);
-    if (!fileData) {
+    const registry = fileRegistry.get(code);
+    if (!registry) {
       ws.send(JSON.stringify({
         type: 'file-not-found',
         code,
@@ -113,30 +131,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
-    // Send file metadata first
-    ws.send(JSON.stringify({
-      type: 'file-available',
-      code,
-      fileName: fileData.fileName,
-      fileSize: fileData.fileSize,
-      fileType: fileData.fileType,
-    }));
-
-    // If file data is available, send it immediately
-    if (fileData.data) {
+    // Send file metadata for all files
+    registry.files.forEach(file => {
       ws.send(JSON.stringify({
-        type: 'file-data',
+        type: 'file-available',
         code,
-        fileName: fileData.fileName,
-        data: fileData.data,
+        fileName: file.fileName,
+        fileSize: file.fileSize,
+        fileType: file.fileType,
+        fileIndex: file.fileIndex,
+        totalFiles: registry.totalFiles,
       }));
-    }
 
-    console.log(`File requested with code: ${code}`);
+      // If file data is available, send it immediately
+      if (file.data) {
+        ws.send(JSON.stringify({
+          type: 'file-data',
+          code,
+          fileName: file.fileName,
+          data: file.data,
+          fileIndex: file.fileIndex,
+          totalFiles: registry.totalFiles,
+        }));
+      }
+    });
+
+    console.log(`Files requested with code: ${code} (${registry.files.length} files)`);
   }
 
   function handleFileData(message: any, ws: WebSocket) {
-    const { code, data } = message;
+    const { code, data, fileName, fileIndex } = message;
     
     if (!code || !data) {
       ws.send(JSON.stringify({
@@ -146,8 +170,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
-    const fileData = fileRegistry.get(code);
-    if (!fileData) {
+    const registry = fileRegistry.get(code);
+    if (!registry) {
       ws.send(JSON.stringify({
         type: 'error',
         message: 'File not registered',
@@ -155,11 +179,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
-    // Store the file data
-    fileData.data = data;
-    fileRegistry.set(code, fileData);
-
-    console.log(`File data stored for code: ${code}`);
+    // Find and update the specific file
+    const fileToUpdate = registry.files.find(f => 
+      f.fileIndex === (fileIndex || 0) && f.fileName === fileName
+    );
+    
+    if (fileToUpdate) {
+      fileToUpdate.data = data;
+      console.log(`File data stored for code: ${code} - ${fileName} (${fileIndex + 1}/${registry.totalFiles})`);
+    } else {
+      console.log(`File not found in registry: ${code} - ${fileName}`);
+    }
     
     ws.send(JSON.stringify({
       type: 'file-stored',

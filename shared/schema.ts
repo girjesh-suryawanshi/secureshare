@@ -9,6 +9,8 @@ export const MessageSchema = z.object({
   fileType: z.string().optional(),
   data: z.string().optional(), // base64 encoded file data
   message: z.string().optional(), // error messages
+  fileIndex: z.number().optional(), // for multiple files
+  totalFiles: z.number().optional(), // total number of files
 });
 
 export type Message = z.infer<typeof MessageSchema>;
@@ -16,9 +18,13 @@ export type Message = z.infer<typeof MessageSchema>;
 // File registry for code-based transfers
 export interface FileRegistry {
   code: string;
-  fileName: string;
-  fileSize: number;
-  fileType: string;
-  data: string; // base64 encoded
+  files: Array<{
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    data: string; // base64 encoded
+    fileIndex: number;
+  }>;
+  totalFiles: number;
   createdAt: Date;
 }

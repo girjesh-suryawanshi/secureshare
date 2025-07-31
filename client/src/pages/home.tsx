@@ -8,11 +8,11 @@ import { Upload, Download, Copy, CheckCircle, Share } from "lucide-react";
 
 export default function Home() {
   const [mode, setMode] = useState<'select' | 'send' | 'receive'>('select');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [transferCode, setTransferCode] = useState<string>('');
   const [inputCode, setInputCode] = useState<string>('');
-  const [fileReady, setFileReady] = useState<boolean>(false);
-  const [receivedFile, setReceivedFile] = useState<{ name: string; size: number; blob: Blob } | null>(null);
+  const [filesReady, setFilesReady] = useState<boolean>(false);
+  const [receivedFiles, setReceivedFiles] = useState<{ name: string; size: number; blob: Blob }[]>([]);
 
   const { isConnected, sendMessage, onFileAvailable, onFileData, onFileNotFound } = useWebSocket();
   const { toast } = useToast();
@@ -27,42 +27,54 @@ export default function Home() {
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      setSelectedFiles(files);
       const code = generateCode();
       setTransferCode(code);
       
-      // Convert file to base64
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        const base64Data = base64.split(',')[1]; // Remove data:image/png;base64, prefix
-        
-        // Register file with server
-        sendMessage({
-          type: 'register-file',
-          code: code,
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-        });
+      // Process all files
+      const filePromises = files.map((file, index) => {
+        return new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            const base64Data = base64.split(',')[1];
+            
+            // Register each file with the same code but different index
+            sendMessage({
+              type: 'register-file',
+              code: code,
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+              fileIndex: index,
+              totalFiles: files.length,
+            });
 
-        // Send file data
-        sendMessage({
-          type: 'file-data',
-          code: code,
-          data: base64Data,
+            // Send file data
+            sendMessage({
+              type: 'file-data',
+              code: code,
+              fileName: file.name,
+              data: base64Data,
+              fileIndex: index,
+            });
+            
+            resolve();
+          };
+          reader.readAsDataURL(file);
         });
+      });
 
-        setFileReady(true);
-        toast({
-          title: "File Ready",
-          description: `Share code ${code} with the receiver`,
-        });
-      };
+      // Wait for all files to be processed
+      await Promise.all(filePromises);
       
-      reader.readAsDataURL(file);
+      setFilesReady(true);
+      toast({
+        title: "Files Ready",
+        description: `${files.length} file(s) ready. Share code ${code}`,
+      });
     }
   };
 
@@ -106,21 +118,25 @@ export default function Home() {
     }
   };
 
-  const downloadFile = () => {
-    if (!receivedFile) return;
+  const downloadFiles = () => {
+    if (receivedFiles.length === 0) return;
     
-    const url = URL.createObjectURL(receivedFile.blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = receivedFile.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    receivedFiles.forEach((file, index) => {
+      setTimeout(() => {
+        const url = URL.createObjectURL(file.blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, index * 100); // Small delay between downloads
+    });
     
     toast({
-      title: "Download Started",
-      description: `Downloading ${receivedFile.name}`,
+      title: "Downloads Started",
+      description: `Downloading ${receivedFiles.length} file(s)`,
     });
   };
 
@@ -142,17 +158,31 @@ export default function Home() {
           bytes[i] = binaryString.charCodeAt(i);
         }
         
-        // Create blob and set received file
+        // Create blob and add to received files
         const blob = new Blob([bytes]);
-        setReceivedFile({
+        const newFile = {
           name: data.fileName || 'downloaded-file',
           size: blob.size,
           blob: blob,
-        });
+        };
 
-        toast({
-          title: "File Received",
-          description: "File is ready to download",
+        setReceivedFiles(prev => {
+          const updated = [...prev, newFile];
+          // Check if this is the last file
+          if (data.fileIndex !== undefined && data.totalFiles !== undefined) {
+            if (updated.length === data.totalFiles) {
+              toast({
+                title: "All Files Received",
+                description: `${data.totalFiles} file(s) ready to download`,
+              });
+            }
+          } else {
+            toast({
+              title: "File Received",
+              description: "File is ready to download",
+            });
+          }
+          return updated;
         });
       }
     });
@@ -222,7 +252,7 @@ export default function Home() {
               <Upload className="h-16 w-16 text-blue-600 mx-auto mb-6" />
               <h2 className="text-xl font-bold text-gray-900 mb-6">Send File</h2>
 
-              {!fileReady ? (
+              {!filesReady ? (
                 <div>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4 hover:border-blue-400 transition-colors">
                     <input
@@ -230,10 +260,12 @@ export default function Home() {
                       onChange={handleFileSelect}
                       className="hidden"
                       id="file-input"
+                      multiple
                     />
                     <label htmlFor="file-input" className="cursor-pointer block">
                       <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600">Click to select a file</p>
+                      <p className="text-gray-600">Click to select files</p>
+                      <p className="text-sm text-gray-500 mt-1">You can select multiple files</p>
                     </label>
                   </div>
                 </div>
@@ -241,9 +273,17 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="font-medium text-green-800">{selectedFile?.name}</p>
-                    <p className="text-sm text-green-600">
-                      {selectedFile ? Math.round(selectedFile.size / 1024) : 0} KB
+                    <p className="font-medium text-green-800">{selectedFiles.length} file(s) selected</p>
+                    <div className="text-sm text-green-600 max-h-32 overflow-y-auto">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="flex justify-between items-center py-1">
+                          <span className="truncate">{file.name}</span>
+                          <span>{Math.round(file.size / 1024)} KB</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-green-600 mt-2 font-medium">
+                      Total: {Math.round(selectedFiles.reduce((acc, f) => acc + f.size, 0) / 1024)} KB
                     </p>
                   </div>
 
@@ -260,20 +300,20 @@ export default function Home() {
                   </div>
 
                   <p className="text-sm text-gray-600">
-                    The receiver should enter this code to download your file
+                    The receiver should enter this code to download all files
                   </p>
 
                   <Button 
                     onClick={() => {
                       setMode('select');
-                      setSelectedFile(null);
+                      setSelectedFiles([]);
                       setTransferCode('');
-                      setFileReady(false);
+                      setFilesReady(false);
                     }}
                     variant="outline"
                     className="w-full"
                   >
-                    Send Another File
+                    Send More Files
                   </Button>
                 </div>
               )}
@@ -301,7 +341,7 @@ export default function Home() {
               <Download className="h-16 w-16 text-blue-600 mx-auto mb-6" />
               <h2 className="text-xl font-bold text-gray-900 mb-6">Receive File</h2>
 
-              {!receivedFile ? (
+              {receivedFiles.length === 0 ? (
                 <div className="space-y-4">
                   <div>
                     <p className="text-gray-600 mb-4">Enter the 6-character code:</p>
@@ -327,27 +367,35 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="font-medium text-green-800">{receivedFile.name}</p>
-                    <p className="text-sm text-green-600">
-                      {Math.round(receivedFile.size / 1024)} KB
+                    <p className="font-medium text-green-800">{receivedFiles.length} file(s) received</p>
+                    <div className="text-sm text-green-600 max-h-32 overflow-y-auto">
+                      {receivedFiles.map((file, index) => (
+                        <div key={index} className="flex justify-between items-center py-1">
+                          <span className="truncate">{file.name}</span>
+                          <span>{Math.round(file.size / 1024)} KB</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-green-600 mt-2 font-medium">
+                      Total: {Math.round(receivedFiles.reduce((acc, f) => acc + f.size, 0) / 1024)} KB
                     </p>
                   </div>
 
-                  <Button onClick={downloadFile} className="w-full">
+                  <Button onClick={downloadFiles} className="w-full">
                     <Download className="mr-2 h-4 w-4" />
-                    Download File
+                    Download All Files
                   </Button>
 
                   <Button 
                     onClick={() => {
                       setMode('select');
                       setInputCode('');
-                      setReceivedFile(null);
+                      setReceivedFiles([]);
                     }}
                     variant="outline"
                     className="w-full"
                   >
-                    Receive Another File
+                    Receive More Files
                   </Button>
                 </div>
               )}
