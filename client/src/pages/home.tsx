@@ -238,7 +238,7 @@ export default function Home() {
 
   if (mode === 'select') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-6xl mx-auto py-12">
           <div className="text-center space-y-8">
             {/* Hero Section */}
@@ -386,7 +386,7 @@ export default function Home() {
 
   if (mode === 'send') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8">
             <Button 
@@ -475,7 +475,7 @@ export default function Home() {
 
   if (mode === 'receive') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8">
             <Button 

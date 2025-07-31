@@ -35,11 +35,20 @@ Preferred communication style: Simple, everyday language.
 5. **Direct Transfer**: No server storage - files transfer through temporary memory
 6. **Mobile Responsive**: Clean, minimal UI that works on all devices
 
+### Legal and Policy Pages (for Google AdSense compliance)
+1. **Home Page**: Professional landing page with clear value proposition
+2. **About Us**: Company mission, vision, and technology details
+3. **Contact Us**: Contact form, support information, FAQ section
+4. **Privacy Policy**: Comprehensive data handling and privacy practices
+5. **Terms and Conditions**: Service terms, user responsibilities, limitations
+6. **Disclaimer**: Service limitations, user responsibilities, legal disclaimers
+
 ### UI Components Structure
-- **Connection Panel**: Device pairing and connection status
+- **Navigation Bar**: Logo, main navigation links, mobile menu
+- **Landing Page**: Hero section, features, how-it-works guide
 - **File Transfer Panel**: File selection and transfer initiation
 - **Incoming Files**: Handle incoming transfer requests
-- **Status Bar**: Real-time connection and transfer status
+- **Footer**: Links, legal pages, copyright information
 - **Toast Notifications**: User feedback and error handling
 
 ### WebRTC Implementation
