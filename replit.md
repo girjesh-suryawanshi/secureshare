@@ -28,11 +28,12 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Core Application Features
-1. **Connection Management**: Generate and share connection IDs for device pairing
-2. **File Selection**: Drag-and-drop and click-to-select file interface
-3. **WebRTC Communication**: Direct peer-to-peer data transfer
-4. **Transfer Progress**: Real-time progress tracking and status updates
-5. **Mobile Responsive**: Adaptive UI for desktop and mobile devices
+1. **Simple Two-Button Interface**: Just "Send File" and "Receive File" buttons
+2. **Multiple File Selection**: Users can select and send multiple files at once
+3. **6-Digit Code System**: Alphanumeric codes for easy file sharing
+4. **ZIP Download**: Multiple files are automatically packaged as ZIP for download
+5. **Direct Transfer**: No server storage - files transfer through temporary memory
+6. **Mobile Responsive**: Clean, minimal UI that works on all devices
 
 ### UI Components Structure
 - **Connection Panel**: Device pairing and connection status
@@ -49,22 +50,24 @@ Preferred communication style: Simple, everyday language.
 
 ## Data Flow
 
-1. **Connection Establishment**:
-   - Client connects to WebSocket server and receives unique connection ID
-   - User shares connection ID with target device
-   - WebRTC peer connection established through signaling exchange
+1. **File Upload Process**:
+   - User selects single or multiple files through file picker
+   - Files converted to base64 for transmission
+   - Server generates 6-digit alphanumeric code
+   - Files temporarily stored in server memory with code association
 
-2. **File Transfer Process**:
-   - Files selected through UI are chunked for efficient transfer
-   - Transfer requests sent through WebRTC data channel
-   - File chunks transmitted with progress tracking
-   - Received chunks reconstructed into original files
+2. **File Download Process**:
+   - Receiver enters 6-digit code in app
+   - Server validates code and retrieves associated files
+   - Single file: Direct download
+   - Multiple files: Automatically packaged as ZIP file
+   - Files removed from server memory after 1 hour
 
 3. **State Management**:
-   - WebSocket connection state managed by custom hook
-   - WebRTC connections tracked in React state
-   - File transfer progress updated in real-time
-   - UI state synchronized across components
+   - WebSocket connection managed by custom hook
+   - File upload/download progress tracked in React state
+   - Toast notifications provide user feedback
+   - Simple mode switching between send/receive/select states
 
 ## External Dependencies
 

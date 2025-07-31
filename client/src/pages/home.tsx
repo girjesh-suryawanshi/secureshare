@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Download, Copy, CheckCircle, Share } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive } from "lucide-react";
+import JSZip from "jszip";
 
 export default function Home() {
   const [mode, setMode] = useState<'select' | 'send' | 'receive'>('select');
@@ -118,26 +119,65 @@ export default function Home() {
     }
   };
 
-  const downloadFiles = () => {
+  const downloadFiles = async () => {
     if (receivedFiles.length === 0) return;
     
-    receivedFiles.forEach((file, index) => {
-      setTimeout(() => {
-        const url = URL.createObjectURL(file.blob);
+    if (receivedFiles.length === 1) {
+      // Single file - download directly
+      const file = receivedFiles[0];
+      const url = URL.createObjectURL(file.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download Started",
+        description: `Downloading ${file.name}`,
+      });
+    } else {
+      // Multiple files - create ZIP
+      const zip = new JSZip();
+      
+      // Add all files to ZIP
+      receivedFiles.forEach((file) => {
+        zip.file(file.name, file.blob);
+      });
+      
+      try {
+        toast({
+          title: "Creating ZIP",
+          description: "Preparing download...",
+        });
+        
+        // Generate ZIP file
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        
+        // Download ZIP
+        const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = file.name;
+        a.download = `files-${inputCode}.zip`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      }, index * 100); // Small delay between downloads
-    });
-    
-    toast({
-      title: "Downloads Started",
-      description: `Downloading ${receivedFiles.length} file(s)`,
-    });
+        
+        toast({
+          title: "ZIP Download Started",
+          description: `Downloading ${receivedFiles.length} files as ZIP`,
+        });
+      } catch (error) {
+        toast({
+          title: "ZIP Creation Failed",
+          description: "Could not create ZIP file",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   // Set up WebSocket event handlers
@@ -382,8 +422,17 @@ export default function Home() {
                   </div>
 
                   <Button onClick={downloadFiles} className="w-full">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download All Files
+                    {receivedFiles.length === 1 ? (
+                      <>
+                        <Download className="mr-2 h-4 w-4" />
+                        Download File
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="mr-2 h-4 w-4" />
+                        Download as ZIP
+                      </>
+                    )}
                   </Button>
 
                   <Button 
