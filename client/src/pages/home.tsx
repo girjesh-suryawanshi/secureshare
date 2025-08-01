@@ -316,12 +316,12 @@ export default function Home() {
                   SecureShare
                 </h1>
                 <div className="max-w-4xl mx-auto space-y-4">
-                  <p className="text-2xl md:text-3xl font-semibold text-gray-800 leading-relaxed">
-                    The Future of File Sharing is Here
-                  </p>
+                  <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 leading-relaxed">
+                    Share Any File Between Any Devices in Seconds with Just a 6-Digit Code
+                  </h2>
                   <p className="text-xl text-gray-600 leading-relaxed">
-                    Transfer files instantly between any devices with military-grade security. 
-                    No accounts, no downloads, no waiting. Just pure speed and privacy.
+                    The world's fastest peer-to-peer file transfer service. Send documents, photos, videos, and files of any size instantly. 
+                    No registration required, no file size limits, complete privacy guaranteed.
                   </p>
                 </div>
                 

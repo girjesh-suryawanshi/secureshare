@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://secureshare.com/sitemap.xml
+
+# Block development files
+Disallow: /dev/
+Disallow: /*.json$
+Disallow: /*.log$
+
+# Allow important pages
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /disclaimer

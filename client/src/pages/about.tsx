@@ -6,32 +6,34 @@ export default function About() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-4xl mx-auto py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">About SecureShare</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">About SecureShare - The Ultimate File Sharing Solution</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Making file sharing simple, secure, and accessible for everyone
+            Learn how SecureShare revolutionizes file transfer with 6-digit code technology. 
+            Making peer-to-peer file sharing simple, secure, and accessible for everyone worldwide.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <Card className="shadow-lg">
             <CardContent className="p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Mission: Simplifying File Transfer</h2>
               <p className="text-gray-600 leading-relaxed">
-                SecureShare was created to solve the everyday problem of sharing files between devices. 
-                We believe file sharing should be instant, secure, and require no complicated setup or registration. 
-                Our platform enables anyone to share files instantly with just a simple 6-digit code.
+                SecureShare was created to solve the everyday problem of sharing files between devices across different platforms. 
+                We believe file sharing should be instant, secure, and require no complicated setup, registration, or downloads. 
+                Our peer-to-peer platform enables anyone to transfer documents, photos, videos, and any file type instantly 
+                with just a simple 6-digit alphanumeric code.
               </p>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg">
             <CardContent className="p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Vision: The Future of File Sharing</h2>
               <p className="text-gray-600 leading-relaxed">
-                To become the world's most trusted and user-friendly file sharing platform. 
-                We envision a world where sharing files is as simple as sharing a code, 
-                without compromising on security or privacy. Every file transfer should be direct, 
-                fast, and completely private.
+                To become the world's most trusted and user-friendly file sharing platform for individuals and businesses. 
+                We envision a world where sharing files between any devices is as simple as sharing a code, 
+                without compromising on security, privacy, or speed. Every file transfer should be direct, 
+                instant, and completely private with military-grade encryption.
               </p>
             </CardContent>
           </Card>
