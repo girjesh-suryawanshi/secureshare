@@ -95,9 +95,11 @@ If you encounter issues:
 
 ## Fixed Issues
 - ✅ Fixed function runtime configuration error
-- ✅ Removed problematic runtime specification
+- ✅ Removed problematic runtime specification  
 - ✅ Simplified vercel.json for automatic detection
 - ✅ Added api/package.json for ES modules support
+- ✅ Fixed build command to use existing npm run build
+- ✅ Corrected output directory to dist/public
 
 Your SecureShare app will be live on Vercel with:
 - Professional Google AdSense-ready website
