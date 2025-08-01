@@ -88,9 +88,15 @@ After deployment, test these URLs:
 ## Troubleshooting
 
 If you encounter issues:
-1. Check Vercel's function logs in the dashboard
-2. Ensure all dependencies are in `package.json`
-3. Verify `vercel.json` configuration is correct
+1. **Runtime Error**: Make sure `vercel.json` uses the correct runtime version
+2. **Build Errors**: Check that `vite build` works locally first
+3. **Function Errors**: Check Vercel's function logs in the dashboard
+4. **Dependencies**: Ensure all required packages are in dependencies (not devDependencies)
+
+## Fixed Issues
+- ✅ Fixed function runtime configuration error
+- ✅ Updated to use `@vercel/node@3.0.7` runtime
+- ✅ Simplified API structure for better compatibility
 
 Your SecureShare app will be live on Vercel with:
 - Professional Google AdSense-ready website
