@@ -95,8 +95,9 @@ If you encounter issues:
 
 ## Fixed Issues
 - ✅ Fixed function runtime configuration error
-- ✅ Updated to use `@vercel/node@3.0.7` runtime
-- ✅ Simplified API structure for better compatibility
+- ✅ Removed problematic runtime specification
+- ✅ Simplified vercel.json for automatic detection
+- ✅ Added api/package.json for ES modules support
 
 Your SecureShare app will be live on Vercel with:
 - Professional Google AdSense-ready website
