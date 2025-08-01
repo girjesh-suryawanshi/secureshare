@@ -512,10 +512,10 @@ export default function Home() {
                   <Upload className="h-12 w-12 text-white" />
                 </div>
               </div>
-              <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+              <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
                 Send Your Files
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
                 Share files instantly with military-grade security. Your files, your control, your privacy.
               </p>
             </div>
@@ -537,10 +537,10 @@ export default function Home() {
                             </div>
                           </div>
                           <div className="space-y-3">
-                            <p className="text-2xl font-bold text-gray-900">
+                            <p className="text-lg md:text-2xl font-bold text-gray-900">
                               Drop Files Here or Click to Browse
                             </p>
-                            <p className="text-lg text-gray-600">
+                            <p className="text-sm md:text-lg text-gray-600">
                               Support for any file type • Multiple files automatically ZIP packaged
                             </p>
                             <div className="flex justify-center space-x-4 text-sm font-medium">
@@ -552,9 +552,9 @@ export default function Home() {
                         </div>
                       </DragDropZone>
                       
-                      <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
-                        <h4 className="font-bold text-gray-900 mb-3">💡 Pro Tips</h4>
-                        <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-700">
+                      <div className="mt-8 p-4 md:p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
+                        <h4 className="font-bold text-gray-900 mb-3 text-sm md:text-base">💡 Pro Tips</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm text-gray-700">
                           <div>• Multiple files = Auto ZIP</div>
                           <div>• Files expire in 1 hour</div>
                           <div>• No size limits</div>
@@ -563,8 +563,8 @@ export default function Home() {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-2xl font-bold text-gray-900">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <h3 className="text-lg md:text-2xl font-bold text-gray-900">
                           Ready to Send ({selectedFiles.length} files)
                         </h3>
                         <div className="text-sm text-gray-500">
@@ -591,12 +591,12 @@ export default function Home() {
                         </div>
                       )}
                       
-                      <div className="flex space-x-4">
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                         <DragDropZone onFilesSelected={(newFiles) => {
                           setSelectedFiles(prev => [...prev, ...newFiles]);
                         }}>
-                          <Button variant="outline" className="flex-1 h-12 text-lg border-2 hover:bg-blue-50">
-                            <Upload className="mr-2 h-5 w-5" />
+                          <Button variant="outline" className="w-full sm:flex-1 h-12 text-sm md:text-lg border-2 hover:bg-blue-50">
+                            <Upload className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                             Add More Files
                           </Button>
                         </DragDropZone>
@@ -607,7 +607,7 @@ export default function Home() {
                             setIsUploading(false);
                           }}
                           variant="outline"
-                          className="flex-1 h-12 text-lg border-2 hover:bg-red-50 text-red-600 border-red-200"
+                          className="w-full sm:flex-1 h-12 text-sm md:text-lg border-2 hover:bg-red-50 text-red-600 border-red-200"
                         >
                           Clear All
                         </Button>
@@ -624,10 +624,10 @@ export default function Home() {
                         <CheckCircle className="h-12 w-12 text-white" />
                       </div>
                     </div>
-                    <h3 className="text-2xl font-bold text-green-800 mb-4">
+                    <h3 className="text-lg md:text-2xl font-bold text-green-800 mb-4">
                       🎉 Files Ready to Share!
                     </h3>
-                    <p className="text-lg text-green-700 mb-6">
+                    <p className="text-sm md:text-lg text-green-700 mb-6">
                       {selectedFiles.length} file(s) uploaded and secured. Share your code below.
                     </p>
                     
@@ -639,29 +639,29 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-6 text-white">
-                      <p className="text-lg font-semibold mb-4">🔐 Your Secure Share Code</p>
-                      <div className="flex items-center justify-center space-x-4 mb-4">
-                        <div className="bg-white/20 backdrop-blur px-6 py-4 rounded-xl font-mono text-3xl font-bold tracking-wider">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-4 md:p-6 text-white">
+                      <p className="text-sm md:text-lg font-semibold mb-4">🔐 Your Secure Share Code</p>
+                      <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 mb-4">
+                        <div className="bg-white/20 backdrop-blur px-4 md:px-6 py-3 md:py-4 rounded-xl font-mono text-xl md:text-3xl font-bold tracking-wider">
                           {transferCode}
                         </div>
                         <Button 
                           variant="secondary" 
                           size="lg" 
                           onClick={copyCode}
-                          className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                          className="bg-white/20 hover:bg-white/30 text-white border-white/30 w-full sm:w-auto"
                         >
-                          <Copy className="h-5 w-5 mr-2" />
+                          <Copy className="h-4 w-4 md:h-5 md:w-5 mr-2" />
                           Copy
                         </Button>
                       </div>
-                      <p className="text-blue-100">
+                      <p className="text-blue-100 text-sm md:text-base">
                         Share this code with the receiver. Files expire in 1 hour for maximum security.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex space-x-4">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                     <Button 
                       onClick={() => {
                         setMode('select');
@@ -669,14 +669,14 @@ export default function Home() {
                         setTransferCode('');
                         setFilesReady(false);
                       }}
-                      className="flex-1 h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      className="w-full sm:flex-1 h-12 text-sm md:text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     >
                       Send More Files
                     </Button>
                     <Button 
                       onClick={() => setMode('receive')}
                       variant="outline"
-                      className="flex-1 h-12 text-lg border-2"
+                      className="w-full sm:flex-1 h-12 text-sm md:text-lg border-2"
                     >
                       Receive Files
                     </Button>
@@ -710,10 +710,10 @@ export default function Home() {
                   <Download className="h-12 w-12 text-white" />
                 </div>
               </div>
-              <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
+              <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
                 Receive Files
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
                 Enter your 6-digit secure code to instantly download files shared with you.
               </p>
             </div>
@@ -732,8 +732,8 @@ export default function Home() {
                       </div>
                     </div>
                     
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Enter Your Code</h3>
-                    <p className="text-lg text-gray-600 mb-8">Type the 6-character code shared with you</p>
+                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-4">Enter Your Code</h3>
+                    <p className="text-sm md:text-lg text-gray-600 mb-8">Type the 6-character code shared with you</p>
                     
                     <div className="max-w-md mx-auto space-y-6">
                       <Input
@@ -741,13 +741,13 @@ export default function Home() {
                         placeholder="ABC123"
                         value={inputCode}
                         onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-                        className="text-center text-2xl font-mono tracking-widest h-16 border-2 border-purple-200 focus:border-purple-500 bg-white"
+                        className="text-center text-lg md:text-2xl font-mono tracking-widest h-12 md:h-16 border-2 border-purple-200 focus:border-purple-500 bg-white"
                         maxLength={6}
                       />
                       
                       <Button 
                         onClick={handleReceiveFile} 
-                        className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold"
+                        className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold"
                         disabled={!isConnected || inputCode.length !== 6}
                       >
                         {inputCode.length === 6 ? 'Get My Files 🚀' : `Enter ${6 - inputCode.length} more characters`}
@@ -761,9 +761,9 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
-                    <h4 className="font-bold text-gray-900 mb-3">💡 Quick Tips</h4>
-                    <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-700">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 md:p-6 border border-blue-200">
+                    <h4 className="font-bold text-gray-900 mb-3 text-sm md:text-base">💡 Quick Tips</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm text-gray-700">
                       <div>• Codes are case-insensitive</div>
                       <div>• Files download instantly</div>
                       <div>• Multiple files come as ZIP</div>
@@ -780,30 +780,30 @@ export default function Home() {
                       </div>
                     </div>
                     
-                    <h3 className="text-2xl font-bold text-green-800 mb-4">
+                    <h3 className="text-lg md:text-2xl font-bold text-green-800 mb-4">
                       🎉 Files Ready to Download!
                     </h3>
-                    <p className="text-lg text-green-700 mb-6">
+                    <p className="text-sm md:text-lg text-green-700 mb-6">
                       {receivedFiles.length} file(s) successfully received and verified.
                     </p>
                     
-                    <div className="bg-white rounded-xl p-6 border border-green-300 mb-6">
-                      <div className="grid gap-3 max-h-48 overflow-y-auto">
+                    <div className="bg-white rounded-xl p-4 md:p-6 border border-green-300 mb-6">
+                      <div className="grid gap-2 md:gap-3 max-h-48 overflow-y-auto">
                         {receivedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <FileText className="h-6 w-6 text-blue-600" />
-                              <div className="text-left">
-                                <p className="font-medium text-gray-900 truncate">{file.name}</p>
-                                <p className="text-sm text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                          <div key={index} className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-2 md:space-x-3">
+                              <FileText className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
+                              <div className="text-left min-w-0 flex-1">
+                                <p className="font-medium text-gray-900 truncate text-sm md:text-base">{file.name}</p>
+                                <p className="text-xs md:text-sm text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
                               </div>
                             </div>
                           </div>
                         ))}
                       </div>
                       
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-700 font-medium">
+                      <div className="mt-4 p-2 md:p-3 bg-blue-50 rounded-lg">
+                        <p className="text-xs md:text-sm text-blue-700 font-medium">
                           Total: {(receivedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024)).toFixed(2)} MB
                         </p>
                       </div>
@@ -811,27 +811,27 @@ export default function Home() {
                     
                     <Button 
                       onClick={downloadFiles} 
-                      className="w-full h-14 text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold mb-4"
+                      className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold mb-4"
                     >
-                      <Download className="mr-2 h-5 w-5" />
+                      <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                       Download {receivedFiles.length > 1 ? 'ZIP Package' : 'File'} 
                     </Button>
                   </div>
                   
-                  <div className="flex space-x-4">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                     <Button 
                       variant="outline"
                       onClick={() => {
                         setReceivedFiles([]);
                         setInputCode('');
                       }}
-                      className="flex-1 h-12 text-lg border-2"
+                      className="w-full sm:flex-1 h-12 text-sm md:text-lg border-2"
                     >
                       Receive More Files
                     </Button>
                     <Button 
                       onClick={() => setMode('send')}
-                      className="flex-1 h-12 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                      className="w-full sm:flex-1 h-12 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                     >
                       Send Files
                     </Button>
