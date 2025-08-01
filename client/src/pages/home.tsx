@@ -9,7 +9,7 @@ import { FilePreview } from "@/components/file-preview";
 import { DragDropZone } from "@/components/drag-drop-zone";
 import { TransferProgress } from "@/components/transfer-progress";
 import { TransferStats } from "@/components/transfer-stats";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap } from "lucide-react";
 import JSZip from "jszip";
 
 export default function Home() {
@@ -298,60 +298,103 @@ export default function Home() {
 
   if (mode === 'select') {
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-6xl mx-auto py-12">
-          <div className="text-center space-y-8">
-            {/* Hero Section */}
-            <div className="space-y-6">
-              <div className="inline-flex items-center justify-center p-4 bg-blue-100 rounded-full mb-4">
-                <Share className="h-12 w-12 text-blue-600" />
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="text-center space-y-12">
+            
+            {/* Premium Hero Section */}
+            <div className="space-y-8">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-3xl opacity-20 w-32 h-32 mx-auto"></div>
+                <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl mb-6">
+                  <Share className="h-16 w-16 text-white" />
+                </div>
               </div>
-              <h1 className="text-5xl font-bold text-gray-900 sm:text-6xl">
-                SecureShare
-              </h1>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Share files instantly across devices with just a 6-digit code. No accounts, no limits, no complexity.
-              </p>
-              <p className="text-lg text-blue-600 font-medium">
-                Simple • Secure • Lightning Fast
-              </p>
+              
+              <div className="space-y-6">
+                <h1 className="text-6xl md:text-7xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight">
+                  SecureShare
+                </h1>
+                <div className="max-w-4xl mx-auto space-y-4">
+                  <p className="text-2xl md:text-3xl font-semibold text-gray-800 leading-relaxed">
+                    The Future of File Sharing is Here
+                  </p>
+                  <p className="text-xl text-gray-600 leading-relaxed">
+                    Transfer files instantly between any devices with military-grade security. 
+                    No accounts, no downloads, no waiting. Just pure speed and privacy.
+                  </p>
+                </div>
+                
+                <div className="flex flex-wrap justify-center gap-4 text-lg font-medium">
+                  <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full">✨ Zero Setup</span>
+                  <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full">🔒 Bank-Level Security</span>
+                  <span className="px-4 py-2 bg-purple-100 text-purple-800 rounded-full">⚡ Lightning Fast</span>
+                </div>
+              </div>
             </div>
 
             {/* Transfer Stats Dashboard */}
-            <div className="mb-8">
+            <div className="mb-12">
               <TransferStats stats={stats} />
             </div>
 
-            {/* Main Action Card */}
-            <div className="max-w-md mx-auto">
-              <Card className="shadow-xl border-0">
-                <CardContent className="p-8">
-                  <div className="space-y-6">
-                    <Button 
-                      onClick={() => setMode('send')} 
-                      className="w-full h-16 text-xl bg-blue-600 hover:bg-blue-700 shadow-lg"
-                      disabled={!isConnected}
-                    >
-                      <Upload className="mr-3 h-6 w-6" />
-                      Send Files
-                    </Button>
-                    
-                    <Button 
-                      onClick={() => setMode('receive')} 
-                      variant="outline" 
-                      className="w-full h-16 text-xl border-2 hover:bg-gray-50 shadow-lg"
-                      disabled={!isConnected}
-                    >
-                      <Download className="mr-3 h-6 w-6" />
-                      Receive Files
-                    </Button>
+            {/* Premium Action Cards */}
+            <div className="max-w-2xl mx-auto">
+              <div className="grid md:grid-cols-2 gap-6">
+                
+                {/* Send Files Card */}
+                <Card className="group hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <CardContent className="p-8 relative z-10">
+                    <div className="text-center space-y-6">
+                      <div className="bg-white/20 rounded-2xl p-4 w-fit mx-auto">
+                        <Upload className="h-12 w-12 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold mb-2">Send Files</h3>
+                        <p className="text-blue-100 text-lg">Share your files with anyone, anywhere in seconds</p>
+                      </div>
+                      <Button 
+                        onClick={() => setMode('send')} 
+                        className="w-full h-14 text-lg bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold"
+                        disabled={!isConnected}
+                      >
+                        Start Sending →
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                    {!isConnected && (
-                      <p className="text-sm text-red-600 mt-4">Connecting to server...</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Receive Files Card */}
+                <Card className="group hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <CardContent className="p-8 relative z-10">
+                    <div className="text-center space-y-6">
+                      <div className="bg-white/20 rounded-2xl p-4 w-fit mx-auto">
+                        <Download className="h-12 w-12 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold mb-2">Receive Files</h3>
+                        <p className="text-purple-100 text-lg">Enter a code and get your files instantly</p>
+                      </div>
+                      <Button 
+                        onClick={() => setMode('receive')} 
+                        className="w-full h-14 text-lg bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold"
+                        disabled={!isConnected}
+                      >
+                        Start Receiving →
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+              </div>
+
+              {!isConnected && (
+                <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-600 font-medium">🔄 Connecting to secure servers...</p>
+                </div>
+              )}
             </div>
 
             {/* How It Works */}
@@ -451,48 +494,94 @@ export default function Home() {
 
   if (mode === 'send') {
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="mb-8">
             <Button 
               variant="ghost" 
               onClick={() => setMode('select')} 
-              className="mb-4"
+              className="mb-6 text-lg hover:bg-white/80 transition-all duration-200"
             >
-              ← Back
+              ← Back to Home
             </Button>
 
-            <div className="text-center">
-              <Upload className="h-16 w-16 text-blue-600 mx-auto mb-6" />
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Send Files</h2>
+            <div className="text-center mb-12">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-2xl opacity-30 w-24 h-24 mx-auto"></div>
+                <div className="relative inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl">
+                  <Upload className="h-12 w-12 text-white" />
+                </div>
+              </div>
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                Send Your Files
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Share files instantly with military-grade security. Your files, your control, your privacy.
+              </p>
+            </div>
+          </div>
+
+          <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-8">
 
               {!filesReady ? (
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {selectedFiles.length === 0 ? (
-                    <DragDropZone onFilesSelected={handleFilesSelected}>
-                      <div className="p-8">
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-lg font-medium text-gray-900">
-                          Drop files here or click to browse
-                        </p>
-                        <p className="text-sm text-gray-500 mt-2">
-                          Select multiple files to create a ZIP download
-                        </p>
+                    <div className="text-center">
+                      <DragDropZone onFilesSelected={handleFilesSelected}>
+                        <div className="p-12 space-y-6">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-xl opacity-20 w-20 h-20 mx-auto"></div>
+                            <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-6 w-fit mx-auto">
+                              <Upload className="h-16 w-16 text-white" />
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <p className="text-2xl font-bold text-gray-900">
+                              Drop Files Here or Click to Browse
+                            </p>
+                            <p className="text-lg text-gray-600">
+                              Support for any file type • Multiple files automatically ZIP packaged
+                            </p>
+                            <div className="flex justify-center space-x-4 text-sm font-medium">
+                              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">✓ Secure</span>
+                              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">✓ Fast</span>
+                              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full">✓ Private</span>
+                            </div>
+                          </div>
+                        </div>
+                      </DragDropZone>
+                      
+                      <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
+                        <h4 className="font-bold text-gray-900 mb-3">💡 Pro Tips</h4>
+                        <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-700">
+                          <div>• Multiple files = Auto ZIP</div>
+                          <div>• Files expire in 1 hour</div>
+                          <div>• No size limits</div>
+                        </div>
                       </div>
-                    </DragDropZone>
+                    </div>
                   ) : (
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Selected Files ({selectedFiles.length})
-                      </h3>
-                      <div className="space-y-3 max-h-60 overflow-y-auto">
-                        {selectedFiles.map((file, index) => (
-                          <FilePreview key={index} file={file} />
-                        ))}
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-2xl font-bold text-gray-900">
+                          Ready to Send ({selectedFiles.length} files)
+                        </h3>
+                        <div className="text-sm text-gray-500">
+                          Total: {(selectedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024)).toFixed(1)} MB
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-6 border border-green-200">
+                        <div className="grid gap-3 max-h-64 overflow-y-auto">
+                          {selectedFiles.map((file, index) => (
+                            <FilePreview key={index} file={file} showSize={true} />
+                          ))}
+                        </div>
                       </div>
                       
                       {isUploading && (
-                        <div className="mt-6">
+                        <div className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
                           <TransferProgress
                             progress={uploadProgress}
                             transferSpeed={transferSpeed}
@@ -502,13 +591,13 @@ export default function Home() {
                         </div>
                       )}
                       
-                      <div className="flex space-x-3">
+                      <div className="flex space-x-4">
                         <DragDropZone onFilesSelected={(newFiles) => {
                           setSelectedFiles(prev => [...prev, ...newFiles]);
                         }}>
-                          <Button variant="outline" className="flex-1">
-                            <Upload className="mr-2 h-4 w-4" />
-                            Add More
+                          <Button variant="outline" className="flex-1 h-12 text-lg border-2 hover:bg-blue-50">
+                            <Upload className="mr-2 h-5 w-5" />
+                            Add More Files
                           </Button>
                         </DragDropZone>
                         <Button 
@@ -518,7 +607,7 @@ export default function Home() {
                             setIsUploading(false);
                           }}
                           variant="outline"
-                          className="flex-1"
+                          className="flex-1 h-12 text-lg border-2 hover:bg-red-50 text-red-600 border-red-200"
                         >
                           Clear All
                         </Button>
@@ -527,147 +616,231 @@ export default function Home() {
                   )}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="font-medium text-green-800">{selectedFiles.length} file(s) selected</p>
-                    <div className="text-sm text-green-600 max-h-32 overflow-y-auto">
-                      {selectedFiles.map((file, index) => (
-                        <div key={index} className="flex justify-between items-center py-1">
-                          <span className="truncate">{file.name}</span>
-                          <span>{Math.round(file.size / 1024)} KB</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-sm text-green-600 mt-2 font-medium">
-                      Total: {Math.round(selectedFiles.reduce((acc, f) => acc + f.size, 0) / 1024)} KB
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-600 mb-2">Share this code:</p>
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="bg-white px-4 py-2 rounded border font-mono text-lg font-bold">
-                        {transferCode}
+                <div className="text-center space-y-8">
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl p-8">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 bg-green-500 rounded-full blur-xl opacity-20 w-16 h-16 mx-auto"></div>
+                      <div className="relative bg-green-500 rounded-2xl p-4 w-fit mx-auto">
+                        <CheckCircle className="h-12 w-12 text-white" />
                       </div>
-                      <Button variant="outline" size="sm" onClick={copyCode}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
+                    </div>
+                    <h3 className="text-2xl font-bold text-green-800 mb-4">
+                      🎉 Files Ready to Share!
+                    </h3>
+                    <p className="text-lg text-green-700 mb-6">
+                      {selectedFiles.length} file(s) uploaded and secured. Share your code below.
+                    </p>
+                    
+                    <div className="bg-white rounded-xl p-4 border border-green-300 mb-6">
+                      <div className="grid gap-2 max-h-32 overflow-y-auto">
+                        {selectedFiles.map((file, index) => (
+                          <FilePreview key={index} file={file} showSize={true} />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-6 text-white">
+                      <p className="text-lg font-semibold mb-4">🔐 Your Secure Share Code</p>
+                      <div className="flex items-center justify-center space-x-4 mb-4">
+                        <div className="bg-white/20 backdrop-blur px-6 py-4 rounded-xl font-mono text-3xl font-bold tracking-wider">
+                          {transferCode}
+                        </div>
+                        <Button 
+                          variant="secondary" 
+                          size="lg" 
+                          onClick={copyCode}
+                          className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                        >
+                          <Copy className="h-5 w-5 mr-2" />
+                          Copy
+                        </Button>
+                      </div>
+                      <p className="text-blue-100">
+                        Share this code with the receiver. Files expire in 1 hour for maximum security.
+                      </p>
                     </div>
                   </div>
 
-                  <p className="text-sm text-gray-600">
-                    The receiver should enter this code to download all files
-                  </p>
-
-                  <Button 
-                    onClick={() => {
-                      setMode('select');
-                      setSelectedFiles([]);
-                      setTransferCode('');
-                      setFilesReady(false);
-                    }}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Send More Files
-                  </Button>
+                  <div className="flex space-x-4">
+                    <Button 
+                      onClick={() => {
+                        setMode('select');
+                        setSelectedFiles([]);
+                        setTransferCode('');
+                        setFilesReady(false);
+                      }}
+                      className="flex-1 h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      Send More Files
+                    </Button>
+                    <Button 
+                      onClick={() => setMode('receive')}
+                      variant="outline"
+                      className="flex-1 h-12 text-lg border-2"
+                    >
+                      Receive Files
+                    </Button>
+                  </div>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (mode === 'receive') {
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="mb-8">
             <Button 
               variant="ghost" 
               onClick={() => setMode('select')} 
-              className="mb-4"
+              className="mb-6 text-lg hover:bg-white/80 transition-all duration-200"
             >
-              ← Back
+              ← Back to Home
             </Button>
 
-            <div className="text-center">
-              <Download className="h-16 w-16 text-blue-600 mx-auto mb-6" />
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Receive Files</h2>
+            <div className="text-center mb-12">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full blur-2xl opacity-30 w-24 h-24 mx-auto"></div>
+                <div className="relative inline-flex items-center justify-center p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-xl">
+                  <Download className="h-12 w-12 text-white" />
+                </div>
+              </div>
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
+                Receive Files
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Enter your 6-digit secure code to instantly download files shared with you.
+              </p>
+            </div>
+          </div>
+
+          <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-8">
 
               {receivedFiles.length === 0 ? (
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-gray-600 mb-4">Enter the 6-character code:</p>
-                    <Input
-                      type="text"
-                      placeholder="ABC123"
-                      value={inputCode}
-                      onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-                      className="text-center text-lg font-mono"
-                      maxLength={6}
-                    />
+                <div className="text-center space-y-8">
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-8 border border-purple-200">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 bg-purple-500 rounded-full blur-xl opacity-20 w-16 h-16 mx-auto"></div>
+                      <div className="relative bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl p-4 w-fit mx-auto">
+                        <Download className="h-12 w-12 text-white" />
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Enter Your Code</h3>
+                    <p className="text-lg text-gray-600 mb-8">Type the 6-character code shared with you</p>
+                    
+                    <div className="max-w-md mx-auto space-y-6">
+                      <Input
+                        type="text"
+                        placeholder="ABC123"
+                        value={inputCode}
+                        onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+                        className="text-center text-2xl font-mono tracking-widest h-16 border-2 border-purple-200 focus:border-purple-500 bg-white"
+                        maxLength={6}
+                      />
+                      
+                      <Button 
+                        onClick={handleReceiveFile} 
+                        className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold"
+                        disabled={!isConnected || inputCode.length !== 6}
+                      >
+                        {inputCode.length === 6 ? 'Get My Files 🚀' : `Enter ${6 - inputCode.length} more characters`}
+                      </Button>
+                      
+                      {!isConnected && (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                          <p className="text-red-600 font-medium">🔄 Connecting to secure servers...</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                  <Button 
-                    onClick={handleReceiveFile}
-                    className="w-full"
-                    disabled={inputCode.length !== 6}
-                  >
-                    Get File
-                  </Button>
+                  
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
+                    <h4 className="font-bold text-gray-900 mb-3">💡 Quick Tips</h4>
+                    <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-700">
+                      <div>• Codes are case-insensitive</div>
+                      <div>• Files download instantly</div>
+                      <div>• Multiple files come as ZIP</div>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="font-medium text-green-800">{receivedFiles.length} file(s) received</p>
-                    <div className="text-sm text-green-600 max-h-32 overflow-y-auto">
-                      {receivedFiles.map((file, index) => (
-                        <div key={index} className="flex justify-between items-center py-1">
-                          <span className="truncate">{file.name}</span>
-                          <span>{Math.round(file.size / 1024)} KB</span>
-                        </div>
-                      ))}
+                <div className="text-center space-y-8">
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl p-8">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 bg-green-500 rounded-full blur-xl opacity-20 w-16 h-16 mx-auto"></div>
+                      <div className="relative bg-green-500 rounded-2xl p-4 w-fit mx-auto">
+                        <CheckCircle className="h-12 w-12 text-white" />
+                      </div>
                     </div>
-                    <p className="text-sm text-green-600 mt-2 font-medium">
-                      Total: {Math.round(receivedFiles.reduce((acc, f) => acc + f.size, 0) / 1024)} KB
+                    
+                    <h3 className="text-2xl font-bold text-green-800 mb-4">
+                      🎉 Files Ready to Download!
+                    </h3>
+                    <p className="text-lg text-green-700 mb-6">
+                      {receivedFiles.length} file(s) successfully received and verified.
                     </p>
+                    
+                    <div className="bg-white rounded-xl p-6 border border-green-300 mb-6">
+                      <div className="grid gap-3 max-h-48 overflow-y-auto">
+                        {receivedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <FileText className="h-6 w-6 text-blue-600" />
+                              <div className="text-left">
+                                <p className="font-medium text-gray-900 truncate">{file.name}</p>
+                                <p className="text-sm text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-700 font-medium">
+                          Total: {(receivedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      onClick={downloadFiles} 
+                      className="w-full h-14 text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold mb-4"
+                    >
+                      <Download className="mr-2 h-5 w-5" />
+                      Download {receivedFiles.length > 1 ? 'ZIP Package' : 'File'} 
+                    </Button>
                   </div>
-
-                  <Button onClick={downloadFiles} className="w-full">
-                    {receivedFiles.length === 1 ? (
-                      <>
-                        <Download className="mr-2 h-4 w-4" />
-                        Download File
-                      </>
-                    ) : (
-                      <>
-                        <Archive className="mr-2 h-4 w-4" />
-                        Download as ZIP
-                      </>
-                    )}
-                  </Button>
-
-                  <Button 
-                    onClick={() => {
-                      setMode('select');
-                      setInputCode('');
-                      setReceivedFiles([]);
-                    }}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Receive More Files
-                  </Button>
+                  
+                  <div className="flex space-x-4">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setReceivedFiles([]);
+                        setInputCode('');
+                      }}
+                      className="flex-1 h-12 text-lg border-2"
+                    >
+                      Receive More Files
+                    </Button>
+                    <Button 
+                      onClick={() => setMode('send')}
+                      className="flex-1 h-12 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      Send Files
+                    </Button>
+                  </div>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
