@@ -11,9 +11,7 @@ export default function Navbar() {
     { href: "/", label: "Home" },
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact Us" },
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms & Conditions" },
-    { href: "/disclaimer", label: "Disclaimer" },
+    { href: "/blog", label: "Blog" },
   ];
 
   const isActive = (href: string) => {
