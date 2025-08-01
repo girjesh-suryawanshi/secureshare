@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft } from "lucide-react";
+import { useTransferStats } from "@/hooks/use-transfer-stats";
+import { FilePreview } from "@/components/file-preview";
+import { DragDropZone } from "@/components/drag-drop-zone";
+import { TransferProgress } from "@/components/transfer-progress";
+import { TransferStats } from "@/components/transfer-stats";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users } from "lucide-react";
 import JSZip from "jszip";
 
 export default function Home() {
@@ -14,9 +19,14 @@ export default function Home() {
   const [inputCode, setInputCode] = useState<string>('');
   const [filesReady, setFilesReady] = useState<boolean>(false);
   const [receivedFiles, setReceivedFiles] = useState<{ name: string; size: number; blob: Blob }[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [transferSpeed, setTransferSpeed] = useState<string>('');
+  const [estimatedTime, setEstimatedTime] = useState<string>('');
 
   const { isConnected, sendMessage, onFileAvailable, onFileData, onFileNotFound } = useWebSocket();
   const { toast } = useToast();
+  const { stats, addTransfer } = useTransferStats();
 
   const generateCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -27,14 +37,19 @@ export default function Home() {
     return code;
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+  const handleFilesSelected = async (files: File[]) => {
     if (files.length > 0) {
       setSelectedFiles(files);
+      setIsUploading(true);
+      setUploadProgress(0);
+      
       const code = generateCode();
       setTransferCode(code);
       
-      // Process all files
+      const startTime = Date.now();
+      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+      
+      // Process all files with progress tracking
       const filePromises = files.map((file, index) => {
         return new Promise<void>((resolve) => {
           const reader = new FileReader();
@@ -62,6 +77,20 @@ export default function Home() {
               fileIndex: index,
             });
             
+            // Update progress
+            const progress = ((index + 1) / files.length) * 100;
+            setUploadProgress(progress);
+            
+            // Calculate transfer speed and estimated time
+            const elapsedTime = (Date.now() - startTime) / 1000;
+            const bytesProcessed = files.slice(0, index + 1).reduce((sum, f) => sum + f.size, 0);
+            const speed = bytesProcessed / elapsedTime;
+            const remaining = totalSize - bytesProcessed;
+            const eta = remaining / speed;
+            
+            setTransferSpeed(formatSpeed(speed));
+            setEstimatedTime(eta > 0 ? formatTime(eta) : '');
+            
             resolve();
           };
           reader.readAsDataURL(file);
@@ -71,7 +100,18 @@ export default function Home() {
       // Wait for all files to be processed
       await Promise.all(filePromises);
       
+      setIsUploading(false);
       setFilesReady(true);
+      
+      // Add to transfer stats
+      files.forEach(file => {
+        addTransfer({
+          type: 'sent',
+          fileName: file.name,
+          size: file.size,
+          code
+        });
+      });
       toast({
         title: "Files Ready",
         description: `${files.length} file(s) ready. Share code ${code}`,
@@ -257,6 +297,11 @@ export default function Home() {
               </p>
             </div>
 
+            {/* Transfer Stats Dashboard */}
+            <div className="mb-8">
+              <TransferStats stats={stats} />
+            </div>
+
             {/* Main Action Card */}
             <div className="max-w-md mx-auto">
               <Card className="shadow-xl border-0">
@@ -402,21 +447,64 @@ export default function Home() {
               <h2 className="text-xl font-bold text-gray-900 mb-6">Send Files</h2>
 
               {!filesReady ? (
-                <div>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4 hover:border-blue-400 transition-colors">
-                    <input
-                      type="file"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      id="file-input"
-                      multiple
-                    />
-                    <label htmlFor="file-input" className="cursor-pointer block">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600">Click to select files</p>
-                      <p className="text-sm text-gray-500 mt-1">You can select multiple files</p>
-                    </label>
-                  </div>
+                <div className="space-y-6">
+                  {selectedFiles.length === 0 ? (
+                    <DragDropZone onFilesSelected={handleFilesSelected}>
+                      <div className="p-8">
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-lg font-medium text-gray-900">
+                          Drop files here or click to browse
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          Select multiple files to create a ZIP download
+                        </p>
+                      </div>
+                    </DragDropZone>
+                  ) : (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Selected Files ({selectedFiles.length})
+                      </h3>
+                      <div className="space-y-3 max-h-60 overflow-y-auto">
+                        {selectedFiles.map((file, index) => (
+                          <FilePreview key={index} file={file} />
+                        ))}
+                      </div>
+                      
+                      {isUploading && (
+                        <div className="mt-6">
+                          <TransferProgress
+                            progress={uploadProgress}
+                            transferSpeed={transferSpeed}
+                            estimatedTime={estimatedTime}
+                            fileName={selectedFiles.length > 1 ? `${selectedFiles.length} files` : selectedFiles[0]?.name}
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="flex space-x-3">
+                        <DragDropZone onFilesSelected={(newFiles) => {
+                          setSelectedFiles(prev => [...prev, ...newFiles]);
+                        }}>
+                          <Button variant="outline" className="flex-1">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Add More
+                          </Button>
+                        </DragDropZone>
+                        <Button 
+                          onClick={() => {
+                            setSelectedFiles([]);
+                            setUploadProgress(0);
+                            setIsUploading(false);
+                          }}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Clear All
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
