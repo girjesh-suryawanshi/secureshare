@@ -37,6 +37,19 @@ export default function Home() {
     return code;
   };
 
+  const formatSpeed = (bytesPerSecond: number) => {
+    if (bytesPerSecond < 1024) return `${Math.round(bytesPerSecond)} B/s`;
+    if (bytesPerSecond < 1024 * 1024) return `${Math.round(bytesPerSecond / 1024)} KB/s`;
+    return `${Math.round(bytesPerSecond / (1024 * 1024))} MB/s`;
+  };
+
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.round(seconds % 60);
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
   const handleFilesSelected = async (files: File[]) => {
     if (files.length > 0) {
       setSelectedFiles(files);
@@ -229,7 +242,7 @@ export default function Home() {
       });
     });
 
-    onFileData((data) => {
+    onFileData((data: any) => {
       if (data.code === inputCode) {
         // Convert base64 back to blob
         const binaryString = atob(data.data);
@@ -245,6 +258,13 @@ export default function Home() {
           size: blob.size,
           blob: blob,
         };
+
+        // Add to transfer stats
+        addTransfer({
+          type: 'received',
+          fileName: newFile.name,
+          size: newFile.size
+        });
 
         setReceivedFiles(prev => {
           const updated = [...prev, newFile];
