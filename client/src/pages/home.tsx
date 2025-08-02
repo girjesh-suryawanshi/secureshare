@@ -172,25 +172,28 @@ export default function Home() {
     }
   };
 
+  const downloadSingleFile = (file: any) => {
+    const url = URL.createObjectURL(file.blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Download Started",
+      description: `Downloading ${file.name}`,
+    });
+  };
+
   const downloadFiles = async () => {
     if (receivedFiles.length === 0) return;
     
     if (receivedFiles.length === 1) {
       // Single file - download directly
-      const file = receivedFiles[0];
-      const url = URL.createObjectURL(file.blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Download Started",
-        description: `Downloading ${file.name}`,
-      });
+      downloadSingleFile(receivedFiles[0]);
     } else {
       // Multiple files - create ZIP
       const zip = new JSZip();
@@ -815,13 +818,24 @@ export default function Home() {
                       <div className="grid gap-2 md:gap-3 max-h-48 overflow-y-auto">
                         {receivedFiles.map((file, index) => (
                           <div key={index} className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg">
-                            <div className="flex items-center space-x-2 md:space-x-3">
+                            <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
                               <FileText className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
                               <div className="text-left min-w-0 flex-1">
                                 <p className="font-medium text-gray-900 truncate text-sm md:text-base">{file.name}</p>
                                 <p className="text-xs md:text-sm text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
                               </div>
                             </div>
+                            {receivedFiles.length > 1 && (
+                              <Button
+                                onClick={() => downloadSingleFile(file)}
+                                size="sm"
+                                variant="outline"
+                                className="ml-2 text-xs px-2 py-1 h-7"
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                Download
+                              </Button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -833,13 +847,28 @@ export default function Home() {
                       </div>
                     </div>
                     
-                    <Button 
-                      onClick={downloadFiles} 
-                      className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold mb-4"
-                    >
-                      <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                      Download {receivedFiles.length > 1 ? 'ZIP Package' : 'File'} 
-                    </Button>
+                    {receivedFiles.length > 1 ? (
+                      <div className="space-y-3 mb-4">
+                        <Button 
+                          onClick={downloadFiles} 
+                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold"
+                        >
+                          <Archive className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                          Download All as ZIP ({receivedFiles.length} files)
+                        </Button>
+                        <p className="text-center text-xs md:text-sm text-gray-600">
+                          Or download individual files using the buttons above
+                        </p>
+                      </div>
+                    ) : (
+                      <Button 
+                        onClick={downloadFiles} 
+                        className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold mb-4"
+                      >
+                        <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                        Download File
+                      </Button>
+                    )}
                   </div>
                   
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
