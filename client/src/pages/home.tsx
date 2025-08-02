@@ -355,7 +355,11 @@ export default function Home() {
                         <p className="text-blue-100 text-lg">Share your files with anyone, anywhere in seconds</p>
                       </div>
                       <Button 
-                        onClick={() => setMode('send')} 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          setTimeout(() => setMode('send'), 100);
+                        }} 
                         className="w-full h-14 text-lg bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold"
                         disabled={!isConnected}
                       >
@@ -378,7 +382,11 @@ export default function Home() {
                         <p className="text-purple-100 text-lg">Enter a code and get your files instantly</p>
                       </div>
                       <Button 
-                        onClick={() => setMode('receive')} 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          setTimeout(() => setMode('receive'), 100);
+                        }} 
                         className="w-full h-14 text-lg bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold"
                         disabled={!isConnected}
                       >
@@ -499,7 +507,11 @@ export default function Home() {
           <div className="mb-8">
             <Button 
               variant="ghost" 
-              onClick={() => setMode('select')} 
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => setMode('select'), 100);
+              }} 
               className="mb-6 text-lg hover:bg-white/80 transition-all duration-200"
             >
               ← Back to Home
@@ -663,18 +675,26 @@ export default function Home() {
 
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                     <Button 
-                      onClick={() => {
-                        setMode('select');
-                        setSelectedFiles([]);
-                        setTransferCode('');
-                        setFilesReady(false);
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => {
+                          setMode('select');
+                          setSelectedFiles([]);
+                          setTransferCode('');
+                          setFilesReady(false);
+                        }, 100);
                       }}
                       className="w-full sm:flex-1 h-12 text-sm md:text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     >
                       Send More Files
                     </Button>
                     <Button 
-                      onClick={() => setMode('receive')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => setMode('receive'), 100);
+                      }}
                       variant="outline"
                       className="w-full sm:flex-1 h-12 text-sm md:text-lg border-2"
                     >
@@ -697,7 +717,11 @@ export default function Home() {
           <div className="mb-8">
             <Button 
               variant="ghost" 
-              onClick={() => setMode('select')} 
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => setMode('select'), 100);
+              }} 
               className="mb-6 text-lg hover:bg-white/80 transition-all duration-200"
             >
               ← Back to Home
@@ -821,16 +845,24 @@ export default function Home() {
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                     <Button 
                       variant="outline"
-                      onClick={() => {
-                        setReceivedFiles([]);
-                        setInputCode('');
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => {
+                          setReceivedFiles([]);
+                          setInputCode('');
+                        }, 100);
                       }}
                       className="w-full sm:flex-1 h-12 text-sm md:text-lg border-2"
                     >
                       Receive More Files
                     </Button>
                     <Button 
-                      onClick={() => setMode('send')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => setMode('send'), 100);
+                      }}
                       className="w-full sm:flex-1 h-12 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                     >
                       Send Files
