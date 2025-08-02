@@ -312,23 +312,23 @@ export default function Home() {
               </div>
               
               <div className="space-y-6">
-                <h1 className="text-6xl md:text-7xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight px-2">
                   SecureShare
                 </h1>
-                <div className="max-w-4xl mx-auto space-y-4">
-                  <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 leading-relaxed">
+                <div className="max-w-4xl mx-auto space-y-4 px-4">
+                  <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-gray-800 leading-relaxed">
                     Share Any File Between Any Devices in Seconds with Just a 6-Digit Code
                   </h2>
-                  <p className="text-xl text-gray-600 leading-relaxed">
+                  <p className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed">
                     The world's fastest peer-to-peer file transfer service. Send documents, photos, videos, and files of any size instantly. 
                     No registration required, no file size limits, complete privacy guaranteed.
                   </p>
                 </div>
                 
-                <div className="flex flex-wrap justify-center gap-4 text-lg font-medium">
-                  <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full">✨ Zero Setup</span>
-                  <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full">🔒 Bank-Level Security</span>
-                  <span className="px-4 py-2 bg-purple-100 text-purple-800 rounded-full">⚡ Lightning Fast</span>
+                <div className="flex flex-wrap justify-center gap-2 md:gap-4 text-sm md:text-lg font-medium px-4">
+                  <span className="px-3 py-2 md:px-4 md:py-2 bg-green-100 text-green-800 rounded-full">✨ Zero Setup</span>
+                  <span className="px-3 py-2 md:px-4 md:py-2 bg-blue-100 text-blue-800 rounded-full">🔒 Bank-Level Security</span>
+                  <span className="px-3 py-2 md:px-4 md:py-2 bg-purple-100 text-purple-800 rounded-full">⚡ Lightning Fast</span>
                 </div>
               </div>
             </div>
@@ -351,8 +351,8 @@ export default function Home() {
                         <Upload className="h-12 w-12 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold mb-2">Send Files</h3>
-                        <p className="text-blue-100 text-lg">Share your files with anyone, anywhere in seconds</p>
+                        <h3 className="text-xl md:text-2xl font-bold mb-2">Send Files</h3>
+                        <p className="text-blue-100 text-sm md:text-lg">Share your files with anyone, anywhere in seconds</p>
                       </div>
                       <Button 
                         onClick={(e) => {
@@ -378,8 +378,8 @@ export default function Home() {
                         <Download className="h-12 w-12 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold mb-2">Receive Files</h3>
-                        <p className="text-purple-100 text-lg">Enter a code and get your files instantly</p>
+                        <h3 className="text-xl md:text-2xl font-bold mb-2">Receive Files</h3>
+                        <p className="text-purple-100 text-sm md:text-lg">Enter a code and get your files instantly</p>
                       </div>
                       <Button 
                         onClick={(e) => {
@@ -406,90 +406,90 @@ export default function Home() {
             </div>
 
             {/* How It Works */}
-            <div className="grid md:grid-cols-3 gap-8 mt-16">
-              <div className="text-center p-8 bg-white rounded-xl shadow-lg border border-gray-100">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6">
-                  <Upload className="h-8 w-8 text-blue-600" />
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8 mt-16 mx-4">
+              <div className="text-center p-6 md:p-8 bg-white rounded-xl shadow-lg border border-gray-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full mb-4 md:mb-6">
+                  <Upload className="h-6 w-6 md:h-8 md:w-8 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">1. Select & Send</h3>
-                <p className="text-gray-600 leading-relaxed">Choose single or multiple files from your device. Get a unique 6-digit code instantly.</p>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">1. Select & Send</h3>
+                <p className="text-sm md:text-base text-gray-600 leading-relaxed">Choose single or multiple files from your device. Get a unique 6-digit code instantly.</p>
               </div>
               
-              <div className="text-center p-8 bg-white rounded-xl shadow-lg border border-gray-100">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-6">
-                  <Share className="h-8 w-8 text-green-600" />
+              <div className="text-center p-6 md:p-8 bg-white rounded-xl shadow-lg border border-gray-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full mb-4 md:mb-6">
+                  <Share className="h-6 w-6 md:h-8 md:w-8 text-green-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">2. Share Code</h3>
-                <p className="text-gray-600 leading-relaxed">Share the simple 6-digit code with anyone, anywhere. Works on any device.</p>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">2. Share Code</h3>
+                <p className="text-sm md:text-base text-gray-600 leading-relaxed">Share the simple 6-digit code with anyone, anywhere. Works on any device.</p>
               </div>
               
-              <div className="text-center p-8 bg-white rounded-xl shadow-lg border border-gray-100">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-6">
-                  <Archive className="h-8 w-8 text-purple-600" />
+              <div className="text-center p-6 md:p-8 bg-white rounded-xl shadow-lg border border-gray-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full mb-4 md:mb-6">
+                  <Archive className="h-6 w-6 md:h-8 md:w-8 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">3. Instant Download</h3>
-                <p className="text-gray-600 leading-relaxed">Enter code to download. Multiple files automatically packaged as convenient ZIP.</p>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">3. Instant Download</h3>
+                <p className="text-sm md:text-base text-gray-600 leading-relaxed">Enter code to download. Multiple files automatically packaged as convenient ZIP.</p>
               </div>
             </div>
 
             {/* Features Section */}
-            <div className="bg-white rounded-2xl p-12 mt-16 shadow-xl border border-gray-100">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Why Choose SecureShare?</h2>
-              <div className="grid md:grid-cols-2 gap-8 text-left">
-                <div className="flex items-start space-x-4">
-                  <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+            <div className="bg-white rounded-2xl p-6 md:p-12 mt-16 shadow-xl border border-gray-100 mx-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Why Choose SecureShare?</h2>
+              <div className="grid md:grid-cols-2 gap-6 md:gap-8 text-left">
+                <div className="flex items-start space-x-3 md:space-x-4">
+                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 text-lg mb-1">No Registration Required</h4>
-                    <p className="text-gray-600">Start sharing immediately. No accounts, no sign-ups, no hassle.</p>
+                    <h4 className="font-semibold text-gray-900 text-base md:text-lg mb-1">No Registration Required</h4>
+                    <p className="text-gray-600 text-sm md:text-base">Start sharing immediately. No accounts, no sign-ups, no hassle.</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-4">
-                  <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                <div className="flex items-start space-x-3 md:space-x-4">
+                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 text-lg mb-1">Multiple File Support</h4>
-                    <p className="text-gray-600">Send multiple files at once. Auto-ZIP packaging for easy download.</p>
+                    <h4 className="font-semibold text-gray-900 text-base md:text-lg mb-1">Multiple File Support</h4>
+                    <p className="text-gray-600 text-sm md:text-base">Send multiple files at once. Auto-ZIP packaging for easy download.</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-4">
-                  <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                <div className="flex items-start space-x-3 md:space-x-4">
+                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 text-lg mb-1">Direct Transfer</h4>
-                    <p className="text-gray-600">Files never stored on servers. Complete privacy guaranteed.</p>
+                    <h4 className="font-semibold text-gray-900 text-base md:text-lg mb-1">Direct Transfer</h4>
+                    <p className="text-gray-600 text-sm md:text-base">Files never stored on servers. Complete privacy guaranteed.</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-4">
-                  <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                <div className="flex items-start space-x-3 md:space-x-4">
+                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 text-lg mb-1">Works Everywhere</h4>
-                    <p className="text-gray-600">Any device, any browser. Perfect mobile experience included.</p>
+                    <h4 className="font-semibold text-gray-900 text-base md:text-lg mb-1">Works Everywhere</h4>
+                    <p className="text-gray-600 text-sm md:text-base">Any device, any browser. Perfect mobile experience included.</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Quick Instructions */}
-            <div className="bg-blue-50 rounded-2xl p-12 mt-12 border border-blue-100">
-              <h3 className="text-2xl font-bold text-gray-900 mb-8">Quick Start Guide</h3>
-              <div className="space-y-6 text-left max-w-3xl mx-auto">
-                <div className="flex items-start space-x-4">
-                  <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white text-lg font-bold rounded-full flex-shrink-0">1</span>
+            <div className="bg-blue-50 rounded-2xl p-6 md:p-12 mt-12 border border-blue-100 mx-4">
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 md:mb-8">Quick Start Guide</h3>
+              <div className="space-y-4 md:space-y-6 text-left max-w-3xl mx-auto">
+                <div className="flex items-start space-x-3 md:space-x-4">
+                  <span className="inline-flex items-center justify-center w-7 h-7 md:w-8 md:h-8 bg-blue-600 text-white text-sm md:text-lg font-bold rounded-full flex-shrink-0">1</span>
                   <div>
-                    <p className="text-gray-800 text-lg"><strong>To Send Files:</strong> Click "Send Files" → Choose single or multiple files → Share the 6-digit code</p>
+                    <p className="text-gray-800 text-sm md:text-lg"><strong>To Send Files:</strong> Click "Send Files" → Choose single or multiple files → Share the 6-digit code</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white text-lg font-bold rounded-full flex-shrink-0">2</span>
+                <div className="flex items-start space-x-3 md:space-x-4">
+                  <span className="inline-flex items-center justify-center w-7 h-7 md:w-8 md:h-8 bg-blue-600 text-white text-sm md:text-lg font-bold rounded-full flex-shrink-0">2</span>
                   <div>
-                    <p className="text-gray-800 text-lg"><strong>To Receive Files:</strong> Click "Receive Files" → Enter the 6-digit code → Download instantly</p>
+                    <p className="text-gray-800 text-sm md:text-lg"><strong>To Receive Files:</strong> Click "Receive Files" → Enter the 6-digit code → Download instantly</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white text-lg font-bold rounded-full flex-shrink-0">3</span>
+                <div className="flex items-start space-x-3 md:space-x-4">
+                  <span className="inline-flex items-center justify-center w-7 h-7 md:w-8 md:h-8 bg-blue-600 text-white text-sm md:text-lg font-bold rounded-full flex-shrink-0">3</span>
                   <div>
-                    <p className="text-gray-800 text-lg"><strong>Multiple Files:</strong> Automatically packaged as ZIP for convenient single download</p>
+                    <p className="text-gray-800 text-sm md:text-lg"><strong>Multiple Files:</strong> Automatically packaged as ZIP for convenient single download</p>
                   </div>
                 </div>
               </div>
