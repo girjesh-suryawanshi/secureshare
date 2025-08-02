@@ -9,7 +9,8 @@ import { FilePreview } from "@/components/file-preview";
 import { DragDropZone } from "@/components/drag-drop-zone";
 import { TransferProgress } from "@/components/transfer-progress";
 import { TransferStats } from "@/components/transfer-stats";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import JSZip from "jszip";
 
 export default function Home() {
@@ -23,6 +24,10 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [transferSpeed, setTransferSpeed] = useState<string>('');
   const [estimatedTime, setEstimatedTime] = useState<string>('');
+  const [downloadProgress, setDownloadProgress] = useState<number>(0);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [receiveProgress, setReceiveProgress] = useState<number>(0);
+  const [isReceiving, setIsReceiving] = useState<boolean>(false);
 
   const { isConnected, sendMessage, onFileAvailable, onFileData, onFileNotFound } = useWebSocket();
   const { toast } = useToast();
@@ -142,6 +147,9 @@ export default function Home() {
       return;
     }
 
+    setIsReceiving(true);
+    setReceiveProgress(10);
+
     // Request file with the code
     sendMessage({
       type: 'request-file',
@@ -173,6 +181,20 @@ export default function Home() {
   };
 
   const downloadSingleFile = (file: any) => {
+    setIsDownloading(true);
+    setDownloadProgress(20);
+    
+    // Simulate progressive download for user feedback
+    const progressInterval = setInterval(() => {
+      setDownloadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 100);
+
     const url = URL.createObjectURL(file.blob);
     const a = document.createElement('a');
     a.href = url;
@@ -181,6 +203,11 @@ export default function Home() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    setTimeout(() => {
+      setIsDownloading(false);
+      setDownloadProgress(0);
+    }, 1500);
     
     toast({
       title: "Download Started",
@@ -195,12 +222,16 @@ export default function Home() {
       // Single file - download directly
       downloadSingleFile(receivedFiles[0]);
     } else {
-      // Multiple files - create ZIP
+      // Multiple files - create ZIP with progress
+      setIsDownloading(true);
+      setDownloadProgress(0);
+      
       const zip = new JSZip();
       
-      // Add all files to ZIP
-      receivedFiles.forEach((file) => {
+      // Add all files to ZIP with progress updates
+      receivedFiles.forEach((file, index) => {
         zip.file(file.name, file.blob);
+        setDownloadProgress((index + 1) / receivedFiles.length * 30); // 30% for file processing
       });
       
       try {
@@ -209,8 +240,18 @@ export default function Home() {
           description: "Preparing download...",
         });
         
-        // Generate ZIP file
-        const zipBlob = await zip.generateAsync({ type: "blob" });
+        setDownloadProgress(40);
+        
+        // Generate ZIP file with progress callback
+        const zipBlob = await zip.generateAsync({ 
+          type: "blob",
+          streamFiles: true
+        }, (metadata) => {
+          const progress = 40 + (metadata.percent * 0.5); // 40-90% for ZIP creation
+          setDownloadProgress(progress);
+        });
+        
+        setDownloadProgress(95);
         
         // Download ZIP
         const url = URL.createObjectURL(zipBlob);
@@ -222,11 +263,20 @@ export default function Home() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
+        setDownloadProgress(100);
+        
+        setTimeout(() => {
+          setIsDownloading(false);
+          setDownloadProgress(0);
+        }, 1000);
+        
         toast({
           title: "ZIP Download Started",
           description: `Downloading ${receivedFiles.length} files as ZIP`,
         });
       } catch (error) {
+        setIsDownloading(false);
+        setDownloadProgress(0);
         toast({
           title: "ZIP Creation Failed",
           description: "Could not create ZIP file",
@@ -239,6 +289,7 @@ export default function Home() {
   // Set up WebSocket event handlers
   useEffect(() => {
     onFileAvailable((file) => {
+      setReceiveProgress(30);
       toast({
         title: "File Found",
         description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB)`,
@@ -247,6 +298,8 @@ export default function Home() {
 
     onFileData((data: any) => {
       if (data.code === inputCode) {
+        setReceiveProgress(50);
+        
         // Convert base64 back to blob
         const binaryString = atob(data.data);
         const bytes = new Uint8Array(binaryString.length);
@@ -273,13 +326,28 @@ export default function Home() {
           const updated = [...prev, newFile];
           // Check if this is the last file
           if (data.fileIndex !== undefined && data.totalFiles !== undefined) {
+            const progress = 50 + ((updated.length / data.totalFiles) * 40); // 50-90%
+            setReceiveProgress(progress);
+            
             if (updated.length === data.totalFiles) {
+              setReceiveProgress(100);
+              setTimeout(() => {
+                setIsReceiving(false);
+                setReceiveProgress(0);
+              }, 1000);
+              
               toast({
                 title: "All Files Received",
                 description: `${data.totalFiles} file(s) ready to download`,
               });
             }
           } else {
+            setReceiveProgress(90);
+            setTimeout(() => {
+              setIsReceiving(false);
+              setReceiveProgress(0);
+            }, 500);
+            
             toast({
               title: "File Received",
               description: "File is ready to download",
@@ -291,6 +359,8 @@ export default function Home() {
     });
 
     onFileNotFound((code) => {
+      setIsReceiving(false);
+      setReceiveProgress(0);
       toast({
         title: "File Not Found",
         description: `No file found with code ${code}`,
@@ -775,10 +845,25 @@ export default function Home() {
                       <Button 
                         onClick={handleReceiveFile} 
                         className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold"
-                        disabled={!isConnected || inputCode.length !== 6}
+                        disabled={!isConnected || inputCode.length !== 6 || isReceiving}
                       >
-                        {inputCode.length === 6 ? 'Get My Files 🚀' : `Enter ${6 - inputCode.length} more characters`}
+                        {isReceiving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Receiving Files...
+                          </>
+                        ) : inputCode.length === 6 ? 'Get My Files 🚀' : `Enter ${6 - inputCode.length} more characters`}
                       </Button>
+
+                      {isReceiving && (
+                        <div className="mt-4 space-y-2">
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>Receiving files...</span>
+                            <span>{Math.round(receiveProgress)}%</span>
+                          </div>
+                          <Progress value={receiveProgress} className="h-2" />
+                        </div>
+                      )}
                       
                       {!isConnected && (
                         <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
@@ -831,9 +916,16 @@ export default function Home() {
                                 size="sm"
                                 variant="outline"
                                 className="ml-2 text-xs px-2 py-1 h-7"
+                                disabled={isDownloading}
                               >
-                                <Download className="h-3 w-3 mr-1" />
-                                Download
+                                {isDownloading ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Download
+                                  </>
+                                )}
                               </Button>
                             )}
                           </div>
@@ -852,22 +944,62 @@ export default function Home() {
                         <Button 
                           onClick={downloadFiles} 
                           className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold"
+                          disabled={isDownloading}
                         >
-                          <Archive className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                          Download All as ZIP ({receivedFiles.length} files)
+                          {isDownloading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Creating ZIP...
+                            </>
+                          ) : (
+                            <>
+                              <Archive className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                              Download All as ZIP ({receivedFiles.length} files)
+                            </>
+                          )}
                         </Button>
+                        {isDownloading && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-gray-600">
+                              <span>Preparing download...</span>
+                              <span>{Math.round(downloadProgress)}%</span>
+                            </div>
+                            <Progress value={downloadProgress} className="h-2" />
+                          </div>
+                        )}
                         <p className="text-center text-xs md:text-sm text-gray-600">
                           Or download individual files using the buttons above
                         </p>
                       </div>
                     ) : (
-                      <Button 
-                        onClick={downloadFiles} 
-                        className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold mb-4"
-                      >
-                        <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                        Download File
-                      </Button>
+                      <div className="space-y-3 mb-4">
+                        <Button 
+                          onClick={downloadFiles} 
+                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold"
+                          disabled={isDownloading}
+                        >
+                          {isDownloading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Downloading...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                              Download File
+                            </>
+                          )}
+                        </Button>
+                        {isDownloading && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-gray-600">
+                              <span>Download in progress...</span>
+                              <span>{Math.round(downloadProgress)}%</span>
+                            </div>
+                            <Progress value={downloadProgress} className="h-2" />
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                   
