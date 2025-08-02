@@ -40,6 +40,7 @@ export default function Home() {
     for (let i = 0; i < 6; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    console.log('Generated code:', code);
     return code;
   };
 
@@ -152,9 +153,11 @@ export default function Home() {
     setReceiveProgress(10);
 
     // Request file with the code
+    const upperCode = inputCode.toUpperCase();
+    console.log('Requesting file with code:', upperCode);
     sendMessage({
       type: 'request-file',
-      code: inputCode.toUpperCase(),
+      code: upperCode,
     });
 
     toast({

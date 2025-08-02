@@ -41,6 +41,7 @@ export function useWebSocket(): WebSocketHook {
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          console.log('WebSocket received message:', message);
 
           switch (message.type) {
             case 'file-available':
@@ -107,6 +108,7 @@ export function useWebSocket(): WebSocketHook {
 
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log('WebSocket sending message:', message);
       wsRef.current.send(JSON.stringify(message));
     } else {
       console.warn('WebSocket is not connected. Message not sent:', message);

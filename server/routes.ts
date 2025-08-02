@@ -83,6 +83,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
+    console.log(`Registering file: ${fileName} with code: ${code}`);
+
     // Get or create file registry entry
     let registry = fileRegistry.get(code);
     if (!registry) {
@@ -94,6 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderWs: ws, // Store sender's WebSocket connection
       };
       fileRegistry.set(code, registry);
+      console.log(`Created new registry for code: ${code}`);
     }
 
     // Add or update file in registry
@@ -131,14 +134,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
+    console.log(`File request received for code: ${code}`);
+    console.log(`Registry has ${fileRegistry.size} entries:`, Array.from(fileRegistry.keys()));
+
     const registry = fileRegistry.get(code);
     if (!registry) {
+      console.log(`No registry found for code: ${code}`);
       ws.send(JSON.stringify({
         type: 'file-not-found',
         code,
       }));
       return;
     }
+
+    console.log(`Registry found for code: ${code}, files: ${registry.files.length}, totalFiles: ${registry.totalFiles}`);
 
     // Send file metadata for all files
     registry.files.forEach(file => {
