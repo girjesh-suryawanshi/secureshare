@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // WebSocket message types
 export const MessageSchema = z.object({
-  type: z.enum(['register-file', 'request-file', 'file-available', 'file-data', 'file-not-found', 'file-registered', 'file-stored', 'error']),
+  type: z.enum(['register-file', 'request-file', 'file-available', 'file-data', 'file-not-found', 'file-registered', 'file-stored', 'download-success', 'download-error', 'download-acknowledgment', 'error']),
   code: z.string().optional(),
   fileName: z.string().optional(),
   fileSize: z.number().optional(),
@@ -11,6 +11,9 @@ export const MessageSchema = z.object({
   message: z.string().optional(), // error messages
   fileIndex: z.number().optional(), // for multiple files
   totalFiles: z.number().optional(), // total number of files
+  completedFiles: z.number().optional(), // acknowledgment data
+  status: z.string().optional(), // acknowledgment status
+  error: z.string().optional(), // error details
 });
 
 export type Message = z.infer<typeof MessageSchema>;
@@ -27,4 +30,5 @@ export interface FileRegistry {
   }>;
   totalFiles: number;
   createdAt: Date;
+  senderWs?: any; // WebSocket connection of the sender
 }

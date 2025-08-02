@@ -7,6 +7,7 @@ export interface WebSocketHook {
   onFileAvailable: (callback: (file: { code: string; fileName: string; fileSize: number; fileType: string }) => void) => void;
   onFileData: (callback: (data: { code: string; data: string }) => void) => void;
   onFileNotFound: (callback: (code: string) => void) => void;
+  onDownloadAck: (callback: (data: { status: string; message: string; code: string }) => void) => void;
 }
 
 export function useWebSocket(): WebSocketHook {
@@ -16,6 +17,7 @@ export function useWebSocket(): WebSocketHook {
   const fileAvailableCallbackRef = useRef<((file: any) => void) | null>(null);
   const fileDataCallbackRef = useRef<((data: any) => void) | null>(null);
   const fileNotFoundCallbackRef = useRef<((code: string) => void) | null>(null);
+  const downloadAckCallbackRef = useRef<((data: any) => void) | null>(null);
   const { toast } = useToast();
 
   const connect = useCallback(() => {
@@ -61,6 +63,12 @@ export function useWebSocket(): WebSocketHook {
 
             case 'file-registered':
               // File was successfully registered
+              break;
+
+            case 'download-acknowledgment':
+              if (downloadAckCallbackRef.current) {
+                downloadAckCallbackRef.current(message);
+              }
               break;
 
             case 'error':
@@ -117,6 +125,10 @@ export function useWebSocket(): WebSocketHook {
     fileNotFoundCallbackRef.current = callback;
   }, []);
 
+  const onDownloadAck = useCallback((callback: (data: any) => void) => {
+    downloadAckCallbackRef.current = callback;
+  }, []);
+
   useEffect(() => {
     connect();
 
@@ -136,5 +148,6 @@ export function useWebSocket(): WebSocketHook {
     onFileAvailable,
     onFileData,
     onFileNotFound,
+    onDownloadAck,
   };
 }

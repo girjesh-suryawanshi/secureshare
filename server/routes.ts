@@ -43,6 +43,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             handleFileData(validatedMessage, ws);
             break;
           
+          case 'download-success':
+            handleDownloadAck(validatedMessage, 'success');
+            break;
+          
+          case 'download-error':
+            handleDownloadAck(validatedMessage, 'error');
+            break;
+          
           default:
             console.log('Unknown message type:', validatedMessage.type);
         }
@@ -83,6 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         files: [],
         totalFiles: totalFiles || 1,
         createdAt: new Date(),
+        senderWs: ws, // Store sender's WebSocket connection
       };
       fileRegistry.set(code, registry);
     }
@@ -195,6 +204,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       type: 'file-stored',
       code,
     }));
+  }
+
+  function handleDownloadAck(message: any, status: 'success' | 'error') {
+    const { code, fileName, totalFiles, completedFiles } = message;
+    
+    const registry = fileRegistry.get(code);
+    if (!registry || !registry.senderWs) {
+      return; // No sender to notify
+    }
+
+    // Check if sender's WebSocket is still connected
+    if (registry.senderWs.readyState === WebSocket.OPEN) {
+      registry.senderWs.send(JSON.stringify({
+        type: 'download-acknowledgment',
+        status,
+        code,
+        fileName,
+        totalFiles,
+        completedFiles,
+        message: status === 'success' 
+          ? `File${totalFiles && totalFiles > 1 ? 's' : ''} downloaded successfully by recipient`
+          : `Download failed for ${fileName || 'file'}`
+      }));
+      
+      console.log(`Sent ${status} acknowledgment for code: ${code}`);
+    }
   }
 
   // Health check endpoint

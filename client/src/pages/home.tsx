@@ -28,8 +28,9 @@ export default function Home() {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [receiveProgress, setReceiveProgress] = useState<number>(0);
   const [isReceiving, setIsReceiving] = useState<boolean>(false);
+  const [acknowledgments, setAcknowledgments] = useState<Array<{id: string, message: string, status: string, timestamp: Date}>>([]);
 
-  const { isConnected, sendMessage, onFileAvailable, onFileData, onFileNotFound } = useWebSocket();
+  const { isConnected, sendMessage, onFileAvailable, onFileData, onFileNotFound, onDownloadAck } = useWebSocket();
   const { toast } = useToast();
   const { stats, addTransfer } = useTransferStats();
 
@@ -268,6 +269,15 @@ export default function Home() {
         setTimeout(() => {
           setIsDownloading(false);
           setDownloadProgress(0);
+          
+          // Send success acknowledgment to sender
+          sendMessage({
+            type: 'download-success',
+            code: inputCode,
+            fileName: 'Multiple files',
+            totalFiles: receivedFiles.length,
+            completedFiles: receivedFiles.length
+          });
         }, 1000);
         
         toast({
@@ -277,6 +287,15 @@ export default function Home() {
       } catch (error) {
         setIsDownloading(false);
         setDownloadProgress(0);
+        
+        // Send error acknowledgment to sender
+        sendMessage({
+          type: 'download-error',
+          code: inputCode,
+          fileName: 'ZIP creation',
+          error: 'Failed to create ZIP file'
+        });
+        
         toast({
           title: "ZIP Creation Failed",
           description: "Could not create ZIP file",
@@ -367,7 +386,24 @@ export default function Home() {
         variant: "destructive",
       });
     });
-  }, [onFileAvailable, onFileData, onFileNotFound, inputCode, toast]);
+
+    onDownloadAck((data: any) => {
+      const newAck = {
+        id: Math.random().toString(36).substr(2, 9),
+        message: data.message,
+        status: data.status,
+        timestamp: new Date()
+      };
+      
+      setAcknowledgments(prev => [newAck, ...prev.slice(0, 4)]); // Keep last 5 acknowledgments
+      
+      toast({
+        title: data.status === 'success' ? "✅ Files Downloaded!" : "❌ Download Failed",
+        description: data.message,
+        variant: data.status === 'success' ? "default" : "destructive",
+      });
+    });
+  }, [onFileAvailable, onFileData, onFileNotFound, onDownloadAck, inputCode, toast]);
 
   if (mode === 'select') {
     return (
@@ -746,6 +782,41 @@ export default function Home() {
                     </div>
                   </div>
 
+                  {acknowledgments.length > 0 && (
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
+                      <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        📱 Download Status 
+                        <span className="text-sm font-normal text-gray-600">({acknowledgments.length} update{acknowledgments.length > 1 ? 's' : ''})</span>
+                      </h4>
+                      <div className="space-y-3">
+                        {acknowledgments.slice(0, 3).map((ack) => (
+                          <div key={ack.id} className={`p-4 rounded-xl border-l-4 ${
+                            ack.status === 'success' 
+                              ? 'bg-green-50 border-l-green-500 text-green-800' 
+                              : 'bg-red-50 border-l-red-500 text-red-800'
+                          }`}>
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className="text-lg">{ack.status === 'success' ? '✅' : '❌'}</span>
+                                <div>
+                                  <p className="font-medium">{ack.message}</p>
+                                  <p className="text-xs opacity-70 mt-1">
+                                    {ack.timestamp.toLocaleTimeString()} • {ack.timestamp.toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {acknowledgments.length > 3 && (
+                          <p className="text-center text-sm text-gray-500 pt-2">
+                            ... and {acknowledgments.length - 3} more update{acknowledgments.length - 3 > 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                     <Button 
                       onClick={(e) => {
@@ -756,6 +827,7 @@ export default function Home() {
                           setSelectedFiles([]);
                           setTransferCode('');
                           setFilesReady(false);
+                          setAcknowledgments([]);
                         }, 100);
                       }}
                       className="w-full sm:flex-1 h-12 text-sm md:text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
