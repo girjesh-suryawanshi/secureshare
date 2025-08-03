@@ -107,7 +107,7 @@ export function useLocalNetwork() {
         });
         
         try {
-          console.log(`Registering local file: ${file.name} (${index + 1}/${files.length})`);
+          console.log(`Registering local file: ${file.name} (${index + 1}/${files.length}) - ${(file.size / 1024 / 1024).toFixed(2)}MB`);
           
           const response = await fetch('/api/register-local-file', {
             method: 'POST',
@@ -141,6 +141,8 @@ export function useLocalNetwork() {
       
       await Promise.all(filePromises);
       
+      console.log(`All ${files.length} files registered successfully for code ${code}`);
+      
       const qrCode = generateQRCode(localIP, port, code);
       
       setLocalServerInfo({ ip: localIP, port, qrCode });
@@ -148,7 +150,7 @@ export function useLocalNetwork() {
       
       toast({
         title: "Local Server Ready",
-        description: `Files available on local network with code ${code}`,
+        description: `${files.length} file(s) available on local network with code ${code}`,
       });
       
       return { ip: localIP, port, qrCode };

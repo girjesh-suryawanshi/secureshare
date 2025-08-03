@@ -3,8 +3,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '100mb' })); // Increase JSON payload limit for large files
+app.use(express.urlencoded({ extended: false, limit: '100mb' })); // Increase URL-encoded payload limit
 
 app.use((req, res, next) => {
   const start = Date.now();
