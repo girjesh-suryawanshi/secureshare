@@ -284,6 +284,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Log file size for debugging large files
+    const fileSizeMB = fileSize ? (fileSize / 1024 / 1024).toFixed(2) : 'unknown';
+    console.log(`Registering large file: ${fileName} - ${fileSizeMB}MB (${fileIndex + 1}/${totalFiles})`);
+
     // Get or create file registry entry
     let registry = fileRegistry.get(code);
     if (!registry) {
