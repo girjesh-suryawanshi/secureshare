@@ -93,6 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         files: [],
         totalFiles: totalFiles || 1,
         createdAt: new Date(),
+        transferType: message.transferType || 'internet', // Use provided transfer type or default to internet
         senderWs: ws, // Store sender's WebSocket connection
       };
       fileRegistry.set(code, registry);
@@ -248,6 +249,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       activeFiles: fileRegistry.size,
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // Local network file sharing endpoints
+  app.get("/ping", (_req, res) => {
+    res.json({ status: "SecureShare", version: "1.0.0" });
+  });
+
+  app.get("/files/:code", (req, res) => {
+    const { code } = req.params;
+    const registry = fileRegistry.get(code);
+    
+    if (!registry || registry.transferType !== 'local') {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Return file metadata and data
+    const files = registry.files.map(file => ({
+      fileName: file.fileName,
+      fileSize: file.fileSize,
+      fileType: file.fileType,
+      data: file.data,
+      fileIndex: file.fileIndex
+    }));
+
+    res.json(files);
   });
 
   return httpServer;

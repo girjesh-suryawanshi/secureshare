@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates
 
+**Local Network Transfer Feature (Aug 2025)**
+- Added dual transfer modes: Internet and Local Network
+- Local network detection and device scanning
+- QR code generation for easy device pairing
+- High-speed file transfers on same WiFi/hotspot
+- Complete UI redesign with transfer type selection
+- Backward compatibility with existing internet transfers
+- Enhanced user experience with visual transfer mode indicators
+
 **SEO Optimization Complete (Jan 2025)**
 - Comprehensive meta tags with targeted keywords
 - Schema.org structured data for WebApplication
@@ -40,12 +49,14 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Core Application Features
-1. **Simple Two-Button Interface**: Just "Send File" and "Receive File" buttons
-2. **Multiple File Selection**: Users can select and send multiple files at once
-3. **6-Digit Code System**: Alphanumeric codes for easy file sharing
-4. **ZIP Download**: Multiple files are automatically packaged as ZIP for download
-5. **Direct Transfer**: No server storage - files transfer through temporary memory
-6. **Mobile Responsive**: Clean, minimal UI that works on all devices
+1. **Dual Transfer Modes**: Internet transfers and local network high-speed transfers
+2. **Transfer Type Selection**: Visual interface to choose between internet and local network
+3. **Multiple File Selection**: Users can select and send multiple files at once
+4. **6-Digit Code System**: Alphanumeric codes for easy file sharing across both modes
+5. **ZIP Download**: Multiple files are automatically packaged as ZIP for download
+6. **Local Network Discovery**: Automatic device scanning and QR code pairing
+7. **Direct Transfer**: No server storage - files transfer through temporary memory
+8. **Mobile Responsive**: Clean, minimal UI that works on all devices
 
 ### Legal and Policy Pages (for Google AdSense compliance)
 1. **Home Page**: Professional landing page with clear value proposition
@@ -63,10 +74,12 @@ Preferred communication style: Simple, everyday language.
 - **Footer**: Links, legal pages, copyright information
 - **Toast Notifications**: User feedback and error handling
 
-### WebRTC Implementation
-- **Signaling Server**: WebSocket-based coordination for connection establishment
-- **STUN Servers**: Google STUN servers for NAT traversal
-- **Data Channels**: Chunked file transfer with progress tracking
+### Transfer Technologies
+- **Internet Mode**: WebSocket-based signaling with real-time coordination
+- **Local Network Mode**: Direct HTTP server with device discovery
+- **Hybrid Architecture**: Seamless switching between transfer methods
+- **QR Code Integration**: Easy device pairing for local transfers
+- **Device Discovery**: Network scanning for available SecureShare devices
 - **Connection Management**: Automatic cleanup and reconnection handling
 
 ## Data Flow

@@ -1,8 +1,11 @@
 import { z } from "zod";
 
+// Transfer types
+export type TransferType = 'internet' | 'local';
+
 // WebSocket message types
 export const MessageSchema = z.object({
-  type: z.enum(['register-file', 'request-file', 'file-available', 'file-data', 'file-not-found', 'file-registered', 'file-stored', 'download-success', 'download-error', 'download-acknowledgment', 'error']),
+  type: z.enum(['register-file', 'request-file', 'file-available', 'file-data', 'file-not-found', 'file-registered', 'file-stored', 'download-success', 'download-error', 'download-acknowledgment', 'local-discovery', 'local-offer', 'local-answer', 'error']),
   code: z.string().optional(),
   fileName: z.string().optional(),
   fileSize: z.number().optional(),
@@ -14,6 +17,10 @@ export const MessageSchema = z.object({
   completedFiles: z.number().optional(), // acknowledgment data
   status: z.string().optional(), // acknowledgment status
   error: z.string().optional(), // error details
+  transferType: z.enum(['internet', 'local']).optional(), // transfer method
+  localIp: z.string().optional(), // local network IP
+  localPort: z.number().optional(), // local network port
+  deviceName: z.string().optional(), // device identifier
 });
 
 export type Message = z.infer<typeof MessageSchema>;
@@ -30,5 +37,18 @@ export interface FileRegistry {
   }>;
   totalFiles: number;
   createdAt: Date;
+  transferType: TransferType;
   senderWs?: any; // WebSocket connection of the sender
+  localIp?: string; // for local transfers
+  localPort?: number; // for local transfers
+  deviceName?: string; // device identifier
+}
+
+// Local network device discovery
+export interface LocalDevice {
+  id: string;
+  name: string;
+  ip: string;
+  port: number;
+  lastSeen: Date;
 }

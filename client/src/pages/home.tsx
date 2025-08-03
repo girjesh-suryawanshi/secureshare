@@ -3,18 +3,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWebSocket } from "@/hooks/use-websocket";
+import { useLocalNetwork } from "@/hooks/use-local-network";
 import { useToast } from "@/hooks/use-toast";
 import { useTransferStats } from "@/hooks/use-transfer-stats";
 import { FilePreview } from "@/components/file-preview";
 import { DragDropZone } from "@/components/drag-drop-zone";
 import { TransferProgress } from "@/components/transfer-progress";
 import { TransferStats } from "@/components/transfer-stats";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2 } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import JSZip from "jszip";
+import type { TransferType } from "@shared/schema";
 
 export default function Home() {
   const [mode, setMode] = useState<'select' | 'send' | 'receive'>('select');
+  const [transferType, setTransferType] = useState<TransferType>('internet');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [transferCode, setTransferCode] = useState<string>('');
   const [inputCode, setInputCode] = useState<string>('');
@@ -31,6 +35,17 @@ export default function Home() {
   const [acknowledgments, setAcknowledgments] = useState<Array<{id: string, message: string, status: string, timestamp: Date}>>([]);
 
   const { isConnected, sendMessage, onFileAvailable, onFileData, onFileNotFound, onDownloadAck } = useWebSocket();
+  const { 
+    isScanning, 
+    availableDevices, 
+    isLocalServerRunning, 
+    localServerInfo,
+    startLocalServer,
+    stopLocalServer,
+    scanForDevices,
+    connectToDevice,
+    getLocalFiles
+  } = useLocalNetwork();
   const { toast } = useToast();
   const { stats, addTransfer } = useTransferStats();
 
@@ -66,6 +81,21 @@ export default function Home() {
       const code = generateCode();
       setTransferCode(code);
       
+      // Handle local network transfer
+      if (transferType === 'local') {
+        const serverInfo = await startLocalServer(files, code);
+        if (serverInfo) {
+          setUploadProgress(100);
+          setIsUploading(false);
+          setFilesReady(true);
+          toast({
+            title: "Local Server Ready",
+            description: `Files available on local network. Share code ${code}`,
+          });
+        }
+        return;
+      }
+      
       const startTime = Date.now();
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
       
@@ -86,6 +116,7 @@ export default function Home() {
               fileType: file.type,
               fileIndex: index,
               totalFiles: files.length,
+              transferType: transferType,
             });
 
             // Send file data
@@ -139,7 +170,7 @@ export default function Home() {
     }
   };
 
-  const handleReceiveFile = () => {
+  const handleReceiveFile = async () => {
     if (!inputCode.trim() || inputCode.length !== 6) {
       toast({
         title: "Invalid Code",
@@ -149,11 +180,52 @@ export default function Home() {
       return;
     }
 
+    const upperCode = inputCode.toUpperCase();
     setIsReceiving(true);
     setReceiveProgress(10);
 
-    // Request file with the code
-    const upperCode = inputCode.toUpperCase();
+    // Handle local network transfer
+    if (transferType === 'local') {
+      if (availableDevices.length === 0) {
+        toast({
+          title: "Scanning Network",
+          description: "Looking for devices on local network...",
+        });
+        await scanForDevices();
+      }
+      
+      // Try to connect to available devices
+      for (const device of availableDevices) {
+        const files = await connectToDevice(device, upperCode);
+        if (files && files.length > 0) {
+          // Convert files to blobs and set as received files
+          const processedFiles = files.map((file: any) => ({
+            name: file.fileName,
+            size: file.fileSize,
+            blob: new Blob([Uint8Array.from(atob(file.data), c => c.charCodeAt(0))], { type: file.fileType })
+          }));
+          setReceivedFiles(processedFiles);
+          setReceiveProgress(100);
+          setIsReceiving(false);
+          toast({
+            title: "Files Received Locally",
+            description: `${files.length} file(s) received from local device`,
+          });
+          return;
+        }
+      }
+      
+      setIsReceiving(false);
+      setReceiveProgress(0);
+      toast({
+        title: "File Not Found",
+        description: "No files found with that code on local network",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Internet transfer - existing logic
     console.log('Requesting file with code:', upperCode);
     sendMessage({
       type: 'request-file',
@@ -450,6 +522,46 @@ export default function Home() {
               <TransferStats stats={stats} />
             </div>
 
+            {/* Transfer Type Selection */}
+            <div className="max-w-xl mx-auto mb-8">
+              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Choose Transfer Method</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setTransferType('internet')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      transferType === 'internet'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                    }`}
+                  >
+                    <Globe className="h-8 w-8 mx-auto mb-2" />
+                    <div className="font-medium">Internet Transfer</div>
+                    <div className="text-xs mt-1">Works anywhere</div>
+                    <Badge variant={transferType === 'internet' ? 'default' : 'outline'} className="mt-2">
+                      {isConnected ? 'Ready' : 'Connecting...'}
+                    </Badge>
+                  </button>
+                  
+                  <button
+                    onClick={() => setTransferType('local')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      transferType === 'local'
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                    }`}
+                  >
+                    <Wifi className="h-8 w-8 mx-auto mb-2" />
+                    <div className="font-medium">Local Network</div>
+                    <div className="text-xs mt-1">Same WiFi/Hotspot</div>
+                    <Badge variant={transferType === 'local' ? 'default' : 'outline'} className="mt-2">
+                      High Speed
+                    </Badge>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Premium Action Cards */}
             <div className="max-w-2xl mx-auto">
               <div className="grid md:grid-cols-2 gap-6">
@@ -475,7 +587,7 @@ export default function Home() {
                         className="w-full h-14 text-lg bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold"
                         disabled={!isConnected}
                       >
-                        Start Sending →
+                        Start Sending {transferType === 'local' ? '(Local) →' : '→'}
                       </Button>
                     </div>
                   </CardContent>
@@ -502,7 +614,7 @@ export default function Home() {
                         className="w-full h-14 text-lg bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold"
                         disabled={!isConnected}
                       >
-                        Start Receiving →
+                        Start Receiving {transferType === 'local' ? '(Local) →' : '→'}
                       </Button>
                     </div>
                   </CardContent>
@@ -637,11 +749,22 @@ export default function Home() {
                 </div>
               </div>
               <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-                Send Your Files
+                Send Your Files {transferType === 'local' ? '(Local Network)' : ''}
               </h2>
               <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
-                Share files instantly with military-grade security. Your files, your control, your privacy.
+                {transferType === 'local' 
+                  ? 'Share files at high speed on your local network. Perfect for large files!' 
+                  : 'Share files instantly with military-grade security. Your files, your control, your privacy.'
+                }
               </p>
+              {transferType === 'local' && (
+                <div className="mt-4">
+                  <Badge variant="secondary" className="text-sm">
+                    <Wifi className="w-4 h-4 mr-2" />
+                    Local Network Mode - High Speed Transfer
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
 
@@ -764,7 +887,9 @@ export default function Home() {
                     </div>
 
                     <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-4 md:p-6 text-white">
-                      <p className="text-sm md:text-lg font-semibold mb-4">🔐 Your Secure Share Code</p>
+                      <p className="text-sm md:text-lg font-semibold mb-4">
+                        {transferType === 'local' ? '🏠 Local Network Share Code' : '🔐 Your Secure Share Code'}
+                      </p>
                       <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 mb-4">
                         <div className="bg-white/20 backdrop-blur px-4 md:px-6 py-3 md:py-4 rounded-xl font-mono text-xl md:text-3xl font-bold tracking-wider">
                           {transferCode}
@@ -779,9 +904,31 @@ export default function Home() {
                           Copy
                         </Button>
                       </div>
-                      <p className="text-blue-100 text-sm md:text-base">
-                        Share this code with the receiver. Files expire in 1 hour for maximum security.
-                      </p>
+                      {transferType === 'local' && localServerInfo ? (
+                        <div className="mt-6 p-4 bg-white/10 rounded-xl">
+                          <div className="grid md:grid-cols-2 gap-4 items-center">
+                            <div>
+                              <p className="text-white/90 text-sm mb-2">
+                                <Wifi className="w-4 h-4 inline mr-2" />
+                                Server: {localServerInfo.ip}:{localServerInfo.port}
+                              </p>
+                              <p className="text-white/80 text-xs">
+                                Devices on same WiFi/hotspot can download using the code above
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <div className="bg-white p-3 rounded-lg inline-block">
+                                <img src={localServerInfo.qrCode} alt="QR Code" className="w-20 h-20" />
+                              </div>
+                              <p className="text-white/80 text-xs mt-2">QR Code for quick access</p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-blue-100 text-sm md:text-base">
+                          Share this code with the receiver. Files expire in 1 hour for maximum security.
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -831,6 +978,9 @@ export default function Home() {
                           setTransferCode('');
                           setFilesReady(false);
                           setAcknowledgments([]);
+                          if (transferType === 'local' && isLocalServerRunning) {
+                            stopLocalServer();
+                          }
                         }, 100);
                       }}
                       className="w-full sm:flex-1 h-12 text-sm md:text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -883,11 +1033,22 @@ export default function Home() {
                 </div>
               </div>
               <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
-                Receive Files
+                Receive Files {transferType === 'local' ? '(Local Network)' : ''}
               </h2>
               <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
-                Enter your 6-digit secure code to instantly download files shared with you.
+                {transferType === 'local' 
+                  ? 'Enter code to receive files from devices on your local network.' 
+                  : 'Enter your 6-digit secure code to instantly download files shared with you.'
+                }
               </p>
+              {transferType === 'local' && (
+                <div className="mt-4">
+                  <Badge variant="secondary" className="text-sm">
+                    <Wifi className="w-4 h-4 mr-2" />
+                    Local Network Mode - High Speed Transfer
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
 
@@ -904,8 +1065,61 @@ export default function Home() {
                       </div>
                     </div>
                     
-                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-4">Enter Your Code</h3>
-                    <p className="text-sm md:text-lg text-gray-600 mb-8">Type the 6-character code shared with you</p>
+                    <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-4">
+                      {transferType === 'local' ? 'Local Network Code' : 'Enter Your Code'}
+                    </h3>
+                    <p className="text-sm md:text-lg text-gray-600 mb-8">
+                      {transferType === 'local' 
+                        ? 'Enter the code from a device on your local network' 
+                        : 'Type the 6-character code shared with you'
+                      }
+                    </p>
+                    
+                    {transferType === 'local' && (
+                      <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-semibold text-gray-800">Available Devices</h4>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={scanForDevices}
+                            disabled={isScanning}
+                            className="text-xs"
+                          >
+                            {isScanning ? (
+                              <>
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                Scanning...
+                              </>
+                            ) : (
+                              <>
+                                <Search className="w-3 h-3 mr-1" />
+                                Scan Network
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        
+                        {availableDevices.length > 0 ? (
+                          <div className="space-y-2">
+                            {availableDevices.map((device) => (
+                              <div key={device.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                                <div className="flex items-center gap-2">
+                                  <Wifi className="w-4 h-4 text-green-500" />
+                                  <span className="text-sm font-medium">{device.name}</span>
+                                  <span className="text-xs text-gray-500">{device.ip}</span>
+                                </div>
+                                <Badge variant="outline" className="text-xs">Online</Badge>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-600 text-center py-2">
+                            {isScanning ? 'Scanning for devices...' : 'No devices found. Click scan to search for SecureShare devices.'}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     
                     <div className="max-w-md mx-auto space-y-6">
                       <Input
@@ -920,7 +1134,7 @@ export default function Home() {
                       <Button 
                         onClick={handleReceiveFile} 
                         className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold"
-                        disabled={!isConnected || inputCode.length !== 6 || isReceiving}
+                        disabled={(transferType === 'internet' && !isConnected) || inputCode.length !== 6 || isReceiving}
                       >
                         {isReceiving ? (
                           <>
