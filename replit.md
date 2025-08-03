@@ -7,6 +7,7 @@ This is a peer-to-peer (P2P) file sharing application called "SecureShare" built
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Design preference: Clean, minimal, and user-friendly interface. User wants the landing page to be neat and clean without excessive text, so users will love it.
 
 ## Recent Updates
 

@@ -514,8 +514,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center space-y-12">
             
-            {/* Premium Hero Section */}
-            <div className="space-y-8">
+            {/* Clean Hero Section */}
+            <div className="space-y-12">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-3xl opacity-20 w-32 h-32 mx-auto"></div>
                 <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl mb-6">
@@ -523,24 +523,18 @@ export default function Home() {
                 </div>
               </div>
               
-              <div className="space-y-6">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight px-2">
+              <div className="space-y-8">
+                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight">
                   SecureShare
                 </h1>
-                <div className="max-w-4xl mx-auto space-y-4 px-4">
-                  <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-gray-800 leading-relaxed">
-                    Share Any File Between Any Devices in Seconds with Just a 6-Digit Code
-                  </h2>
-                  <p className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed">
-                    The world's fastest peer-to-peer file transfer service. Send documents, photos, videos, and files of any size instantly. 
-                    No registration required, no file size limits, complete privacy guaranteed.
-                  </p>
-                </div>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-700 max-w-3xl mx-auto leading-relaxed">
+                  Share Any File in Seconds with Just a 6-Digit Code
+                </h2>
                 
-                <div className="flex flex-wrap justify-center gap-2 md:gap-4 text-sm md:text-lg font-medium px-4">
-                  <span className="px-3 py-2 md:px-4 md:py-2 bg-green-100 text-green-800 rounded-full">✨ Zero Setup</span>
-                  <span className="px-3 py-2 md:px-4 md:py-2 bg-blue-100 text-blue-800 rounded-full">🔒 Bank-Level Security</span>
-                  <span className="px-3 py-2 md:px-4 md:py-2 bg-purple-100 text-purple-800 rounded-full">⚡ Lightning Fast</span>
+                <div className="flex flex-wrap justify-center gap-3 text-sm md:text-base font-medium">
+                  <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full">Zero Setup</span>
+                  <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full">Secure</span>
+                  <span className="px-4 py-2 bg-purple-100 text-purple-800 rounded-full">Lightning Fast</span>
                 </div>
               </div>
             </div>
@@ -603,8 +597,8 @@ export default function Home() {
                         <Upload className="h-12 w-12 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-xl md:text-2xl font-bold mb-2">Send Files</h3>
-                        <p className="text-blue-100 text-sm md:text-lg">Share your files with anyone, anywhere in seconds</p>
+                        <h3 className="text-2xl font-bold mb-2">Send Files</h3>
+                        <p className="text-blue-100">Share files instantly</p>
                       </div>
                       <Button 
                         onClick={(e) => {
@@ -612,10 +606,10 @@ export default function Home() {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => setMode('send'), 100);
                         }} 
-                        className="w-full h-14 text-lg bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold"
+                        className="w-full h-12 text-base bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold"
                         disabled={!isConnected}
                       >
-                        Start Sending {transferType === 'local' ? '(Local) →' : '→'}
+                        Start Sending {transferType === 'local' ? '(Local)' : ''}
                       </Button>
                     </div>
                   </CardContent>
@@ -630,8 +624,8 @@ export default function Home() {
                         <Download className="h-12 w-12 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-xl md:text-2xl font-bold mb-2">Receive Files</h3>
-                        <p className="text-purple-100 text-sm md:text-lg">Enter a code and get your files instantly</p>
+                        <h3 className="text-2xl font-bold mb-2">Receive Files</h3>
+                        <p className="text-purple-100">Enter code and download</p>
                       </div>
                       <Button 
                         onClick={(e) => {
@@ -639,10 +633,10 @@ export default function Home() {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => setMode('receive'), 100);
                         }} 
-                        className="w-full h-14 text-lg bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold"
+                        className="w-full h-12 text-base bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold"
                         disabled={!isConnected}
                       >
-                        Start Receiving {transferType === 'local' ? '(Local) →' : '→'}
+                        Start Receiving {transferType === 'local' ? '(Local)' : ''}
                       </Button>
                     </div>
                   </CardContent>
@@ -657,93 +651,30 @@ export default function Home() {
               )}
             </div>
 
-            {/* How It Works */}
-            <div className="grid md:grid-cols-3 gap-6 md:gap-8 mt-16 mx-4">
-              <div className="text-center p-6 md:p-8 bg-white rounded-xl shadow-lg border border-gray-100">
-                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full mb-4 md:mb-6">
-                  <Upload className="h-6 w-6 md:h-8 md:w-8 text-blue-600" />
+            {/* Simple How It Works */}
+            <div className="grid md:grid-cols-3 gap-8 mt-16 mx-4">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+                  <Upload className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">1. Select & Send</h3>
-                <p className="text-sm md:text-base text-gray-600 leading-relaxed">Choose single or multiple files from your device. Get a unique 6-digit code instantly.</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Send Files</h3>
+                <p className="text-gray-600">Select files and get a code</p>
               </div>
               
-              <div className="text-center p-6 md:p-8 bg-white rounded-xl shadow-lg border border-gray-100">
-                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full mb-4 md:mb-6">
-                  <Share className="h-6 w-6 md:h-8 md:w-8 text-green-600" />
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
+                  <Share className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">2. Share Code</h3>
-                <p className="text-sm md:text-base text-gray-600 leading-relaxed">Share the simple 6-digit code with anyone, anywhere. Works on any device.</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Share Code</h3>
+                <p className="text-gray-600">Give the 6-digit code to anyone</p>
               </div>
               
-              <div className="text-center p-6 md:p-8 bg-white rounded-xl shadow-lg border border-gray-100">
-                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full mb-4 md:mb-6">
-                  <Archive className="h-6 w-6 md:h-8 md:w-8 text-purple-600" />
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-full mb-4">
+                  <Download className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">3. Instant Download</h3>
-                <p className="text-sm md:text-base text-gray-600 leading-relaxed">Enter code to download. Multiple files automatically packaged as convenient ZIP.</p>
-              </div>
-            </div>
-
-            {/* Features Section */}
-            <div className="bg-white rounded-2xl p-6 md:p-12 mt-16 shadow-xl border border-gray-100 mx-4">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Why Choose SecureShare?</h2>
-              <div className="grid md:grid-cols-2 gap-6 md:gap-8 text-left">
-                <div className="flex items-start space-x-3 md:space-x-4">
-                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-base md:text-lg mb-1">No Registration Required</h4>
-                    <p className="text-gray-600 text-sm md:text-base">Start sharing immediately. No accounts, no sign-ups, no hassle.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3 md:space-x-4">
-                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-base md:text-lg mb-1">Multiple File Support</h4>
-                    <p className="text-gray-600 text-sm md:text-base">Send multiple files at once. Auto-ZIP packaging for easy download.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3 md:space-x-4">
-                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-base md:text-lg mb-1">Direct Transfer</h4>
-                    <p className="text-gray-600 text-sm md:text-base">Files never stored on servers. Complete privacy guaranteed.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3 md:space-x-4">
-                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-base md:text-lg mb-1">Works Everywhere</h4>
-                    <p className="text-gray-600 text-sm md:text-base">Any device, any browser. Perfect mobile experience included.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Instructions */}
-            <div className="bg-blue-50 rounded-2xl p-6 md:p-12 mt-12 border border-blue-100 mx-4">
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 md:mb-8">Quick Start Guide</h3>
-              <div className="space-y-4 md:space-y-6 text-left max-w-3xl mx-auto">
-                <div className="flex items-start space-x-3 md:space-x-4">
-                  <span className="inline-flex items-center justify-center w-7 h-7 md:w-8 md:h-8 bg-blue-600 text-white text-sm md:text-lg font-bold rounded-full flex-shrink-0">1</span>
-                  <div>
-                    <p className="text-gray-800 text-sm md:text-lg"><strong>To Send Files:</strong> Click "Send Files" → Choose single or multiple files → Share the 6-digit code</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3 md:space-x-4">
-                  <span className="inline-flex items-center justify-center w-7 h-7 md:w-8 md:h-8 bg-blue-600 text-white text-sm md:text-lg font-bold rounded-full flex-shrink-0">2</span>
-                  <div>
-                    <p className="text-gray-800 text-sm md:text-lg"><strong>To Receive Files:</strong> Click "Receive Files" → Enter the 6-digit code → Download instantly</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3 md:space-x-4">
-                  <span className="inline-flex items-center justify-center w-7 h-7 md:w-8 md:h-8 bg-blue-600 text-white text-sm md:text-lg font-bold rounded-full flex-shrink-0">3</span>
-                  <div>
-                    <p className="text-gray-800 text-sm md:text-lg"><strong>Multiple Files:</strong> Automatically packaged as ZIP for convenient single download</p>
-                  </div>
-                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Download</h3>
+                <p className="text-gray-600">Enter code and download files</p>
               </div>
             </div>
           </div>
