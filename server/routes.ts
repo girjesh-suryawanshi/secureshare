@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { code } = req.params;
     const registry = fileRegistry.get(code);
     
-    if (!registry || registry.transferType !== 'local') {
+    if (!registry) {
       return res.status(404).json({ error: "File not found" });
     }
 
@@ -274,6 +274,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }));
 
     res.json(files);
+  });
+
+  // Register files for local network sharing
+  app.post("/api/register-local-file", (req, res) => {
+    const { code, fileName, fileSize, fileType, data, fileIndex, totalFiles } = req.body;
+    
+    if (!code || !fileName || !data) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Get or create file registry entry
+    let registry = fileRegistry.get(code);
+    if (!registry) {
+      registry = {
+        code,
+        files: [],
+        totalFiles: totalFiles || 1,
+        createdAt: new Date(),
+        transferType: 'local',
+        senderWs: null, // No WebSocket for local transfers
+      };
+      fileRegistry.set(code, registry);
+      console.log(`Created new local registry for code: ${code}`);
+    }
+
+    // Add file to registry
+    const fileData = {
+      fileName,
+      fileSize,
+      fileType,
+      data,
+      fileIndex: fileIndex || 0,
+    };
+
+    registry.files.push(fileData);
+    console.log(`Local file registered: ${fileName} with code: ${code} (${registry.files.length}/${totalFiles})`);
+
+    res.json({ success: true, message: "File registered for local sharing" });
   });
 
   return httpServer;

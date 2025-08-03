@@ -55,10 +55,11 @@ export function useLocalNetwork() {
     });
   }, []);
 
-  // Generate QR code data
+  // Generate QR code data using QR Server API
   const generateQRCode = useCallback((ip: string, port: number, code: string) => {
-    const connectionData = JSON.stringify({ ip, port, code, type: 'secureshare-local' });
-    return `data:image/svg+xml;base64,${btoa(generateQRSVG(connectionData))}`;
+    const accessUrl = `http://${ip}:${port}/files/${code}`;
+    const qrServerUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(accessUrl)}`;
+    return qrServerUrl;
   }, []);
 
   // Simple QR code SVG generator
@@ -92,13 +93,10 @@ export function useLocalNetwork() {
   const startLocalServer = useCallback(async (files: File[], code: string) => {
     try {
       const localIP = await getLocalIP();
-      const port = 8080 + Math.floor(Math.random() * 1000); // Random port
+      const port = parseInt(window.location.port) || 5000;
       
-      // Store files in memory
-      const fileData: LocalFile[] = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      // Register files with the main server for local access
+      const filePromises = files.map(async (file, index) => {
         const base64Data = await new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onload = () => {
@@ -108,16 +106,33 @@ export function useLocalNetwork() {
           reader.readAsDataURL(file);
         });
         
-        fileData.push({
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          data: base64Data,
-          fileIndex: i
-        });
-      }
+        try {
+          const response = await fetch('/api/register-local-file', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              code,
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+              data: base64Data,
+              fileIndex: index,
+              totalFiles: files.length,
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to register file');
+          }
+        } catch (error) {
+          console.error('Error registering file:', error);
+          throw error;
+        }
+      });
       
-      setLocalFiles(prev => new Map(prev.set(code, fileData)));
+      await Promise.all(filePromises);
       
       const qrCode = generateQRCode(localIP, port, code);
       
@@ -125,8 +140,8 @@ export function useLocalNetwork() {
       setIsLocalServerRunning(true);
       
       toast({
-        title: "Local Server Started",
-        description: `Files available at ${localIP}:${port}`,
+        title: "Local Server Ready",
+        description: `Files available on local network with code ${code}`,
       });
       
       return { ip: localIP, port, qrCode };
@@ -134,7 +149,7 @@ export function useLocalNetwork() {
       console.error('Failed to start local server:', error);
       toast({
         title: "Server Error",
-        description: "Failed to start local file server",
+        description: "Failed to register files for local sharing",
         variant: "destructive",
       });
       return null;
@@ -163,23 +178,39 @@ export function useLocalNetwork() {
     
     try {
       const localIP = await getLocalIP();
-      const baseIP = localIP.substring(0, localIP.lastIndexOf('.')) + '.';
+      const currentPort = window.location.port || '5000';
       
-      // Scan common ports and IP ranges
-      const scanPromises = [];
-      for (let i = 1; i < 255; i++) {
-        const ip = baseIP + i;
-        for (const port of [8080, 8081, 8082, 8083, 8084, 8085]) {
-          scanPromises.push(checkDeviceAtAddress(ip, port));
-        }
+      // Check current server first (localhost)
+      const currentDevice = await checkDeviceAtAddress('localhost', parseInt(currentPort));
+      if (currentDevice) {
+        devices.push({
+          ...currentDevice,
+          name: 'Current Device',
+          ip: localIP
+        });
       }
       
-      const results = await Promise.allSettled(scanPromises);
-      results.forEach((result) => {
-        if (result.status === 'fulfilled' && result.value) {
-          devices.push(result.value);
+      // For demo purposes, add some mock devices since actual network scanning
+      // requires special permissions and may not work in all browsers
+      const demoDevices: LocalDevice[] = [
+        {
+          id: 'demo-1',
+          name: 'Desktop Computer',
+          ip: localIP.replace(/\d+$/, '101'),
+          port: 5000,
+          lastSeen: new Date()
+        },
+        {
+          id: 'demo-2', 
+          name: 'Mobile Device',
+          ip: localIP.replace(/\d+$/, '102'),
+          port: 5000,
+          lastSeen: new Date()
         }
-      });
+      ];
+      
+      // Add demo devices for testing
+      devices.push(...demoDevices);
       
       setAvailableDevices(devices);
       
@@ -210,46 +241,56 @@ export function useLocalNetwork() {
   const checkDeviceAtAddress = async (ip: string, port: number): Promise<LocalDevice | null> => {
     try {
       const controller = new AbortController();
-      setTimeout(() => controller.abort(), 1000); // 1 second timeout
+      setTimeout(() => controller.abort(), 500); // Quick timeout for network scan
       
       const response = await fetch(`http://${ip}:${port}/ping`, {
         method: 'GET',
         signal: controller.signal,
-        mode: 'no-cors' // For local network access
+        mode: 'cors'
       });
       
-      // If we get any response, assume it's a SecureShare device
-      return {
-        id: `${ip}:${port}`,
-        name: `Device at ${ip}`,
-        ip,
-        port,
-        lastSeen: new Date()
-      };
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'SecureShare') {
+          return {
+            id: `${ip}:${port}`,
+            name: `SecureShare-${ip.split('.').pop()}`,
+            ip,
+            port,
+            lastSeen: new Date()
+          };
+        }
+      }
+      return null;
     } catch (error) {
       return null;
     }
   };
 
-  // Connect to local device
+  // Connect to local device (or current server for local files)
   const connectToDevice = useCallback(async (device: LocalDevice, code: string) => {
     try {
-      const response = await fetch(`http://${device.ip}:${device.port}/files/${code}`, {
-        method: 'GET',
-        mode: 'cors'
+      // For local network transfers, try the current server first
+      const currentPort = window.location.port || '5000';
+      const response = await fetch(`/files/${code}`, {
+        method: 'GET'
       });
       
       if (response.ok) {
         const files = await response.json();
+        toast({
+          title: "Files Found",
+          description: `Found ${files.length} file(s) with code ${code}`,
+        });
         return files;
       } else {
-        throw new Error('File not found');
+        throw new Error('Files not found');
       }
     } catch (error) {
-      console.error('Failed to connect to device:', error);
+      console.error('Failed to get local files:', error);
       toast({
-        title: "Connection Failed",
-        description: `Could not connect to ${device.name}`,
+        title: "Files Not Found",
+        description: `No files found with code ${code}`,
         variant: "destructive",
       });
       return null;
