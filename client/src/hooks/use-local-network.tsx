@@ -107,6 +107,8 @@ export function useLocalNetwork() {
         });
         
         try {
+          console.log(`Registering local file: ${file.name} (${index + 1}/${files.length})`);
+          
           const response = await fetch('/api/register-local-file', {
             method: 'POST',
             headers: {
@@ -124,10 +126,15 @@ export function useLocalNetwork() {
           });
           
           if (!response.ok) {
-            throw new Error('Failed to register file');
+            const errorText = await response.text();
+            console.error(`Failed to register file ${file.name}:`, response.status, errorText);
+            throw new Error(`Failed to register file: ${response.status} ${errorText}`);
           }
+          
+          const result = await response.json();
+          console.log(`Successfully registered ${file.name}:`, result);
         } catch (error) {
-          console.error('Error registering file:', error);
+          console.error(`Error registering file ${file.name}:`, error);
           throw error;
         }
       });
@@ -147,9 +154,10 @@ export function useLocalNetwork() {
       return { ip: localIP, port, qrCode };
     } catch (error) {
       console.error('Failed to start local server:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast({
         title: "Server Error",
-        description: "Failed to register files for local sharing",
+        description: `Failed to register files for local sharing: ${errorMessage}`,
         variant: "destructive",
       });
       return null;
