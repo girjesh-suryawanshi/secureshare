@@ -360,27 +360,42 @@ export function useLocalNetwork() {
   // Connect to local device (or current server for local files)
   const connectToDevice = useCallback(async (device: LocalDevice, code: string) => {
     try {
+      console.log(`Connecting to device ${device.name} for code ${code}`);
+      
       // For local network transfers, try the current server first
-      const currentPort = window.location.port || '5000';
       const response = await fetch(`/files/${code}`, {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        }
       });
       
       if (response.ok) {
         const files = await response.json();
+        console.log(`Successfully retrieved ${files.length} files from local network`);
+        
+        // Validate that files have data
+        const validFiles = files.filter((file: any) => file.data && file.data.length > 0);
+        if (validFiles.length === 0) {
+          throw new Error('No valid file data found');
+        }
+        
         toast({
           title: "Files Found",
-          description: `Found ${files.length} file(s) with code ${code}`,
+          description: `Found ${validFiles.length} file(s) with code ${code}`,
         });
-        return files;
+        return validFiles;
       } else {
-        throw new Error('Files not found');
+        const errorText = await response.text();
+        console.error(`Server responded with ${response.status}: ${errorText}`);
+        throw new Error(`Server error: ${response.status}`);
       }
     } catch (error) {
       console.error('Failed to get local files:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast({
-        title: "Files Not Found",
-        description: `No files found with code ${code}`,
+        title: "Connection Failed",
+        description: `Could not retrieve files: ${errorMessage}`,
         variant: "destructive",
       });
       return null;

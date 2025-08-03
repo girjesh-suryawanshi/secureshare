@@ -199,17 +199,45 @@ export default function Home() {
         const files = await connectToDevice(device, upperCode);
         if (files && files.length > 0) {
           // Convert files to blobs and set as received files
-          const processedFiles = files.map((file: any) => ({
-            name: file.fileName,
-            size: file.fileSize,
-            blob: new Blob([Uint8Array.from(atob(file.data), c => c.charCodeAt(0))], { type: file.fileType })
-          }));
+          const processedFiles = files.map((file: any) => {
+            try {
+              // Decode base64 data to binary
+              const binaryString = atob(file.data);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              
+              return {
+                name: file.fileName,
+                size: file.fileSize,
+                blob: new Blob([bytes], { type: file.fileType || 'application/octet-stream' })
+              };
+            } catch (error) {
+              console.error(`Error processing file ${file.fileName}:`, error);
+              throw error;
+            }
+          });
+          
           setReceivedFiles(processedFiles);
           setReceiveProgress(100);
-          setIsReceiving(false);
+          setTimeout(() => {
+            setIsReceiving(false);
+            setReceiveProgress(0);
+          }, 1000);
+          
+          // Add transfer stats for each file
+          processedFiles.forEach(file => {
+            addTransfer({
+              type: 'received',
+              fileName: file.name,
+              size: file.size
+            });
+          });
+          
           toast({
             title: "Files Received Locally",
-            description: `${files.length} file(s) received from local device`,
+            description: `${files.length} file(s) received from local network`,
           });
           return;
         }
