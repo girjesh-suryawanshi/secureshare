@@ -6,8 +6,13 @@ import { MessageSchema, type FileRegistry } from "@shared/schema";
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
-  // WebSocket server for file sharing
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // WebSocket server for file sharing with increased payload limits
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: '/ws',
+    maxPayload: 100 * 1024 * 1024, // 100MB max payload for large files
+    perMessageDeflate: false // Disable compression for faster transfer
+  });
   const fileRegistry = new Map<string, FileRegistry>();
 
   // Clean up old files every 10 minutes (files expire after 1 hour)
@@ -316,6 +321,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Local file registered: ${fileName} with code: ${code} (${registry.files.length}/${totalFiles})`);
 
     res.json({ success: true, message: "File registered for local sharing" });
+  });
+
+  // Register file metadata for chunked upload (large files)
+  app.post("/api/register-local-file-meta", (req, res) => {
+    const { code, fileName, fileSize, fileType, fileIndex, totalFiles, totalChunks } = req.body;
+    
+    if (!code || !fileName || !fileSize) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const fileSizeMB = (fileSize / 1024 / 1024).toFixed(2);
+    console.log(`Registering chunked file metadata: ${fileName} - ${fileSizeMB}MB (${totalChunks} chunks)`);
+
+    // Get or create file registry entry
+    let registry = fileRegistry.get(code);
+    if (!registry) {
+      registry = {
+        code,
+        files: [],
+        totalFiles: totalFiles || 1,
+        createdAt: new Date(),
+        transferType: 'local',
+        senderWs: null,
+      };
+      fileRegistry.set(code, registry);
+      console.log(`Created new local registry for code: ${code}`);
+    }
+
+    // Create file entry for chunked upload
+    const fileData: any = {
+      fileName,
+      fileSize,
+      fileType,
+      data: '', // Will be built from chunks
+      fileIndex: fileIndex || 0,
+      chunks: new Map<number, string>(), // Store chunks temporarily
+      totalChunks,
+      receivedChunks: 0,
+    };
+
+    registry.files.push(fileData);
+    console.log(`File metadata registered: ${fileName} with code: ${code}`);
+
+    res.json({ success: true, message: "File metadata registered for chunked upload" });
+  });
+
+  // Upload file chunk
+  app.post("/api/upload-local-chunk", (req, res) => {
+    const { code, fileIndex, chunkIndex, data, isLastChunk } = req.body;
+    
+    if (!code || fileIndex === undefined || chunkIndex === undefined || !data) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const registry = fileRegistry.get(code);
+    if (!registry) {
+      return res.status(404).json({ error: "File registry not found" });
+    }
+
+    const file: any = registry.files.find(f => f.fileIndex === fileIndex);
+    if (!file || !file.chunks) {
+      return res.status(404).json({ error: "File not found in registry" });
+    }
+
+    // Store chunk
+    file.chunks.set(chunkIndex, data);
+    file.receivedChunks = (file.receivedChunks || 0) + 1;
+
+    console.log(`Chunk ${chunkIndex} received for ${file.fileName} (${file.receivedChunks}/${file.totalChunks})`);
+
+    // If all chunks received, assemble the file
+    if (file.receivedChunks === file.totalChunks) {
+      const sortedChunks = Array.from(file.chunks.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([, data]) => data);
+      
+      file.data = sortedChunks.join('');
+      delete file.chunks; // Clean up chunks to save memory
+      delete file.totalChunks;
+      delete file.receivedChunks;
+      
+      console.log(`File assembled: ${file.fileName} - ${(file.fileSize / 1024 / 1024).toFixed(2)}MB`);
+    }
+
+    res.json({ 
+      success: true, 
+      message: isLastChunk ? "File upload completed" : "Chunk uploaded successfully",
+      progress: Math.round((file.receivedChunks / file.totalChunks) * 100)
+    });
   });
 
   return httpServer;

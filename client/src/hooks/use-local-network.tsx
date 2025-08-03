@@ -89,53 +89,24 @@ export function useLocalNetwork() {
     return svg;
   };
 
-  // Start local server for file sharing
+  // Start local server for file sharing with chunked upload
   const startLocalServer = useCallback(async (files: File[], code: string) => {
     try {
       const localIP = await getLocalIP();
       const port = parseInt(window.location.port) || 5000;
       
-      // Register files with the main server for local access
+      // Register files with the main server using chunked upload for better performance
+      const chunkSize = 1024 * 1024; // 1MB chunks for faster processing
+      
       const filePromises = files.map(async (file, index) => {
-        const base64Data = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            resolve(result.split(',')[1]);
-          };
-          reader.readAsDataURL(file);
-        });
+        console.log(`Registering local file: ${file.name} (${index + 1}/${files.length}) - ${(file.size / 1024 / 1024).toFixed(2)}MB`);
         
-        try {
-          console.log(`Registering local file: ${file.name} (${index + 1}/${files.length}) - ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-          
-          const response = await fetch('/api/register-local-file', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              code,
-              fileName: file.name,
-              fileSize: file.size,
-              fileType: file.type,
-              data: base64Data,
-              fileIndex: index,
-              totalFiles: files.length,
-            }),
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Failed to register file ${file.name}:`, response.status, errorText);
-            throw new Error(`Failed to register file: ${response.status} ${errorText}`);
-          }
-          
-          const result = await response.json();
-          console.log(`Successfully registered ${file.name}:`, result);
-        } catch (error) {
-          console.error(`Error registering file ${file.name}:`, error);
-          throw error;
+        // For files larger than 50MB, use chunked upload
+        if (file.size > 50 * 1024 * 1024) {
+          return await uploadFileInChunks(file, code, index, files.length);
+        } else {
+          // For smaller files, use direct upload
+          return await uploadFileDirect(file, code, index, files.length);
         }
       });
       
@@ -165,6 +136,115 @@ export function useLocalNetwork() {
       return null;
     }
   }, [getLocalIP, generateQRCode, toast]);
+
+  // Upload small files directly
+  const uploadFileDirect = async (file: File, code: string, index: number, totalFiles: number) => {
+    const base64Data = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]);
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    const response = await fetch('/api/register-local-file', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        data: base64Data,
+        fileIndex: index,
+        totalFiles,
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to register file: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log(`Successfully registered ${file.name}:`, result);
+    return result;
+  };
+
+  // Upload large files in chunks for better performance
+  const uploadFileInChunks = async (file: File, code: string, index: number, totalFiles: number) => {
+    const chunkSize = 1024 * 1024; // 1MB chunks
+    const totalChunks = Math.ceil(file.size / chunkSize);
+    
+    console.log(`Uploading ${file.name} in ${totalChunks} chunks...`);
+    
+    // First, register the file metadata
+    const metaResponse = await fetch('/api/register-local-file-meta', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        fileIndex: index,
+        totalFiles,
+        totalChunks,
+      }),
+    });
+    
+    if (!metaResponse.ok) {
+      const errorText = await metaResponse.text();
+      throw new Error(`Failed to register file metadata: ${metaResponse.status} ${errorText}`);
+    }
+    
+    // Upload chunks sequentially for reliability
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      const start = chunkIndex * chunkSize;
+      const end = Math.min(start + chunkSize, file.size);
+      const chunk = file.slice(start, end);
+      
+      const base64Chunk = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]);
+        };
+        reader.readAsDataURL(chunk);
+      });
+      
+      const chunkResponse = await fetch('/api/upload-local-chunk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          fileIndex: index,
+          chunkIndex,
+          data: base64Chunk,
+          isLastChunk: chunkIndex === totalChunks - 1,
+        }),
+      });
+      
+      if (!chunkResponse.ok) {
+        const errorText = await chunkResponse.text();
+        throw new Error(`Failed to upload chunk ${chunkIndex}: ${chunkResponse.status} ${errorText}`);
+      }
+      
+      // Show progress
+      const progress = Math.round(((chunkIndex + 1) / totalChunks) * 100);
+      console.log(`${file.name}: ${progress}% complete (${chunkIndex + 1}/${totalChunks} chunks)`);
+    }
+    
+    console.log(`Successfully uploaded ${file.name} in chunks`);
+    return { success: true };
+  };
 
   // Stop local server
   const stopLocalServer = useCallback(() => {
