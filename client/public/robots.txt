@@ -1,18 +1,54 @@
 User-agent: *
 Allow: /
 
-# Sitemap
-Sitemap: https://secureshare.com/sitemap.xml
+# Prioritize important pages for crawling
+Crawl-delay: 1
 
-# Block development files
-Disallow: /dev/
-Disallow: /*.json$
-Disallow: /*.log$
+# Sitemap location
+Sitemap: https://hexasend.com/sitemap.xml
 
-# Allow important pages
+# Important pages for SEO
 Allow: /
 Allow: /about
 Allow: /contact
+Allow: /blog
+Allow: /blog/*
 Allow: /privacy
 Allow: /terms
 Allow: /disclaimer
+
+# Block any admin or development paths (if they exist)
+Disallow: /admin/
+Disallow: /api/
+Disallow: /.git/
+Disallow: /node_modules/
+
+# SEO friendly directives
+# Encourage crawling of main content areas
+User-agent: Googlebot
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /blog
+Allow: /blog/*
+
+User-agent: Bingbot
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /blog
+Allow: /blog/*
+
+# Social media crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+# Additional search engines
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
