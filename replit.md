@@ -13,12 +13,12 @@ Design preference: Clean, minimal, and user-friendly interface. User wants the l
 
 **Local Network Transfer Feature (Aug 2025)**
 - Added dual transfer modes: Internet and Local Network
-- Local network detection and device scanning
-- QR code generation for easy device pairing
-- High-speed file transfers on same WiFi/hotspot
+- Direct server communication for local network transfers
+- High-speed file transfers with optimized chunking (200MB threshold)
 - Complete UI redesign with transfer type selection
 - Backward compatibility with existing internet transfers
 - Enhanced user experience with visual transfer mode indicators
+- Fixed local network file retrieval bugs for reliable operation
 
 **SEO Optimization Complete (Jan 2025)**
 - Comprehensive meta tags with targeted keywords

@@ -186,20 +186,31 @@ export default function Home() {
 
     // Handle local network transfer
     if (transferType === 'local') {
-      if (availableDevices.length === 0) {
-        toast({
-          title: "Scanning Network",
-          description: "Looking for devices on local network...",
+      try {
+        console.log(`Looking for files with code: ${upperCode}`);
+        setReceiveProgress(30);
+        
+        // Try to get files directly from current server (local network)
+        const response = await fetch(`/files/${upperCode}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
         });
-        await scanForDevices();
-      }
-      
-      // Try to connect to available devices
-      for (const device of availableDevices) {
-        const files = await connectToDevice(device, upperCode);
-        if (files && files.length > 0) {
+        
+        if (response.ok) {
+          const files = await response.json();
+          console.log(`Found ${files.length} files on local network`);
+          setReceiveProgress(60);
+          
+          // Validate that files have data
+          const validFiles = files.filter((file: any) => file.data && file.data.length > 0);
+          if (validFiles.length === 0) {
+            throw new Error('No valid file data found');
+          }
+          
           // Convert files to blobs and set as received files
-          const processedFiles = files.map((file: any) => {
+          const processedFiles = validFiles.map((file: any) => {
             try {
               // Decode base64 data to binary
               const binaryString = atob(file.data);
@@ -237,20 +248,25 @@ export default function Home() {
           
           toast({
             title: "Files Received Locally",
-            description: `${files.length} file(s) received from local network`,
+            description: `${validFiles.length} file(s) received from local network`,
           });
           return;
+        } else {
+          const errorText = await response.text();
+          console.error(`Server responded with ${response.status}: ${errorText}`);
+          throw new Error(`File not found on local network`);
         }
+      } catch (error) {
+        console.error('Failed to get local files:', error);
+        setIsReceiving(false);
+        setReceiveProgress(0);
+        toast({
+          title: "File Not Found",
+          description: `No files found with code ${upperCode} on local network`,
+          variant: "destructive",
+        });
+        return;
       }
-      
-      setIsReceiving(false);
-      setReceiveProgress(0);
-      toast({
-        title: "File Not Found",
-        description: "No files found with that code on local network",
-        variant: "destructive",
-      });
-      return;
     }
 
     // Internet transfer - existing logic
