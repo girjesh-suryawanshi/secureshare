@@ -20,6 +20,12 @@ Design preference: Clean, minimal, and user-friendly interface. User wants the l
 - Enhanced user experience with visual transfer mode indicators
 - Fixed local network file retrieval bugs for reliable operation
 
+**Bug Fixes (Aug 2025)**
+- Added individual file removal option for multiple file uploads
+- Fixed device scanning to show actual devices instead of fake demo devices
+- Clear all uploaded files when clicking back button from send mode
+- Enhanced file management and user experience improvements
+
 **SEO Optimization Complete (Jan 2025)**
 - Comprehensive meta tags with targeted keywords
 - Schema.org structured data for WebApplication

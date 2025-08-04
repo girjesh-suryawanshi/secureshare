@@ -290,27 +290,8 @@ export function useLocalNetwork() {
         });
       }
       
-      // For demo purposes, add some mock devices since actual network scanning
-      // requires special permissions and may not work in all browsers
-      const demoDevices: LocalDevice[] = [
-        {
-          id: 'demo-1',
-          name: 'Desktop Computer',
-          ip: localIP.replace(/\d+$/, '101'),
-          port: 5000,
-          lastSeen: new Date()
-        },
-        {
-          id: 'demo-2', 
-          name: 'Mobile Device',
-          ip: localIP.replace(/\d+$/, '102'),
-          port: 5000,
-          lastSeen: new Date()
-        }
-      ];
-      
-      // Add demo devices for testing
-      devices.push(...demoDevices);
+      // Only show actual detected devices - no demo devices
+      // This will show real devices found on the network
       
       setAvailableDevices(devices);
       

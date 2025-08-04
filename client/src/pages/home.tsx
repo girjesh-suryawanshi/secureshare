@@ -10,7 +10,7 @@ import { FilePreview } from "@/components/file-preview";
 import { DragDropZone } from "@/components/drag-drop-zone";
 import { TransferProgress } from "@/components/transfer-progress";
 import { TransferStats } from "@/components/transfer-stats";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import JSZip from "jszip";
@@ -709,7 +709,19 @@ export default function Home() {
               onClick={(e) => {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(() => setMode('select'), 100);
+                setTimeout(() => {
+                  setMode('select');
+                  // Clear all files and state when going back from send mode
+                  setSelectedFiles([]);
+                  setUploadProgress(0);
+                  setIsUploading(false);
+                  setFilesReady(false);
+                  setTransferCode('');
+                  setAcknowledgments([]);
+                  if (transferType === 'local' && isLocalServerRunning) {
+                    stopLocalServer();
+                  }
+                }, 100);
               }} 
               className="mb-6 text-lg hover:bg-white/80 transition-all duration-200"
             >
@@ -797,7 +809,19 @@ export default function Home() {
                       <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-6 border border-green-200">
                         <div className="grid gap-3 max-h-64 overflow-y-auto">
                           {selectedFiles.map((file, index) => (
-                            <FilePreview key={index} file={file} showSize={true} />
+                            <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                              <FilePreview file={file} showSize={true} />
+                              <Button
+                                onClick={() => {
+                                  setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="ml-3 text-red-600 hover:bg-red-50 border-red-200 flex-shrink-0"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1090,7 +1114,7 @@ export default function Home() {
                           </div>
                         ) : (
                           <p className="text-sm text-gray-600 text-center py-2">
-                            {isScanning ? 'Scanning for devices...' : 'No devices found. Click scan to search for SecureShare devices.'}
+                            {isScanning ? 'Scanning for devices...' : `${availableDevices.length} devices found. Click scan to search for SecureShare devices.`}
                           </p>
                         )}
                       </div>
