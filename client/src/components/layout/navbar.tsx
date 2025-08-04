@@ -30,7 +30,7 @@ export default function Navbar() {
               <div className="p-2 bg-blue-600 rounded-lg">
                 <Share className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">SecureShare</span>
+              <span className="text-xl font-bold text-gray-900">HexaSend</span>
             </div>
           </Link>
 

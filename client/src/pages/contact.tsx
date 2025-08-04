@@ -17,7 +17,7 @@ export default function Contact() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Have questions about SecureShare? We'd love to hear from you.
+            Have questions about HexaSend? We'd love to hear from you.
           </p>
         </div>
 
@@ -106,7 +106,7 @@ export default function Contact() {
                   <h3 className="text-lg font-semibold text-gray-900">Email Support</h3>
                 </div>
                 <p className="text-gray-600">
-                  support@secureshare.com
+                  support@hexasend.com
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   We typically respond within 24 hours
@@ -164,7 +164,7 @@ export default function Contact() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Frequently Asked Questions</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">How secure is SecureShare?</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">How secure is HexaSend?</h3>
               <p className="text-gray-600 text-sm">
                 Files are never stored on our servers. All transfers happen directly between devices, ensuring complete privacy.
               </p>
@@ -172,7 +172,7 @@ export default function Contact() {
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">What file types are supported?</h3>
               <p className="text-gray-600 text-sm">
-                SecureShare supports all file types - documents, images, videos, archives, and more.
+                HexaSend supports all file types - documents, images, videos, archives, and more.
               </p>
             </div>
             <div>

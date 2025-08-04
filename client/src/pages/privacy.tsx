@@ -16,7 +16,7 @@ export default function Privacy() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Commitment to Privacy</h2>
               <p className="text-gray-600 leading-relaxed">
-                At SecureShare, we are committed to protecting your privacy and ensuring the security of your data. 
+                At HexaSend, we are committed to protecting your privacy and ensuring the security of your data. 
                 This Privacy Policy explains how we collect, use, and protect information when you use our file sharing service.
               </p>
             </div>
@@ -27,7 +27,7 @@ export default function Privacy() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Files and Content</h3>
                   <p className="text-gray-600 leading-relaxed">
-                    When you use SecureShare to send files, your files are temporarily held in server memory only during the active transfer process. 
+                    When you use HexaSend to send files, your files are temporarily held in server memory only during the active transfer process. 
                     Files are automatically deleted from memory after 1 hour or once successfully downloaded, whichever comes first. 
                     We do not permanently store, access, or analyze your files.
                   </p>
@@ -110,7 +110,7 @@ export default function Privacy() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Cookies and Tracking</h2>
               <p className="text-gray-600 leading-relaxed">
-                SecureShare uses minimal cookies and local storage only for essential service functionality, 
+                HexaSend uses minimal cookies and local storage only for essential service functionality, 
                 such as maintaining your session connection. We do not use tracking cookies, 
                 analytics cookies, or advertising cookies.
               </p>
@@ -128,7 +128,7 @@ export default function Privacy() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">International Users</h2>
               <p className="text-gray-600 leading-relaxed">
-                SecureShare is operated from the United States. If you are accessing our service from outside 
+                HexaSend is operated from the United States. If you are accessing our service from outside 
                 the United States, please be aware that your information may be transferred to, 
                 stored, and processed in the United States.
               </p>
@@ -150,7 +150,7 @@ export default function Privacy() {
               </p>
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <p className="text-gray-700">
-                  Email: privacy@secureshare.com<br />
+                  Email: privacy@hexasend.com<br />
                   Address: 123 Tech Street, San Francisco, CA 94102, United States
                 </p>
               </div>

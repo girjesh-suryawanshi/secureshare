@@ -11,7 +11,7 @@ export default function Disclaimer() {
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Disclaimer</h1>
           <p className="text-lg text-gray-600">
-            Important information about using SecureShare
+            Important information about using HexaSend
           </p>
         </div>
 
@@ -23,7 +23,7 @@ export default function Disclaimer() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">General Disclaimer</h2>
                   <p className="text-gray-600 leading-relaxed">
-                    The information and services provided by SecureShare are offered on an "as is" basis. 
+                    The information and services provided by HexaSend are offered on an "as is" basis. 
                     While we strive to provide a reliable and secure file sharing service, we make no warranties 
                     or representations about the completeness, accuracy, reliability, or suitability of our service 
                     for any particular purpose.
@@ -37,7 +37,7 @@ export default function Disclaimer() {
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Availability</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                SecureShare is provided as a web-based service subject to the following limitations:
+                HexaSend is provided as a web-based service subject to the following limitations:
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li>• Service may be temporarily unavailable due to maintenance, updates, or technical issues</li>
@@ -53,7 +53,7 @@ export default function Disclaimer() {
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">File Transfer Limitations</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                When using SecureShare for file transfers, please be aware of these limitations:
+                When using HexaSend for file transfers, please be aware of these limitations:
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li>• File size limits depend on browser capabilities and available device memory</li>

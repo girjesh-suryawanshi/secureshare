@@ -16,7 +16,7 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Agreement to Terms</h2>
               <p className="text-gray-600 leading-relaxed">
-                By accessing and using SecureShare, you accept and agree to be bound by the terms and provision of this agreement. 
+                By accessing and using HexaSend, you accept and agree to be bound by the terms and provision of this agreement. 
                 If you do not agree to abide by the above, please do not use this service.
               </p>
             </div>
@@ -24,7 +24,7 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Description of Service</h2>
               <p className="text-gray-600 leading-relaxed">
-                SecureShare is a web-based file sharing service that allows users to transfer files between devices using 
+                HexaSend is a web-based file sharing service that allows users to transfer files between devices using 
                 temporary 6-digit codes. Files are held temporarily in server memory during transfers and are automatically 
                 deleted after completion or expiration.
               </p>
@@ -33,7 +33,7 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Acceptable Use</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                You agree to use SecureShare only for lawful purposes and in accordance with these Terms. You agree not to:
+                You agree to use HexaSend only for lawful purposes and in accordance with these Terms. You agree not to:
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li>• Upload, share, or distribute any illegal, harmful, threatening, abusive, harassing, defamatory, vulgar, obscene, or invasive content</li>
@@ -48,7 +48,7 @@ export default function Terms() {
 
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">User Responsibilities</h2>
-              <p className="text-gray-600 leading-relaxed mb-4">As a user of SecureShare, you are responsible for:</p>
+              <p className="text-gray-600 leading-relaxed mb-4">As a user of HexaSend, you are responsible for:</p>
               <ul className="space-y-2 text-gray-600">
                 <li>• Ensuring you have the right to share any files you upload</li>
                 <li>• Protecting your transfer codes and sharing them only with intended recipients</li>
@@ -61,7 +61,7 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Limitations</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                SecureShare is provided "as is" with the following limitations:
+                HexaSend is provided "as is" with the following limitations:
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li>• Transfer codes expire after 1 hour</li>

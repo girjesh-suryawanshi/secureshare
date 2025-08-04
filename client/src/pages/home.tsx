@@ -541,7 +541,7 @@ export default function Home() {
               
               <div className="space-y-8">
                 <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight">
-                  HexaSend.com
+                  HexaSend
                 </h1>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-700 max-w-3xl mx-auto leading-relaxed">
                   Share Any File in Seconds with Just a 6-Digit Code
@@ -1133,7 +1133,7 @@ export default function Home() {
                           </div>
                         ) : (
                           <p className="text-sm text-gray-600 text-center py-2">
-                            {isScanning ? 'Scanning for devices...' : `${availableDevices.length} devices found. Click scan to search for HexaSend.com devices.`}
+                            {isScanning ? 'Scanning for devices...' : `${availableDevices.length} devices found. Click scan to search for HexaSend devices.`}
                           </p>
                         )}
                       </div>

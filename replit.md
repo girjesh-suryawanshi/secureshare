@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a peer-to-peer (P2P) file sharing application called "HexaSend.com" built with a modern web stack. The application enables direct file transfers between devices without storing files on a server, using WebRTC for peer-to-peer connections and WebSocket for signaling coordination.
+This is a peer-to-peer (P2P) file sharing application called "HexaSend" built with a modern web stack. The application enables direct file transfers between devices without storing files on a server, using WebRTC for peer-to-peer connections and WebSocket for signaling coordination.
 
 ## User Preferences
 
@@ -28,7 +28,7 @@ Design preference: Clean, minimal, and user-friendly interface. User wants the l
 - Consistent state management for better user experience
 
 **Branding Update (Aug 2025)**
-- Updated application name from "SecureShare" to "HexaSend.com" throughout the entire application
+- Updated application name from "SecureShare" to "HexaSend" throughout the entire application
 - Updated all SEO meta tags, titles, and descriptions with new branding
 - Consistent branding across all user interfaces and documentation
 

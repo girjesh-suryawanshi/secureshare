@@ -6,9 +6,9 @@ export default function About() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-4xl mx-auto py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">About SecureShare - The Ultimate File Sharing Solution</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">About HexaSend - The Ultimate File Sharing Solution</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Learn how SecureShare revolutionizes file transfer with 6-digit code technology. 
+            Learn how HexaSend revolutionizes file transfer with 6-digit code technology. 
             Making peer-to-peer file sharing simple, secure, and accessible for everyone worldwide.
           </p>
         </div>
@@ -18,7 +18,7 @@ export default function About() {
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Mission: Simplifying File Transfer</h2>
               <p className="text-gray-600 leading-relaxed">
-                SecureShare was created to solve the everyday problem of sharing files between devices across different platforms. 
+                HexaSend was created to solve the everyday problem of sharing files between devices across different platforms. 
                 We believe file sharing should be instant, secure, and require no complicated setup, registration, or downloads. 
                 Our peer-to-peer platform enables anyone to transfer documents, photos, videos, and any file type instantly 
                 with just a simple 6-digit alphanumeric code.
@@ -80,7 +80,7 @@ export default function About() {
           <CardContent className="p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Technology</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              SecureShare is built with cutting-edge web technologies to ensure reliability, security, and performance:
+              HexaSend is built with cutting-edge web technologies to ensure reliability, security, and performance:
             </p>
             <ul className="space-y-2 text-gray-600">
               <li>• <strong>WebSocket Technology:</strong> Real-time communication for instant file coordination</li>
