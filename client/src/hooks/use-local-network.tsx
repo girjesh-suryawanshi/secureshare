@@ -303,7 +303,7 @@ export function useLocalNetwork() {
       } else {
         toast({
           title: "No Devices Found",
-          description: "No SecureShare devices found on local network",
+          description: "No HexaSend.com devices found on local network",
         });
       }
     } catch (error) {
