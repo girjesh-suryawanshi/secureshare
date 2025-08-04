@@ -21,10 +21,11 @@ Design preference: Clean, minimal, and user-friendly interface. User wants the l
 - Fixed local network file retrieval bugs for reliable operation
 
 **Bug Fixes (Aug 2025)**
-- Added individual file removal option for multiple file uploads
-- Fixed device scanning to show actual devices instead of fake demo devices
-- Clear all uploaded files when clicking back button from send mode
-- Enhanced file management and user experience improvements
+- Added individual file removal option for multiple file uploads (both Internet and Local Network modes)
+- Fixed device scanning to show actual devices instead of fake demo devices  
+- Clear all uploaded files when clicking back button from send/receive modes
+- Enhanced file management and user experience improvements across all transfer modes
+- Consistent state management for better user experience
 
 **SEO Optimization Complete (Jan 2025)**
 - Comprehensive meta tags with targeted keywords

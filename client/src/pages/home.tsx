@@ -880,7 +880,19 @@ export default function Home() {
                     <div className="bg-white rounded-xl p-4 border border-green-300 mb-6">
                       <div className="grid gap-2 max-h-32 overflow-y-auto">
                         {selectedFiles.map((file, index) => (
-                          <FilePreview key={index} file={file} showSize={true} />
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                            <FilePreview file={file} showSize={true} />
+                            <Button
+                              onClick={() => {
+                                setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="ml-3 text-red-600 hover:bg-red-50 border-red-200 flex-shrink-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -1017,7 +1029,14 @@ export default function Home() {
               onClick={(e) => {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(() => setMode('select'), 100);
+                setTimeout(() => {
+                  setMode('select');
+                  // Clear state when going back from receive mode
+                  setInputCode('');
+                  setReceivedFiles([]);
+                  setIsReceiving(false);
+                  setReceiveProgress(0);
+                }, 100);
               }} 
               className="mb-6 text-lg hover:bg-white/80 transition-all duration-200"
             >
