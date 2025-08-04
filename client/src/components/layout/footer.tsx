@@ -14,7 +14,7 @@ export default function Footer() {
               <div className="p-2 bg-blue-600 rounded-lg">
                 <Share className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">SecureShare</span>
+              <span className="text-xl font-bold text-white">HexaSend</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Simple, secure, and lightning-fast file sharing between devices. 
@@ -89,7 +89,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © {currentYear} SecureShare. All rights reserved.
+              © {currentYear} HexaSend. All rights reserved.
             </p>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
               <span className="text-gray-400 text-sm">Made with ❤️ for secure file sharing</span>
