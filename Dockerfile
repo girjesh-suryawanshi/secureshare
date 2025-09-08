@@ -1,5 +1,5 @@
 # Use Node.js 20 LTS as the base image
-FROM node:20-alpine AS base
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -7,22 +7,16 @@ WORKDIR /app
 # Install dependencies needed for building
 RUN apk add --no-cache libc6-compat
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Build stage
-FROM base AS builder
-
-# Install all dependencies (including dev dependencies)
+# Install ALL dependencies (including dev dependencies for building)
 RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application (frontend + backend)
 RUN npm run build
 
 # Production stage
@@ -35,10 +29,14 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S appuser -u 1001
 
-# Copy built application and node_modules
-COPY --from=builder --chown=appuser:nodejs /app/dist ./dist
-COPY --from=base --chown=appuser:nodejs /app/node_modules ./node_modules
+# Copy package files
 COPY --chown=appuser:nodejs package*.json ./
+
+# Install ALL dependencies in production (needed because server imports vite)
+RUN npm ci && npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder --chown=appuser:nodejs /app/dist ./dist
 
 # Switch to non-root user
 USER appuser
