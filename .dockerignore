@@ -1,0 +1,71 @@
+# Node modules
+node_modules
+npm-debug.log*
+
+# Build outputs
+dist
+build
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Git
+.git
+.gitignore
+
+# Development files
+*.log
+logs
+coverage
+.nyc_output
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Temporary files
+tmp
+temp
+
+# Docker files (don't copy into image)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Replit specific files
+.replit
+.replit.nix
+replit.lock
+
+# Development database files
+*.db
+*.sqlite
+
+# Cache
+.cache
+.parcel-cache
+.next
+
+# Testing
+.jest
+test-results
+playwright-report
+
+# Documentation
+README.md
+docs/
