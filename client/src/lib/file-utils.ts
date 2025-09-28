@@ -118,38 +118,45 @@ export function getFileIconColor(fileName: string): string {
   }
 }
 
-export async function createFileChunks(file: File): Promise<Uint8Array[]> {
-  const chunkSize = 1024 * 1024; // 1MB chunks (64x larger than before)
-  const chunks: Uint8Array[] = [];
+export async function createFileChunks(file: File): Promise<string[]> {
+  const chunkSize = 16 * 1024; // 16KB chunks
+  const chunks: string[] = [];
   
   for (let offset = 0; offset < file.size; offset += chunkSize) {
     const chunk = file.slice(offset, offset + chunkSize);
     const arrayBuffer = await chunk.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    chunks.push(uint8Array);
+    const base64 = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+    chunks.push(base64);
   }
   
   return chunks;
 }
 
 export function reconstructFileFromChunks(
-  chunks: Map<number, Uint8Array>,
+  chunks: Map<number, string>,
   fileName: string,
   totalChunks: number
 ): void {
-  // Directly use binary chunks (no base64 conversion needed)
+  // Convert chunks back to binary data
   const binaryChunks: Uint8Array[] = [];
   
   for (let i = 0; i < totalChunks; i++) {
-    const binaryChunk = chunks.get(i);
-    if (!binaryChunk) {
+    const base64Chunk = chunks.get(i);
+    if (!base64Chunk) {
       console.error(`Missing chunk ${i} for file ${fileName}`);
       return;
     }
-    binaryChunks.push(binaryChunk);
+    
+    const binaryString = atob(base64Chunk);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let j = 0; j < binaryString.length; j++) {
+      bytes[j] = binaryString.charCodeAt(j);
+    }
+    binaryChunks.push(bytes);
   }
   
-  // Combine all chunks efficiently
+  // Combine all chunks
   const totalLength = binaryChunks.reduce((sum, chunk) => sum + chunk.length, 0);
   const combinedArray = new Uint8Array(totalLength);
   let offset = 0;
@@ -170,42 +177,6 @@ export function reconstructFileFromChunks(
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-}
-
-// New optimized file streaming functions for Phase 1
-export async function* streamFileChunks(file: File): AsyncGenerator<{chunk: Uint8Array, index: number, isLast: boolean}> {
-  const chunkSize = 1024 * 1024; // 1MB chunks
-  let index = 0;
-  const totalChunks = Math.ceil(file.size / chunkSize);
-  
-  for (let offset = 0; offset < file.size; offset += chunkSize) {
-    const chunkBlob = file.slice(offset, offset + chunkSize);
-    const arrayBuffer = await chunkBlob.arrayBuffer();
-    const chunk = new Uint8Array(arrayBuffer);
-    
-    yield {
-      chunk,
-      index,
-      isLast: index === totalChunks - 1
-    };
-    index++;
-  }
-}
-
-export function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const binary = Array.from(new Uint8Array(buffer))
-    .map(byte => String.fromCharCode(byte))
-    .join('');
-  return btoa(binary);
-}
-
-export function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
 }
 
 export function generateConnectionId(): string {

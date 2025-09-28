@@ -74,19 +74,6 @@ export default function Home() {
 
   const handleFilesSelected = async (files: File[]) => {
     if (files.length > 0) {
-      // For internet transfers, check file size restrictions
-      if (transferType === 'internet') {
-        const oversizedFiles = files.filter(file => file.size >= 50 * 1024 * 1024);
-        if (oversizedFiles.length > 0) {
-          toast({
-            title: "File Too Large",
-            description: `Internet transfers are limited to files under 50MB. ${oversizedFiles.length} file(s) exceed this limit. Use Local Network mode for larger files.`,
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-      
       setSelectedFiles(files);
       setIsUploading(true);
       setUploadProgress(0);
@@ -112,56 +99,53 @@ export default function Home() {
       const startTime = Date.now();
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
       
-      // Internet transfers - no chunking needed (simple and reliable)
-      // All files use direct base64 upload
-      
-      // Process all files with simple upload (no chunking for internet transfers)
-      const filePromises = files.map(async (file, fileIndex) => {
-        // Register file metadata first
-        sendMessage({
-          type: 'register-file',
-          code: code,
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          fileIndex: fileIndex,
-          totalFiles: files.length,
-          transferType: transferType,
-        });
+      // Process all files with progress tracking
+      const filePromises = files.map((file, index) => {
+        return new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            const base64Data = base64.split(',')[1];
+            
+            // Register each file with the same code but different index
+            sendMessage({
+              type: 'register-file',
+              code: code,
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+              fileIndex: index,
+              totalFiles: files.length,
+              transferType: transferType,
+            });
 
-        // Simple upload for internet files - original reliable method
-        const arrayBuffer = await file.arrayBuffer();
-        
-        // Convert entire file to base64 at once (simple and fast for small files)
-        const uint8Array = new Uint8Array(arrayBuffer);
-        let binaryString = '';
-        for (let i = 0; i < uint8Array.length; i++) {
-          binaryString += String.fromCharCode(uint8Array[i]);
-        }
-        const base64Data = btoa(binaryString);
-        
-        // Send complete file in one message
-        sendMessage({
-          type: 'file-data',
-          code: code,
-          fileName: file.name,
-          data: base64Data,
-          fileIndex: fileIndex,
+            // Send file data
+            sendMessage({
+              type: 'file-data',
+              code: code,
+              fileName: file.name,
+              data: base64Data,
+              fileIndex: index,
+            });
+            
+            // Update progress
+            const progress = ((index + 1) / files.length) * 100;
+            setUploadProgress(progress);
+            
+            // Calculate transfer speed and estimated time
+            const elapsedTime = (Date.now() - startTime) / 1000;
+            const bytesProcessed = files.slice(0, index + 1).reduce((sum, f) => sum + f.size, 0);
+            const speed = bytesProcessed / elapsedTime;
+            const remaining = totalSize - bytesProcessed;
+            const eta = remaining / speed;
+            
+            setTransferSpeed(formatSpeed(speed));
+            setEstimatedTime(eta > 0 ? formatTime(eta) : '');
+            
+            resolve();
+          };
+          reader.readAsDataURL(file);
         });
-        
-        // Update progress
-        const overallProgress = ((fileIndex + 1) / files.length) * 100;
-        setUploadProgress(overallProgress);
-        
-        // Calculate transfer stats
-        const elapsedTime = (Date.now() - startTime) / 1000;
-        const totalProcessedBytes = (fileIndex + 1) * file.size;
-        const speed = totalProcessedBytes / elapsedTime;
-        const remainingBytes = totalSize - totalProcessedBytes;
-        const eta = remainingBytes / speed;
-        
-        setTransferSpeed(formatSpeed(speed));
-        setEstimatedTime(eta > 0 ? formatTime(eta) : '');
       });
 
       // Wait for all files to be processed
@@ -253,12 +237,12 @@ export default function Home() {
             setReceiveProgress(0);
           }, 1000);
           
-          // Add transfer stats for each file (fixed type)
-          processedFiles.forEach((fileData: {name: string, size: number, blob: Blob}) => {
+          // Add transfer stats for each file
+          processedFiles.forEach(file => {
             addTransfer({
               type: 'received',
-              fileName: fileData.name,
-              size: fileData.size
+              fileName: file.name,
+              size: file.size
             });
           });
           
@@ -440,32 +424,20 @@ export default function Home() {
     }
   };
 
-  // Track expected files for proper progress calculation
-  const [expectedTotalFiles, setExpectedTotalFiles] = useState<number>(0);
-  const [filesFoundCount, setFilesFoundCount] = useState<number>(0);
-
   // Set up WebSocket event handlers
   useEffect(() => {
-    onFileAvailable((file: any) => {
-      // Track expected total files and files found
-      setExpectedTotalFiles(file.totalFiles || 1);
-      setFilesFoundCount(prev => {
-        const newCount = prev + 1;
-        // Set initial progress only when first file is found
-        if (newCount === 1) {
-          setReceiveProgress(20);
-        }
-        return newCount;
-      });
-      
+    onFileAvailable((file) => {
+      setReceiveProgress(30);
       toast({
         title: "File Found",
-        description: `Found ${file.fileName} (${Math.round((file.fileSize || 0) / 1024)} KB)`,
+        description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB)`,
       });
     });
 
     onFileData((data: any) => {
       if (data.code === inputCode) {
+        setReceiveProgress(50);
+        
         // Convert base64 back to blob
         const binaryString = atob(data.data);
         const bytes = new Uint8Array(binaryString.length);
@@ -490,30 +462,35 @@ export default function Home() {
 
         setReceivedFiles(prev => {
           const updated = [...prev, newFile];
-          const totalFiles = data.totalFiles || expectedTotalFiles || 1;
-          
-          // Calculate progress based on files received vs expected
-          const progress = 20 + ((updated.length / totalFiles) * 70); // 20% to 90%
-          setReceiveProgress(Math.min(progress, 90));
-          
-          // IMPORTANT: Only mark as complete when we've received ALL expected files
-          // Only complete when we have received data for ALL files
-          if (updated.length === totalFiles) {
-            setReceiveProgress(100);
+          // Check if this is the last file
+          if (data.fileIndex !== undefined && data.totalFiles !== undefined) {
+            const progress = 50 + ((updated.length / data.totalFiles) * 40); // 50-90%
+            setReceiveProgress(progress);
+            
+            if (updated.length === data.totalFiles) {
+              setReceiveProgress(100);
+              setTimeout(() => {
+                setIsReceiving(false);
+                setReceiveProgress(0);
+              }, 1000);
+              
+              toast({
+                title: "All Files Received",
+                description: `${data.totalFiles} file(s) ready to download`,
+              });
+            }
+          } else {
+            setReceiveProgress(90);
             setTimeout(() => {
               setIsReceiving(false);
               setReceiveProgress(0);
-              // Reset tracking state
-              setExpectedTotalFiles(0);
-              setFilesFoundCount(0);
-            }, 1000);
+            }, 500);
             
             toast({
-              title: "All Files Received",
-              description: `${totalFiles} file(s) ready to download`,
+              title: "File Received",
+              description: "File is ready to download",
             });
           }
-          
           return updated;
         });
       }

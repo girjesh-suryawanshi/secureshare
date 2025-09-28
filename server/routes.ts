@@ -6,16 +6,14 @@ import { MessageSchema, type FileRegistry } from "@shared/schema";
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
-  // WebSocket server optimized for large file transfers (Phase 1)
+  // WebSocket server for file sharing with increased payload limits
   const wss = new WebSocketServer({ 
     server: httpServer, 
     path: '/ws',
-    maxPayload: 500 * 1024 * 1024, // 500MB max payload for very large files
-    perMessageDeflate: false, // Disable compression for faster binary transfer
-    clientTracking: true // Enable client tracking for better connection management
+    maxPayload: 100 * 1024 * 1024, // 100MB max payload for large files
+    perMessageDeflate: false // Disable compression for faster transfer
   });
   const fileRegistry = new Map<string, FileRegistry>();
-  const waitingReceivers = new Map<string, WebSocket[]>(); // Track receivers waiting for files
 
   // Clean up old files every 10 minutes (files expire after 1 hour)
   setInterval(() => {
@@ -48,10 +46,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           case 'file-data':
             handleFileData(validatedMessage, ws);
-            break;
-          
-          case 'file-chunk-data':
-            handleFileChunkData(validatedMessage, ws);
             break;
           
           case 'download-success':
@@ -119,9 +113,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileType,
       data: '', // Will be populated by file-data messages
       fileIndex: fileIndex || 0,
-      chunks: new Map() as Map<number, string>, // For chunked uploads
-      receivedChunks: 0,
-      totalChunks: 0,
     };
 
     if (existingFileIndex >= 0) {
@@ -136,32 +127,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       type: 'file-registered',
       code,
     }));
-  }
-
-  // Helper function to notify waiting receivers when a file is complete
-  function notifyWaitingReceivers(code: string, file: any, registry: FileRegistry) {
-    const receivers = waitingReceivers.get(code);
-    if (receivers && receivers.length > 0) {
-      console.log(`Notifying ${receivers.length} waiting receivers for ${file.fileName}`);
-      
-      receivers.forEach(receiverWs => {
-        try {
-          receiverWs.send(JSON.stringify({
-            type: 'file-data',
-            code,
-            fileName: file.fileName,
-            data: file.data,
-            fileIndex: file.fileIndex,
-            totalFiles: registry.totalFiles,
-          }));
-        } catch (error) {
-          console.error('Error notifying receiver:', error);
-        }
-      });
-
-      // Clear the waiting receivers for this file
-      waitingReceivers.delete(code);
-    }
   }
 
   function handleRequestFile(message: any, ws: WebSocket) {
@@ -212,92 +177,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fileIndex: file.fileIndex,
           totalFiles: registry.totalFiles,
         }));
-      } else {
-        // If file is not yet complete (chunks still being assembled), track this receiver
-        console.log(`File ${file.fileName} not yet complete, adding receiver to waiting list...`);
-        
-        // Add this WebSocket to the waiting list for this code
-        if (!waitingReceivers.has(code)) {
-          waitingReceivers.set(code, []);
-        }
-        const receivers = waitingReceivers.get(code)!;
-        if (!receivers.includes(ws)) {
-          receivers.push(ws);
-        }
       }
     });
 
     console.log(`Files requested with code: ${code} (${registry.files.length} files)`);
-  }
-
-  // Handle optimized chunked file data (much faster!)
-  function handleFileChunkData(message: any, ws: WebSocket) {
-    const { code, data, fileName, fileIndex, chunkIndex, totalChunks, isLastChunk } = message;
-    
-    if (!code || !data || fileName === undefined) {
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Code, data, and fileName are required',
-      }));
-      return;
-    }
-
-    const registry = fileRegistry.get(code);
-    if (!registry) {
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'File registry not found',
-      }));
-      return;
-    }
-
-    // Find the file in the registry (using any to bypass type issues temporarily)
-    const file: any = registry.files.find(f => f.fileIndex === (fileIndex || 0));
-    if (!file) {
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'File not found in registry',
-      }));
-      return;
-    }
-
-    // Initialize chunks map if needed
-    if (!file.chunks) {
-      file.chunks = new Map();
-      file.totalChunks = totalChunks;
-      file.receivedChunks = 0;
-    }
-
-    // Store the chunk
-    file.chunks.set(chunkIndex, data);
-    file.receivedChunks = (file.receivedChunks || 0) + 1;
-
-    console.log(`Chunk ${chunkIndex}/${totalChunks} received for ${fileName} (${file.receivedChunks}/${file.totalChunks})`);
-
-    // If all chunks received, assemble the file
-    if (file.receivedChunks === file.totalChunks) {
-      const sortedChunks = Array.from(file.chunks.entries())
-        .sort((a: any, b: any) => a[0] - b[0])
-        .map((entry: any) => entry[1]);
-      
-      file.data = sortedChunks.join('');
-      delete file.chunks; // Clean up chunks to save memory
-      delete file.totalChunks;
-      delete file.receivedChunks;
-      
-      console.log(`File assembled: ${fileName} - ${(file.fileSize / 1024 / 1024).toFixed(2)}MB`);
-      
-      // Notify the sender that file is stored
-      ws.send(JSON.stringify({
-        type: 'file-stored',
-        code,
-        fileIndex: fileIndex,
-        fileName: fileName
-      }));
-
-      // CRITICAL FIX: Notify all waiting receivers that this file is now available
-      notifyWaitingReceivers(code, file, registry);
-    }
   }
 
   function handleFileData(message: any, ws: WebSocket) {
@@ -332,13 +215,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`File not found in registry: ${code} - ${fileName}`);
     }
     
-    // Find file info to include fileIndex
-    const file = registry.files.find(f => f.fileName === fileName);
     ws.send(JSON.stringify({
       type: 'file-stored',
       code,
-      fileIndex: file?.fileIndex || 0,
-      fileName: fileName
     }));
   }
 
@@ -515,8 +394,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // If all chunks received, assemble the file
     if (file.receivedChunks === file.totalChunks) {
       const sortedChunks = Array.from(file.chunks.entries())
-        .sort((a: any, b: any) => a[0] - b[0])
-        .map((entry: any) => entry[1]);
+        .sort(([a], [b]) => a - b)
+        .map(([, data]) => data);
       
       file.data = sortedChunks.join('');
       delete file.chunks; // Clean up chunks to save memory
