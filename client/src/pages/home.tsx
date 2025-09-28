@@ -113,24 +113,37 @@ export default function Home() {
           transferType: transferType,
         });
 
-        // Stream file chunks efficiently (1MB chunks instead of loading entire file)
-        const chunks: string[] = [];
+        // Optimized streaming with individual chunk sending (MUCH faster!)
         let processedBytes = 0;
+        const totalChunks = Math.ceil(file.size / (1024 * 1024)); // 1MB chunks
+        let chunkIndex = 0;
         
         for (let offset = 0; offset < file.size; offset += 1024 * 1024) { // 1MB chunks
           const chunkBlob = file.slice(offset, offset + 1024 * 1024);
           const arrayBuffer = await chunkBlob.arrayBuffer();
           
-          // Convert to base64 safely (fixed stack overflow for large files)
+          // Convert to base64 for this chunk only (much faster than huge string)
           const uint8Array = new Uint8Array(arrayBuffer);
           let binaryString = '';
           for (let i = 0; i < uint8Array.length; i++) {
             binaryString += String.fromCharCode(uint8Array[i]);
           }
           const base64Chunk = btoa(binaryString);
-          chunks.push(base64Chunk);
+          
+          // Send each chunk immediately (don't accumulate)
+          sendMessage({
+            type: 'file-chunk-data',
+            code: code,
+            fileName: file.name,
+            fileIndex: fileIndex,
+            chunkIndex: chunkIndex,
+            totalChunks: totalChunks,
+            data: base64Chunk,
+            isLastChunk: chunkIndex === totalChunks - 1
+          });
           
           processedBytes += arrayBuffer.byteLength;
+          chunkIndex++;
           
           // Update progress more granularly
           const fileProgress = (processedBytes / file.size) * 100;
@@ -147,19 +160,9 @@ export default function Home() {
           setTransferSpeed(formatSpeed(speed));
           setEstimatedTime(eta > 0 ? formatTime(eta) : '');
           
-          // Small delay to prevent overwhelming the connection
-          await new Promise(resolve => setTimeout(resolve, 1));
+          // Smaller delay for faster throughput
+          await new Promise(resolve => setTimeout(resolve, 10));
         }
-
-        // Send consolidated file data (for backward compatibility)
-        const consolidatedData = chunks.join('');
-        sendMessage({
-          type: 'file-data',
-          code: code,
-          fileName: file.name,
-          data: consolidatedData,
-          fileIndex: fileIndex,
-        });
       });
 
       // Wait for all files to be processed

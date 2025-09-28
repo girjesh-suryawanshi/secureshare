@@ -49,6 +49,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             handleFileData(validatedMessage, ws);
             break;
           
+          case 'file-chunk-data':
+            handleFileChunkData(validatedMessage, ws);
+            break;
+          
           case 'download-success':
             handleDownloadAck(validatedMessage, 'success');
             break;
@@ -114,6 +118,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileType,
       data: '', // Will be populated by file-data messages
       fileIndex: fileIndex || 0,
+      chunks: new Map() as Map<number, string>, // For chunked uploads
+      receivedChunks: 0,
+      totalChunks: 0,
     };
 
     if (existingFileIndex >= 0) {
@@ -182,6 +189,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     console.log(`Files requested with code: ${code} (${registry.files.length} files)`);
+  }
+
+  // Handle optimized chunked file data (much faster!)
+  function handleFileChunkData(message: any, ws: WebSocket) {
+    const { code, data, fileName, fileIndex, chunkIndex, totalChunks, isLastChunk } = message;
+    
+    if (!code || !data || fileName === undefined) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Code, data, and fileName are required',
+      }));
+      return;
+    }
+
+    const registry = fileRegistry.get(code);
+    if (!registry) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'File registry not found',
+      }));
+      return;
+    }
+
+    // Find the file in the registry (using any to bypass type issues temporarily)
+    const file: any = registry.files.find(f => f.fileIndex === (fileIndex || 0));
+    if (!file) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'File not found in registry',
+      }));
+      return;
+    }
+
+    // Initialize chunks map if needed
+    if (!file.chunks) {
+      file.chunks = new Map();
+      file.totalChunks = totalChunks;
+      file.receivedChunks = 0;
+    }
+
+    // Store the chunk
+    file.chunks.set(chunkIndex, data);
+    file.receivedChunks = (file.receivedChunks || 0) + 1;
+
+    console.log(`Chunk ${chunkIndex}/${totalChunks} received for ${fileName} (${file.receivedChunks}/${file.totalChunks})`);
+
+    // If all chunks received, assemble the file
+    if (file.receivedChunks === file.totalChunks) {
+      const sortedChunks = Array.from(file.chunks.entries())
+        .sort(([a]: [number, any], [b]: [number, any]) => a - b)
+        .map(([, data]: [number, any]) => data);
+      
+      file.data = sortedChunks.join('');
+      delete file.chunks; // Clean up chunks to save memory
+      delete file.totalChunks;
+      delete file.receivedChunks;
+      
+      console.log(`File assembled: ${fileName} - ${(file.fileSize / 1024 / 1024).toFixed(2)}MB`);
+      
+      ws.send(JSON.stringify({
+        type: 'file-stored',
+        code,
+      }));
+    }
   }
 
   function handleFileData(message: any, ws: WebSocket) {
