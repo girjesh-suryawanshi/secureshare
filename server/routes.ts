@@ -71,12 +71,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('close', () => {
       console.log('Client disconnected');
       // Find and notify any receivers waiting for files from this sender
-      for (const [code, registry] of fileRegistry.entries()) {
+      for (const [code, registry] of Array.from(fileRegistry.entries())) {
         if (registry.senderWs === ws) {
           console.log(`Sender disconnected for code: ${code}`);
           // Notify all receivers waiting for this code
           if (registry.requesters && registry.requesters.length > 0) {
-            registry.requesters.forEach(requesterWs => {
+            registry.requesters.forEach((requesterWs: any) => {
               if (requesterWs.readyState === WebSocket.OPEN) {
                 requesterWs.send(JSON.stringify({
                   type: 'sender-disconnected',
@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send file data to any pending requesters
       if (registry.requesters && registry.requesters.length > 0) {
-        registry.requesters.forEach(requesterWs => {
+        registry.requesters.forEach((requesterWs: any) => {
           if (requesterWs.readyState === WebSocket.OPEN) {
             requesterWs.send(JSON.stringify({
               type: 'file-data',

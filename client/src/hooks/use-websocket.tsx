@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 export interface WebSocketHook {
   isConnected: boolean;
   sendMessage: (message: any) => void;
-  onFileAvailable: (callback: (file: { code: string; fileName: string; fileSize: number; fileType: string }) => void) => void;
+  onFileAvailable: (callback: (file: { code: string; fileName: string; fileSize: number; fileType: string; fileIndex?: number; totalFiles?: number }) => void) => void;
   onFileData: (callback: (data: { code: string; data: string }) => void) => void;
   onFileNotFound: (callback: (code: string) => void) => void;
   onDownloadAck: (callback: (data: { status: string; message: string; code: string }) => void) => void;

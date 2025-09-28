@@ -211,26 +211,47 @@ export default function Home() {
             throw new Error('No valid file data found');
           }
           
-          // Convert files to blobs and set as received files
-          const processedFiles = validFiles.map((file: any) => {
+          // Set expected files count for local transfers
+          setExpectedFilesCount(validFiles.length);
+          setReceivedFilesCount(0);
+          
+          // Process files one by one to show progress
+          const processedFiles = [];
+          for (let i = 0; i < validFiles.length; i++) {
+            const file = validFiles[i];
+            setReceiveProgress(60 + ((i + 1) / validFiles.length) * 30); // 60-90%
+            setReceivedFilesCount(i + 1);
+            
             try {
               // Decode base64 data to binary
               const binaryString = atob(file.data);
               const bytes = new Uint8Array(binaryString.length);
-              for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
+              for (let j = 0; j < binaryString.length; j++) {
+                bytes[j] = binaryString.charCodeAt(j);
               }
               
-              return {
+              processedFiles.push({
                 name: file.fileName,
                 size: file.fileSize,
                 blob: new Blob([bytes], { type: file.fileType || 'application/octet-stream' })
-              };
+              });
+              
+              // Show progress for each file
+              if (validFiles.length > 1) {
+                toast({
+                  title: `📥 File ${i + 1}/${validFiles.length} Processed`,
+                  description: `${file.fileName} - ${validFiles.length - (i + 1)} files remaining`,
+                });
+              }
             } catch (error) {
               console.error(`Error processing file ${file.fileName}:`, error);
               throw error;
             }
-          });
+          }
+          
+          // Old code for reference - replaced with progressive processing above
+          /*const processedFiles = validFiles.map((file: any) => {
+          */
           
           setReceivedFiles(processedFiles);
           setReceiveProgress(100);
