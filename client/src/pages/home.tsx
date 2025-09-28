@@ -36,7 +36,7 @@ export default function Home() {
   const [isReceiving, setIsReceiving] = useState<boolean>(false);
   const [acknowledgments, setAcknowledgments] = useState<Array<{id: string, message: string, status: string, timestamp: Date}>>([]);
 
-  const { isConnected, sendMessage, onFileAvailable, onFileData, onFileNotFound, onDownloadAck } = useWebSocket();
+  const { isConnected, sendMessage, onFileAvailable, onFileData, onFileNotFound, onDownloadAck, onSenderDisconnected } = useWebSocket();
   const { 
     isScanning, 
     availableDevices, 
@@ -546,7 +546,22 @@ export default function Home() {
         variant: data.status === 'success' ? "default" : "destructive",
       });
     });
-  }, [onFileAvailable, onFileData, onFileNotFound, onDownloadAck, inputCode, toast]);
+
+    onSenderDisconnected((data: any) => {
+      console.log('Sender disconnected:', data);
+      setIsReceiving(false);
+      setReceiveProgress(0);
+      setReceivedFiles([]);
+      setExpectedFilesCount(0);
+      setReceivedFilesCount(0);
+      
+      toast({
+        title: "❌ Sender Disconnected",
+        description: "The sender closed their browser. Files are no longer available. Please ask them to share again.",
+        variant: "destructive",
+      });
+    });
+  }, [onFileAvailable, onFileData, onFileNotFound, onDownloadAck, onSenderDisconnected, inputCode, toast]);
 
   if (mode === 'select') {
     return (

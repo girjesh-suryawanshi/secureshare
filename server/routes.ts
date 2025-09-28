@@ -70,6 +70,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     ws.on('close', () => {
       console.log('Client disconnected');
+      // Find and notify any receivers waiting for files from this sender
+      for (const [code, registry] of fileRegistry.entries()) {
+        if (registry.senderWs === ws) {
+          console.log(`Sender disconnected for code: ${code}`);
+          // Notify all receivers waiting for this code
+          if (registry.requesters && registry.requesters.length > 0) {
+            registry.requesters.forEach(requesterWs => {
+              if (requesterWs.readyState === WebSocket.OPEN) {
+                requesterWs.send(JSON.stringify({
+                  type: 'sender-disconnected',
+                  code: code,
+                  message: 'The sender has disconnected. Please try requesting the files again.'
+                }));
+                console.log(`Notified receiver of sender disconnection for code: ${code}`);
+              }
+            });
+          }
+          // Clean up the registry entry since sender is gone
+          fileRegistry.delete(code);
+          console.log(`Cleaned up registry for disconnected sender: ${code}`);
+        }
+      }
     });
 
     ws.on('error', (error) => {

@@ -8,6 +8,7 @@ export interface WebSocketHook {
   onFileData: (callback: (data: { code: string; data: string }) => void) => void;
   onFileNotFound: (callback: (code: string) => void) => void;
   onDownloadAck: (callback: (data: { status: string; message: string; code: string }) => void) => void;
+  onSenderDisconnected: (callback: (data: { code: string; message: string }) => void) => void;
 }
 
 export function useWebSocket(): WebSocketHook {
@@ -18,6 +19,7 @@ export function useWebSocket(): WebSocketHook {
   const fileDataCallbackRef = useRef<((data: any) => void) | null>(null);
   const fileNotFoundCallbackRef = useRef<((code: string) => void) | null>(null);
   const downloadAckCallbackRef = useRef<((data: any) => void) | null>(null);
+  const senderDisconnectedCallbackRef = useRef<((data: any) => void) | null>(null);
   const { toast } = useToast();
 
   const connect = useCallback(() => {
@@ -69,6 +71,12 @@ export function useWebSocket(): WebSocketHook {
             case 'download-acknowledgment':
               if (downloadAckCallbackRef.current) {
                 downloadAckCallbackRef.current(message);
+              }
+              break;
+
+            case 'sender-disconnected':
+              if (senderDisconnectedCallbackRef.current) {
+                senderDisconnectedCallbackRef.current(message);
               }
               break;
 
@@ -131,6 +139,10 @@ export function useWebSocket(): WebSocketHook {
     downloadAckCallbackRef.current = callback;
   }, []);
 
+  const onSenderDisconnected = useCallback((callback: (data: any) => void) => {
+    senderDisconnectedCallbackRef.current = callback;
+  }, []);
+
   useEffect(() => {
     connect();
 
@@ -151,5 +163,6 @@ export function useWebSocket(): WebSocketHook {
     onFileData,
     onFileNotFound,
     onDownloadAck,
+    onSenderDisconnected,
   };
 }
