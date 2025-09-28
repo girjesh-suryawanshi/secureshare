@@ -39,6 +39,7 @@ export interface FileRegistry {
   createdAt: Date;
   transferType: TransferType;
   senderWs?: any; // WebSocket connection of the sender
+  requesters?: any[]; // WebSocket connections of requesters waiting for files
   localIp?: string; // for local transfers
   localPort?: number; // for local transfers
   deviceName?: string; // device identifier

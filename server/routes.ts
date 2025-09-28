@@ -155,6 +155,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     console.log(`Registry found for code: ${code}, files: ${registry.files.length}, totalFiles: ${registry.totalFiles}`);
 
+    // Store the requester's WebSocket for sending data when files arrive
+    if (!registry.requesters) {
+      registry.requesters = [];
+    }
+    registry.requesters.push(ws);
+
     // Send file metadata for all files
     registry.files.forEach(file => {
       ws.send(JSON.stringify({
@@ -211,6 +217,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (fileToUpdate) {
       fileToUpdate.data = data;
       console.log(`File data stored for code: ${code} - ${fileName} (${fileIndex + 1}/${registry.totalFiles})`);
+      
+      // Send file data to any pending requesters
+      if (registry.requesters && registry.requesters.length > 0) {
+        registry.requesters.forEach(requesterWs => {
+          if (requesterWs.readyState === WebSocket.OPEN) {
+            requesterWs.send(JSON.stringify({
+              type: 'file-data',
+              code,
+              fileName: fileToUpdate.fileName,
+              data: fileToUpdate.data,
+              fileIndex: fileToUpdate.fileIndex,
+              totalFiles: registry.totalFiles,
+            }));
+            console.log(`Sent late-arriving file data to requester: ${fileName}`);
+          }
+        });
+      }
     } else {
       console.log(`File not found in registry: ${code} - ${fileName}`);
     }
