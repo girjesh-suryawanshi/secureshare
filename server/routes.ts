@@ -6,12 +6,13 @@ import { MessageSchema, type FileRegistry } from "@shared/schema";
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
-  // WebSocket server for file sharing with increased payload limits
+  // WebSocket server optimized for large file transfers (Phase 1)
   const wss = new WebSocketServer({ 
     server: httpServer, 
     path: '/ws',
-    maxPayload: 100 * 1024 * 1024, // 100MB max payload for large files
-    perMessageDeflate: false // Disable compression for faster transfer
+    maxPayload: 500 * 1024 * 1024, // 500MB max payload for very large files
+    perMessageDeflate: false, // Disable compression for faster binary transfer
+    clientTracking: true // Enable client tracking for better connection management
   });
   const fileRegistry = new Map<string, FileRegistry>();
 
@@ -394,8 +395,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // If all chunks received, assemble the file
     if (file.receivedChunks === file.totalChunks) {
       const sortedChunks = Array.from(file.chunks.entries())
-        .sort(([a], [b]) => a - b)
-        .map(([, data]) => data);
+        .sort((a: [number, any], b: [number, any]) => a[0] - b[0])
+        .map((entry: [number, any]) => entry[1]);
       
       file.data = sortedChunks.join('');
       delete file.chunks; // Clean up chunks to save memory

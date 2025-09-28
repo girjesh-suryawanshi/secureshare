@@ -99,52 +99,62 @@ export default function Home() {
       const startTime = Date.now();
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
       
-      // Process all files with progress tracking
-      const filePromises = files.map((file, index) => {
-        return new Promise<void>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64 = reader.result as string;
-            const base64Data = base64.split(',')[1];
-            
-            // Register each file with the same code but different index
-            sendMessage({
-              type: 'register-file',
-              code: code,
-              fileName: file.name,
-              fileSize: file.size,
-              fileType: file.type,
-              fileIndex: index,
-              totalFiles: files.length,
-              transferType: transferType,
-            });
+      // Process all files with optimized streaming (Phase 1)
+      const filePromises = files.map(async (file, fileIndex) => {
+        // Register file metadata first
+        sendMessage({
+          type: 'register-file',
+          code: code,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          fileIndex: fileIndex,
+          totalFiles: files.length,
+          transferType: transferType,
+        });
 
-            // Send file data
-            sendMessage({
-              type: 'file-data',
-              code: code,
-              fileName: file.name,
-              data: base64Data,
-              fileIndex: index,
-            });
-            
-            // Update progress
-            const progress = ((index + 1) / files.length) * 100;
-            setUploadProgress(progress);
-            
-            // Calculate transfer speed and estimated time
-            const elapsedTime = (Date.now() - startTime) / 1000;
-            const bytesProcessed = files.slice(0, index + 1).reduce((sum, f) => sum + f.size, 0);
-            const speed = bytesProcessed / elapsedTime;
-            const remaining = totalSize - bytesProcessed;
-            const eta = remaining / speed;
-            
-            setTransferSpeed(formatSpeed(speed));
-            setEstimatedTime(eta > 0 ? formatTime(eta) : '');
-            
-            resolve();
-          };
-          reader.readAsDataURL(file);
+        // Stream file chunks efficiently (1MB chunks instead of loading entire file)
+        const chunks: string[] = [];
+        let processedBytes = 0;
+        
+        for (let offset = 0; offset < file.size; offset += 1024 * 1024) { // 1MB chunks
+          const chunkBlob = file.slice(offset, offset + 1024 * 1024);
+          const arrayBuffer = await chunkBlob.arrayBuffer();
+          
+          // Convert to base64 only when needed for WebSocket
+          const uint8Array = new Uint8Array(arrayBuffer);
+          const base64Chunk = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+          chunks.push(base64Chunk);
+          
+          processedBytes += arrayBuffer.byteLength;
+          
+          // Update progress more granularly
+          const fileProgress = (processedBytes / file.size) * 100;
+          const overallProgress = ((fileIndex * 100 + fileProgress) / files.length);
+          setUploadProgress(overallProgress);
+          
+          // Calculate real-time transfer stats
+          const elapsedTime = (Date.now() - startTime) / 1000;
+          const totalProcessedBytes = (fileIndex * files[fileIndex]?.size || 0) + processedBytes;
+          const speed = totalProcessedBytes / elapsedTime;
+          const remainingBytes = totalSize - totalProcessedBytes;
+          const eta = remainingBytes / speed;
+          
+          setTransferSpeed(formatSpeed(speed));
+          setEstimatedTime(eta > 0 ? formatTime(eta) : '');
+          
+          // Small delay to prevent overwhelming the connection
+          await new Promise(resolve => setTimeout(resolve, 1));
+        }
+
+        // Send consolidated file data (for backward compatibility)
+        const consolidatedData = chunks.join('');
+        sendMessage({
+          type: 'file-data',
+          code: code,
+          fileName: file.name,
+          data: consolidatedData,
+          fileIndex: fileIndex,
         });
       });
 
@@ -237,12 +247,12 @@ export default function Home() {
             setReceiveProgress(0);
           }, 1000);
           
-          // Add transfer stats for each file
-          processedFiles.forEach(file => {
+          // Add transfer stats for each file (fixed type)
+          processedFiles.forEach((fileData: {name: string, size: number, blob: Blob}) => {
             addTransfer({
               type: 'received',
-              fileName: file.name,
-              size: file.size
+              fileName: fileData.name,
+              size: fileData.size
             });
           });
           
