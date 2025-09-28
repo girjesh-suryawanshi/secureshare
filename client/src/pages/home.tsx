@@ -112,16 +112,10 @@ export default function Home() {
       const startTime = Date.now();
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
       
-      // Smart transfer method selection
-      const shouldUseChunkedUpload = (file: File) => {
-        // Only use chunking for local network transfers
-        return transferType === 'local';
-      };
+      // Internet transfers - no chunking needed (simple and reliable)
+      // All files use direct base64 upload
       
-      // For now, let's add a delay to ensure chunked files complete (local network only)
-      let hasChunkedFiles = transferType === 'local';
-      
-      // Process all files with smart method selection
+      // Process all files with simple upload (no chunking for internet transfers)
       const filePromises = files.map(async (file, fileIndex) => {
         // Register file metadata first
         sendMessage({
@@ -135,102 +129,43 @@ export default function Home() {
           transferType: transferType,
         });
 
-        if (shouldUseChunkedUpload(file)) {
-          // Chunked upload for local network OR large files (≥30MB)
-          let processedBytes = 0;
-          const totalChunks = Math.ceil(file.size / (1024 * 1024)); // 1MB chunks
-          let chunkIndex = 0;
-          
-          for (let offset = 0; offset < file.size; offset += 1024 * 1024) { // 1MB chunks
-            const chunkBlob = file.slice(offset, offset + 1024 * 1024);
-            const arrayBuffer = await chunkBlob.arrayBuffer();
-            
-            // Convert to base64 for this chunk only
-            const uint8Array = new Uint8Array(arrayBuffer);
-            let binaryString = '';
-            for (let i = 0; i < uint8Array.length; i++) {
-              binaryString += String.fromCharCode(uint8Array[i]);
-            }
-            const base64Chunk = btoa(binaryString);
-            
-            // Send each chunk immediately
-            sendMessage({
-              type: 'file-chunk-data',
-              code: code,
-              fileName: file.name,
-              fileIndex: fileIndex,
-              chunkIndex: chunkIndex,
-              totalChunks: totalChunks,
-              data: base64Chunk,
-              isLastChunk: chunkIndex === totalChunks - 1
-            });
-            
-            processedBytes += arrayBuffer.byteLength;
-            chunkIndex++;
-            
-            // Update progress
-            const fileProgress = (processedBytes / file.size) * 100;
-            const overallProgress = ((fileIndex * 100 + fileProgress) / files.length);
-            setUploadProgress(overallProgress);
-            
-            // Calculate transfer stats
-            const elapsedTime = (Date.now() - startTime) / 1000;
-            const totalProcessedBytes = (fileIndex * files[fileIndex]?.size || 0) + processedBytes;
-            const speed = totalProcessedBytes / elapsedTime;
-            const remainingBytes = totalSize - totalProcessedBytes;
-            const eta = remainingBytes / speed;
-            
-            setTransferSpeed(formatSpeed(speed));
-            setEstimatedTime(eta > 0 ? formatTime(eta) : '');
-            
-            // Small delay for throughput
-            await new Promise(resolve => setTimeout(resolve, 10));
-          }
-        } else {
-          // Simple upload for internet files - original reliable method
-          const arrayBuffer = await file.arrayBuffer();
-          
-          // Convert entire file to base64 at once (simple and fast for small files)
-          const uint8Array = new Uint8Array(arrayBuffer);
-          let binaryString = '';
-          for (let i = 0; i < uint8Array.length; i++) {
-            binaryString += String.fromCharCode(uint8Array[i]);
-          }
-          const base64Data = btoa(binaryString);
-          
-          // Send complete file in one message
-          sendMessage({
-            type: 'file-data',
-            code: code,
-            fileName: file.name,
-            data: base64Data,
-            fileIndex: fileIndex,
-          });
-          
-          // Update progress
-          const overallProgress = ((fileIndex + 1) / files.length) * 100;
-          setUploadProgress(overallProgress);
-          
-          // Calculate transfer stats
-          const elapsedTime = (Date.now() - startTime) / 1000;
-          const totalProcessedBytes = (fileIndex + 1) * file.size;
-          const speed = totalProcessedBytes / elapsedTime;
-          const remainingBytes = totalSize - totalProcessedBytes;
-          const eta = remainingBytes / speed;
-          
-          setTransferSpeed(formatSpeed(speed));
-          setEstimatedTime(eta > 0 ? formatTime(eta) : '');
+        // Simple upload for internet files - original reliable method
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Convert entire file to base64 at once (simple and fast for small files)
+        const uint8Array = new Uint8Array(arrayBuffer);
+        let binaryString = '';
+        for (let i = 0; i < uint8Array.length; i++) {
+          binaryString += String.fromCharCode(uint8Array[i]);
         }
+        const base64Data = btoa(binaryString);
+        
+        // Send complete file in one message
+        sendMessage({
+          type: 'file-data',
+          code: code,
+          fileName: file.name,
+          data: base64Data,
+          fileIndex: fileIndex,
+        });
+        
+        // Update progress
+        const overallProgress = ((fileIndex + 1) / files.length) * 100;
+        setUploadProgress(overallProgress);
+        
+        // Calculate transfer stats
+        const elapsedTime = (Date.now() - startTime) / 1000;
+        const totalProcessedBytes = (fileIndex + 1) * file.size;
+        const speed = totalProcessedBytes / elapsedTime;
+        const remainingBytes = totalSize - totalProcessedBytes;
+        const eta = remainingBytes / speed;
+        
+        setTransferSpeed(formatSpeed(speed));
+        setEstimatedTime(eta > 0 ? formatTime(eta) : '');
       });
 
       // Wait for all files to be processed
       await Promise.all(filePromises);
-      
-      // TEMPORARY: Add delay for chunked uploads to complete (local network only)
-      if (hasChunkedFiles) {
-        console.log('Waiting extra time for chunked files to complete...');
-        await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
-      }
       
       setIsUploading(false);
       setFilesReady(true);
