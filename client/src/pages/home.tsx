@@ -99,7 +99,13 @@ export default function Home() {
       const startTime = Date.now();
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
       
-      // Process all files with optimized streaming (Phase 1)
+      // Smart transfer method selection
+      const shouldUseChunkedUpload = (file: File) => {
+        // Use chunked for local network OR large files (≥30MB)
+        return transferType === 'local' || file.size >= 30 * 1024 * 1024;
+      };
+      
+      // Process all files with smart method selection
       const filePromises = files.map(async (file, fileIndex) => {
         // Register file metadata first
         sendMessage({
@@ -113,55 +119,91 @@ export default function Home() {
           transferType: transferType,
         });
 
-        // Optimized streaming with individual chunk sending (MUCH faster!)
-        let processedBytes = 0;
-        const totalChunks = Math.ceil(file.size / (1024 * 1024)); // 1MB chunks
-        let chunkIndex = 0;
-        
-        for (let offset = 0; offset < file.size; offset += 1024 * 1024) { // 1MB chunks
-          const chunkBlob = file.slice(offset, offset + 1024 * 1024);
-          const arrayBuffer = await chunkBlob.arrayBuffer();
+        if (shouldUseChunkedUpload(file)) {
+          // Chunked upload for local network OR large files (≥30MB)
+          let processedBytes = 0;
+          const totalChunks = Math.ceil(file.size / (1024 * 1024)); // 1MB chunks
+          let chunkIndex = 0;
           
-          // Convert to base64 for this chunk only (much faster than huge string)
+          for (let offset = 0; offset < file.size; offset += 1024 * 1024) { // 1MB chunks
+            const chunkBlob = file.slice(offset, offset + 1024 * 1024);
+            const arrayBuffer = await chunkBlob.arrayBuffer();
+            
+            // Convert to base64 for this chunk only
+            const uint8Array = new Uint8Array(arrayBuffer);
+            let binaryString = '';
+            for (let i = 0; i < uint8Array.length; i++) {
+              binaryString += String.fromCharCode(uint8Array[i]);
+            }
+            const base64Chunk = btoa(binaryString);
+            
+            // Send each chunk immediately
+            sendMessage({
+              type: 'file-chunk-data',
+              code: code,
+              fileName: file.name,
+              fileIndex: fileIndex,
+              chunkIndex: chunkIndex,
+              totalChunks: totalChunks,
+              data: base64Chunk,
+              isLastChunk: chunkIndex === totalChunks - 1
+            });
+            
+            processedBytes += arrayBuffer.byteLength;
+            chunkIndex++;
+            
+            // Update progress
+            const fileProgress = (processedBytes / file.size) * 100;
+            const overallProgress = ((fileIndex * 100 + fileProgress) / files.length);
+            setUploadProgress(overallProgress);
+            
+            // Calculate transfer stats
+            const elapsedTime = (Date.now() - startTime) / 1000;
+            const totalProcessedBytes = (fileIndex * files[fileIndex]?.size || 0) + processedBytes;
+            const speed = totalProcessedBytes / elapsedTime;
+            const remainingBytes = totalSize - totalProcessedBytes;
+            const eta = remainingBytes / speed;
+            
+            setTransferSpeed(formatSpeed(speed));
+            setEstimatedTime(eta > 0 ? formatTime(eta) : '');
+            
+            // Small delay for throughput
+            await new Promise(resolve => setTimeout(resolve, 10));
+          }
+        } else {
+          // Simple upload for small internet files (<30MB) - original reliable method
+          const arrayBuffer = await file.arrayBuffer();
+          
+          // Convert entire file to base64 at once (simple and fast for small files)
           const uint8Array = new Uint8Array(arrayBuffer);
           let binaryString = '';
           for (let i = 0; i < uint8Array.length; i++) {
             binaryString += String.fromCharCode(uint8Array[i]);
           }
-          const base64Chunk = btoa(binaryString);
+          const base64Data = btoa(binaryString);
           
-          // Send each chunk immediately (don't accumulate)
+          // Send complete file in one message
           sendMessage({
-            type: 'file-chunk-data',
+            type: 'file-data',
             code: code,
             fileName: file.name,
+            data: base64Data,
             fileIndex: fileIndex,
-            chunkIndex: chunkIndex,
-            totalChunks: totalChunks,
-            data: base64Chunk,
-            isLastChunk: chunkIndex === totalChunks - 1
           });
           
-          processedBytes += arrayBuffer.byteLength;
-          chunkIndex++;
-          
-          // Update progress more granularly
-          const fileProgress = (processedBytes / file.size) * 100;
-          const overallProgress = ((fileIndex * 100 + fileProgress) / files.length);
+          // Update progress
+          const overallProgress = ((fileIndex + 1) / files.length) * 100;
           setUploadProgress(overallProgress);
           
-          // Calculate real-time transfer stats
+          // Calculate transfer stats
           const elapsedTime = (Date.now() - startTime) / 1000;
-          const totalProcessedBytes = (fileIndex * files[fileIndex]?.size || 0) + processedBytes;
+          const totalProcessedBytes = (fileIndex + 1) * file.size;
           const speed = totalProcessedBytes / elapsedTime;
           const remainingBytes = totalSize - totalProcessedBytes;
           const eta = remainingBytes / speed;
           
           setTransferSpeed(formatSpeed(speed));
           setEstimatedTime(eta > 0 ? formatTime(eta) : '');
-          
-          // Smaller delay for faster throughput
-          await new Promise(resolve => setTimeout(resolve, 10));
         }
       });
 
