@@ -15,6 +15,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     clientTracking: true // Enable client tracking for better connection management
   });
   const fileRegistry = new Map<string, FileRegistry>();
+  const waitingReceivers = new Map<string, WebSocket[]>(); // Track receivers waiting for files
 
   // Clean up old files every 10 minutes (files expire after 1 hour)
   setInterval(() => {
@@ -137,6 +138,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }));
   }
 
+  // Helper function to notify waiting receivers when a file is complete
+  function notifyWaitingReceivers(code: string, file: any, registry: FileRegistry) {
+    const receivers = waitingReceivers.get(code);
+    if (receivers && receivers.length > 0) {
+      console.log(`Notifying ${receivers.length} waiting receivers for ${file.fileName}`);
+      
+      receivers.forEach(receiverWs => {
+        try {
+          receiverWs.send(JSON.stringify({
+            type: 'file-data',
+            code,
+            fileName: file.fileName,
+            data: file.data,
+            fileIndex: file.fileIndex,
+            totalFiles: registry.totalFiles,
+          }));
+        } catch (error) {
+          console.error('Error notifying receiver:', error);
+        }
+      });
+
+      // Clear the waiting receivers for this file
+      waitingReceivers.delete(code);
+    }
+  }
+
   function handleRequestFile(message: any, ws: WebSocket) {
     const { code } = message;
     
@@ -185,6 +212,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fileIndex: file.fileIndex,
           totalFiles: registry.totalFiles,
         }));
+      } else {
+        // If file is not yet complete (chunks still being assembled), track this receiver
+        console.log(`File ${file.fileName} not yet complete, adding receiver to waiting list...`);
+        
+        // Add this WebSocket to the waiting list for this code
+        if (!waitingReceivers.has(code)) {
+          waitingReceivers.set(code, []);
+        }
+        const receivers = waitingReceivers.get(code)!;
+        if (!receivers.includes(ws)) {
+          receivers.push(ws);
+        }
       }
     });
 
@@ -248,10 +287,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`File assembled: ${fileName} - ${(file.fileSize / 1024 / 1024).toFixed(2)}MB`);
       
+      // Notify the sender that file is stored
       ws.send(JSON.stringify({
         type: 'file-stored',
         code,
       }));
+
+      // CRITICAL FIX: Notify all waiting receivers that this file is now available
+      notifyWaitingReceivers(code, file, registry);
     }
   }
 
