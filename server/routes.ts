@@ -291,6 +291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ws.send(JSON.stringify({
         type: 'file-stored',
         code,
+        fileIndex: fileIndex,
+        fileName: fileName
       }));
 
       // CRITICAL FIX: Notify all waiting receivers that this file is now available
@@ -330,9 +332,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`File not found in registry: ${code} - ${fileName}`);
     }
     
+    // Find file info to include fileIndex
+    const file = registry.files.find(f => f.fileName === fileName);
     ws.send(JSON.stringify({
       type: 'file-stored',
       code,
+      fileIndex: file?.fileIndex || 0,
+      fileName: fileName
     }));
   }
 

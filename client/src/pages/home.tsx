@@ -105,6 +105,10 @@ export default function Home() {
         return transferType === 'local' || file.size >= 50 * 1024 * 1024;
       };
       
+      // For now, let's add a delay to ensure chunked files complete
+      // This is a temporary fix until we implement proper server-side confirmation
+      let hasLargeFiles = files.some(file => file.size >= 50 * 1024 * 1024);
+      
       // Process all files with smart method selection
       const filePromises = files.map(async (file, fileIndex) => {
         // Register file metadata first
@@ -171,7 +175,7 @@ export default function Home() {
             await new Promise(resolve => setTimeout(resolve, 10));
           }
         } else {
-          // Simple upload for small internet files (<30MB) - original reliable method
+          // Simple upload for small internet files (<50MB) - original reliable method
           const arrayBuffer = await file.arrayBuffer();
           
           // Convert entire file to base64 at once (simple and fast for small files)
@@ -209,6 +213,12 @@ export default function Home() {
 
       // Wait for all files to be processed
       await Promise.all(filePromises);
+      
+      // TEMPORARY: Add delay for chunked uploads to complete
+      if (hasLargeFiles) {
+        console.log('Waiting extra time for large files to complete...');
+        await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
+      }
       
       setIsUploading(false);
       setFilesReady(true);
