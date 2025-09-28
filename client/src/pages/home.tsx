@@ -101,8 +101,8 @@ export default function Home() {
       
       // Smart transfer method selection
       const shouldUseChunkedUpload = (file: File) => {
-        // Use chunked for local network OR large files (≥30MB)
-        return transferType === 'local' || file.size >= 30 * 1024 * 1024;
+        // Use chunked for local network OR large files (≥50MB)
+        return transferType === 'local' || file.size >= 50 * 1024 * 1024;
       };
       
       // Process all files with smart method selection
@@ -540,8 +540,8 @@ export default function Home() {
           setReceiveProgress(Math.min(progress, 90));
           
           // IMPORTANT: Only mark as complete when we've received ALL expected files
-          // Check both filesFoundCount (from file-available) and received files
-          if (updated.length === totalFiles && updated.length === filesFoundCount) {
+          // Only complete when we have received data for ALL files
+          if (updated.length === totalFiles) {
             setReceiveProgress(100);
             setTimeout(() => {
               setIsReceiving(false);
