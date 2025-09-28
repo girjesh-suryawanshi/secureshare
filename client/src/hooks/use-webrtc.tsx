@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { formatFileSize, createFileChunks, reconstructFileFromChunks } from "@/lib/file-utils";
+import { formatFileSize, streamFileChunks, reconstructFileFromChunks } from "@/lib/file-utils";
 
 // Local interfaces for WebRTC file transfer
 interface SelectedFile {
@@ -228,7 +228,14 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
             lastChunkMetadata = data;
           } else if (data.type === 'file-chunk') {
             // Legacy JSON chunk handling for backward compatibility
-            handleFileChunk(data, peerId);
+            // Convert base64 data to Uint8Array if needed
+            const legacyChunk = {
+              ...data,
+              data: typeof data.data === 'string' 
+                ? new Uint8Array(atob(data.data).split('').map(c => c.charCodeAt(0)))
+                : data.data
+            };
+            handleFileChunk(legacyChunk, peerId);
           } else if (data.type === 'transfer-accepted') {
             // Set flag to start sending for this peer
             setPendingFileTransfers(prev => {
@@ -308,8 +315,7 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
       // Create optimized data channel for large file transfers (Phase 1)
       const dataChannel = pc.createDataChannel('fileTransfer', {
         ordered: true,
-        maxRetransmits: 3,
-        maxPacketLifeTime: 3000, // 3 seconds
+        maxPacketLifeTime: 3000, // 3 seconds (fixed: removed conflicting maxRetransmits)
       });
       setupDataChannel(dataChannel, targetId);
 
@@ -367,18 +373,17 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
 
       // Wait for acceptance, then stream file with proper gating (Phase 1 Fixed)
       const waitForAcceptanceAndSend = async () => {
-        // Wait for acceptance signal
-        while (!pendingFileTransfers.get(targetId)) {
+        // Wait for acceptance signal (fixed: targetId -> peerId)
+        while (!pendingFileTransfers.get(peerId)) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
         
         console.log(`Starting optimized transfer for ${file.name} (${formatFileSize(file.size)})`);
         
-        // Use streaming instead of preloading entire file
-        const totalChunks = Math.ceil(file.size / chunkSize);
-        let chunkIndex = 0;
+        // Use proper streaming with async generator (fixed API usage)
+        const totalChunks = Math.ceil(file.size / (1024 * 1024)); // 1MB chunks
         
-        await streamFileChunks(file, chunkSize, async (chunk: Uint8Array) => {
+        for await (const {chunk, index} of streamFileChunks(file)) {
           // Check buffer before sending to prevent overwhelming
           if (channel.bufferedAmount > 1024 * 1024) { // 1MB buffer threshold
             await new Promise(resolve => {
@@ -398,25 +403,24 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
             type: 'binary-chunk-metadata',
             fileName: file.name,
             fileSize: file.size,
-            chunkIndex: chunkIndex,
+            chunkIndex: index,
             totalChunks: totalChunks,
           };
           
           channel.send(JSON.stringify(metadata));
           
-          // Immediately send binary chunk
-          channel.send(chunk.buffer);
-          
-          chunkIndex++;
+          // Send binary chunk with proper ArrayBuffer handling (fixed)
+          const arrayBuffer = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+          channel.send(arrayBuffer);
           
           // Smaller delay for 1MB chunks (better throughput)
           await new Promise(resolve => setTimeout(resolve, 5));
-        });
+        }
         
-        // Clear acceptance flag
+        // Clear acceptance flag (fixed: targetId -> peerId)
         setPendingFileTransfers(prev => {
           const newMap = new Map(prev);
-          newMap.delete(targetId);
+          newMap.delete(peerId);
           return newMap;
         });
         
