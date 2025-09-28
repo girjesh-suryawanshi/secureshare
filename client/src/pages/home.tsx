@@ -491,7 +491,7 @@ export default function Home() {
         }
         
         // Create blob and add to received files
-        const blob = new Blob([bytes]);
+        const blob = new Blob([bytes], { type: 'application/octet-stream' });
         const newFile = {
           name: data.fileName || 'downloaded-file',
           size: blob.size,
@@ -524,8 +524,10 @@ export default function Home() {
             
             if (newReceivedCount === data.totalFiles) {
               setReceiveProgress(100);
+              setIsReceiving(false);
+              setReceiveStep('download');
+              setShowReceiveSheet(true);
               setTimeout(() => {
-                setIsReceiving(false);
                 setReceiveProgress(0);
               }, 1000);
               
@@ -541,8 +543,10 @@ export default function Home() {
             }
           } else {
             setReceiveProgress(90);
+            setIsReceiving(false);
+            setReceiveStep('download');
+            setShowReceiveSheet(true);
             setTimeout(() => {
-              setIsReceiving(false);
               setReceiveProgress(0);
             }, 500);
             
