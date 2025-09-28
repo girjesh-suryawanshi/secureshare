@@ -483,20 +483,32 @@ export default function Home() {
     }
   };
 
+  // Track expected files for proper progress calculation
+  const [expectedTotalFiles, setExpectedTotalFiles] = useState<number>(0);
+  const [filesFoundCount, setFilesFoundCount] = useState<number>(0);
+
   // Set up WebSocket event handlers
   useEffect(() => {
-    onFileAvailable((file) => {
-      setReceiveProgress(30);
+    onFileAvailable((file: any) => {
+      // Track expected total files and files found
+      setExpectedTotalFiles(file.totalFiles || 1);
+      setFilesFoundCount(prev => {
+        const newCount = prev + 1;
+        // Set initial progress only when first file is found
+        if (newCount === 1) {
+          setReceiveProgress(20);
+        }
+        return newCount;
+      });
+      
       toast({
         title: "File Found",
-        description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB)`,
+        description: `Found ${file.fileName} (${Math.round((file.fileSize || 0) / 1024)} KB)`,
       });
     });
 
     onFileData((data: any) => {
       if (data.code === inputCode) {
-        setReceiveProgress(50);
-        
         // Convert base64 back to blob
         const binaryString = atob(data.data);
         const bytes = new Uint8Array(binaryString.length);
@@ -521,35 +533,29 @@ export default function Home() {
 
         setReceivedFiles(prev => {
           const updated = [...prev, newFile];
-          // Check if this is the last file
-          if (data.fileIndex !== undefined && data.totalFiles !== undefined) {
-            const progress = 50 + ((updated.length / data.totalFiles) * 40); // 50-90%
-            setReceiveProgress(progress);
-            
-            if (updated.length === data.totalFiles) {
-              setReceiveProgress(100);
-              setTimeout(() => {
-                setIsReceiving(false);
-                setReceiveProgress(0);
-              }, 1000);
-              
-              toast({
-                title: "All Files Received",
-                description: `${data.totalFiles} file(s) ready to download`,
-              });
-            }
-          } else {
-            setReceiveProgress(90);
+          const totalFiles = data.totalFiles || expectedTotalFiles || 1;
+          
+          // Calculate progress based on files received vs expected
+          const progress = 20 + ((updated.length / totalFiles) * 70); // 20% to 90%
+          setReceiveProgress(Math.min(progress, 90));
+          
+          // Check if all files received
+          if (updated.length === totalFiles) {
+            setReceiveProgress(100);
             setTimeout(() => {
               setIsReceiving(false);
               setReceiveProgress(0);
-            }, 500);
+              // Reset tracking state
+              setExpectedTotalFiles(0);
+              setFilesFoundCount(0);
+            }, 1000);
             
             toast({
-              title: "File Received",
-              description: "File is ready to download",
+              title: "All Files Received",
+              description: `${totalFiles} file(s) ready to download`,
             });
           }
+          
           return updated;
         });
       }
