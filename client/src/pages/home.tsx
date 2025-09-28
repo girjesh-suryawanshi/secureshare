@@ -539,8 +539,9 @@ export default function Home() {
           const progress = 20 + ((updated.length / totalFiles) * 70); // 20% to 90%
           setReceiveProgress(Math.min(progress, 90));
           
-          // Check if all files received
-          if (updated.length === totalFiles) {
+          // IMPORTANT: Only mark as complete when we've received ALL expected files
+          // Check both filesFoundCount (from file-available) and received files
+          if (updated.length === totalFiles && updated.length === filesFoundCount) {
             setReceiveProgress(100);
             setTimeout(() => {
               setIsReceiving(false);
