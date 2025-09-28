@@ -24,6 +24,8 @@ export default function Home() {
   const [inputCode, setInputCode] = useState<string>('');
   const [filesReady, setFilesReady] = useState<boolean>(false);
   const [receivedFiles, setReceivedFiles] = useState<{ name: string; size: number; blob: Blob }[]>([]);
+  const [expectedFilesCount, setExpectedFilesCount] = useState<number>(0);
+  const [receivedFilesCount, setReceivedFilesCount] = useState<number>(0);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [transferSpeed, setTransferSpeed] = useState<string>('');
@@ -428,9 +430,16 @@ export default function Home() {
   useEffect(() => {
     onFileAvailable((file) => {
       setReceiveProgress(30);
+      
+      // Set expected files count from the first file metadata
+      if (file.totalFiles && expectedFilesCount === 0) {
+        setExpectedFilesCount(file.totalFiles);
+        console.log(`Expecting ${file.totalFiles} total files`);
+      }
+      
       toast({
         title: "File Found",
-        description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB)`,
+        description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB) - ${file.fileIndex + 1}/${file.totalFiles}`,
       });
     });
 
@@ -462,12 +471,22 @@ export default function Home() {
 
         setReceivedFiles(prev => {
           const updated = [...prev, newFile];
+          const newReceivedCount = updated.length;
+          setReceivedFilesCount(newReceivedCount);
+          
           // Check if this is the last file
           if (data.fileIndex !== undefined && data.totalFiles !== undefined) {
-            const progress = 50 + ((updated.length / data.totalFiles) * 40); // 50-90%
+            // Update expected count if not set
+            if (expectedFilesCount === 0) {
+              setExpectedFilesCount(data.totalFiles);
+            }
+            
+            const progress = 50 + ((newReceivedCount / data.totalFiles) * 40); // 50-90%
             setReceiveProgress(progress);
             
-            if (updated.length === data.totalFiles) {
+            console.log(`Received ${newReceivedCount}/${data.totalFiles} files`);
+            
+            if (newReceivedCount === data.totalFiles) {
               setReceiveProgress(100);
               setTimeout(() => {
                 setIsReceiving(false);
@@ -475,8 +494,13 @@ export default function Home() {
               }, 1000);
               
               toast({
-                title: "All Files Received",
+                title: "✅ All Files Received!",
                 description: `${data.totalFiles} file(s) ready to download`,
+              });
+            } else {
+              toast({
+                title: `📥 File ${newReceivedCount}/${data.totalFiles} Received`,
+                description: `${data.fileName} - ${data.totalFiles - newReceivedCount} files remaining`,
               });
             }
           } else {
@@ -1034,6 +1058,8 @@ export default function Home() {
                   // Clear state when going back from receive mode
                   setInputCode('');
                   setReceivedFiles([]);
+                  setExpectedFilesCount(0);
+                  setReceivedFilesCount(0);
                   setIsReceiving(false);
                   setReceiveProgress(0);
                 }, 100);
@@ -1200,10 +1226,16 @@ export default function Home() {
                     </div>
                     
                     <h3 className="text-lg md:text-2xl font-bold text-green-800 mb-4">
-                      🎉 Files Ready to Download!
+                      {expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount 
+                        ? `📥 Receiving Files... (${receivedFilesCount}/${expectedFilesCount})`
+                        : `🎉 Files Ready to Download!`
+                      }
                     </h3>
                     <p className="text-sm md:text-lg text-green-700 mb-6">
-                      {receivedFiles.length} file(s) successfully received and verified.
+                      {expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount 
+                        ? `${receivedFilesCount} of ${expectedFilesCount} files received. Please wait for all files to complete.`
+                        : `${receivedFiles.length} file(s) successfully received and verified.`
+                      }
                     </p>
                     
                     <div className="bg-white rounded-xl p-4 md:p-6 border border-green-300 mb-6">
@@ -1250,13 +1282,18 @@ export default function Home() {
                       <div className="space-y-3 mb-4">
                         <Button 
                           onClick={downloadFiles} 
-                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold"
-                          disabled={isDownloading}
+                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isDownloading || (expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount)}
                         >
                           {isDownloading ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Creating ZIP...
+                            </>
+                          ) : (expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount) ? (
+                            <>
+                              <Clock className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                              Waiting for {expectedFilesCount - receivedFilesCount} more files...
                             </>
                           ) : (
                             <>
@@ -1274,21 +1311,37 @@ export default function Home() {
                             <Progress value={downloadProgress} className="h-2" />
                           </div>
                         )}
-                        <p className="text-center text-xs md:text-sm text-gray-600">
-                          Or download individual files using the buttons above
-                        </p>
+                        {expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount ? (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <p className="text-center text-xs md:text-sm text-yellow-700 font-medium">
+                              ⏳ Still receiving files... {receivedFilesCount}/{expectedFilesCount} completed
+                            </p>
+                            <p className="text-center text-xs text-yellow-600 mt-1">
+                              Download will be enabled when all files are received
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-center text-xs md:text-sm text-gray-600">
+                            Or download individual files using the buttons above
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-3 mb-4">
                         <Button 
                           onClick={downloadFiles} 
-                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold"
-                          disabled={isDownloading}
+                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isDownloading || (expectedFilesCount > 1 && receivedFilesCount < expectedFilesCount)}
                         >
                           {isDownloading ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Downloading...
+                            </>
+                          ) : (expectedFilesCount > 1 && receivedFilesCount < expectedFilesCount) ? (
+                            <>
+                              <Clock className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                              Waiting for {expectedFilesCount - receivedFilesCount} more files...
                             </>
                           ) : (
                             <>
@@ -1319,6 +1372,8 @@ export default function Home() {
                         setTimeout(() => {
                           setReceivedFiles([]);
                           setInputCode('');
+                          setExpectedFilesCount(0);
+                          setReceivedFilesCount(0);
                         }, 100);
                       }}
                       className="w-full sm:flex-1 h-12 text-sm md:text-lg border-2"
