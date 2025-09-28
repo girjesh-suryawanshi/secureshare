@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useLocalNetwork } from "@/hooks/use-local-network";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +20,10 @@ import type { TransferType } from "@shared/schema";
 
 export default function Home() {
   const [mode, setMode] = useState<'select' | 'send' | 'receive'>('select');
+  const [showSendSheet, setShowSendSheet] = useState<boolean>(false);
+  const [showReceiveSheet, setShowReceiveSheet] = useState<boolean>(false);
+  const [sendStep, setSendStep] = useState<'method' | 'files' | 'share'>('method');
+  const [receiveStep, setReceiveStep] = useState<'method' | 'code' | 'download'>('method');
   const [transferType, setTransferType] = useState<TransferType>('internet');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [transferCode, setTransferCode] = useState<string>('');
@@ -596,7 +602,7 @@ export default function Home() {
   if (mode === 'select') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-        <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="max-w-7xl mx-auto px-4 py-6 md:py-12 pb-32">
           <div className="text-center space-y-12">
             
             {/* Clean Hero Section */}
@@ -669,8 +675,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Premium Action Cards */}
-            <div className="max-w-2xl mx-auto">
+            {/* Action Cards - Hidden on Mobile, Shown on Desktop */}
+            <div className="hidden md:block max-w-2xl mx-auto">
               <div className="grid md:grid-cols-2 gap-6">
                 
                 {/* Send Files Card */}
@@ -686,13 +692,10 @@ export default function Home() {
                         <p className="text-blue-100">Share files instantly</p>
                       </div>
                       <Button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                          setTimeout(() => setMode('send'), 100);
-                        }} 
+                        onClick={() => setShowSendSheet(true)}
                         className="w-full h-12 text-base bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold"
                         disabled={!isConnected}
+                        data-testid="button-send-desktop"
                       >
                         Start Sending {transferType === 'local' ? '(Local)' : ''}
                       </Button>
@@ -713,13 +716,10 @@ export default function Home() {
                         <p className="text-purple-100">Enter code and download</p>
                       </div>
                       <Button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                          setTimeout(() => setMode('receive'), 100);
-                        }} 
+                        onClick={() => setShowReceiveSheet(true)}
                         className="w-full h-12 text-base bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold"
                         disabled={!isConnected}
+                        data-testid="button-receive-desktop"
                       >
                         Start Receiving {transferType === 'local' ? '(Local)' : ''}
                       </Button>
@@ -762,6 +762,428 @@ export default function Home() {
                 <p className="text-gray-600">Enter code and download files</p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Mobile Sticky Bottom Action Bar */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 p-4 safe-area-padding-bottom z-50">
+          <div className="max-w-md mx-auto grid grid-cols-2 gap-3">
+            
+            {/* Send Sheet */}
+            <Sheet open={showSendSheet} onOpenChange={setShowSendSheet}>
+              <SheetTrigger asChild>
+                <Button
+                  size="lg"
+                  className="h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200"
+                  disabled={!isConnected}
+                  data-testid="button-send"
+                >
+                  <Upload className="h-6 w-6 mr-2" />
+                  Send Files
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[90vh] max-h-[90vh] overflow-y-auto">
+                <SheetHeader className="pb-4">
+                  <SheetTitle className="text-xl font-bold">Send Files</SheetTitle>
+                  <SheetDescription>
+                    Share your files {transferType === 'local' ? 'on local network' : 'across the internet'}
+                  </SheetDescription>
+                </SheetHeader>
+                
+                {/* Send Stepper Content */}
+                <div className="space-y-6">
+                  {/* Method Selection Step */}
+                  {sendStep === 'method' && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Choose Transfer Method</h3>
+                      <Tabs value={transferType} onValueChange={(value) => setTransferType(value as TransferType)} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="internet" data-testid="tab-internet">Internet</TabsTrigger>
+                          <TabsTrigger value="local" data-testid="tab-local">Local Network</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="internet" className="mt-4">
+                          <div className="text-center p-4 bg-blue-50 rounded-lg">
+                            <Globe className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+                            <p className="text-sm text-blue-700">Share files globally with anyone</p>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="local" className="mt-4">
+                          <div className="text-center p-4 bg-purple-50 rounded-lg">
+                            <Wifi className="h-12 w-12 text-purple-600 mx-auto mb-2" />
+                            <p className="text-sm text-purple-700">High-speed transfers on your network</p>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                      <Button 
+                        onClick={() => setSendStep('files')} 
+                        className="w-full h-12"
+                        data-testid="button-next-files"
+                      >
+                        Continue to File Selection
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* File Selection Step */}
+                  {sendStep === 'files' && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Select Files</h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setSendStep('method')}
+                          data-testid="button-back-method"
+                        >
+                          ← Back
+                        </Button>
+                      </div>
+                      <DragDropZone onFilesSelected={handleFilesSelected}>
+                        <div className="p-8 space-y-4 text-center">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-xl opacity-20 w-16 h-16 mx-auto"></div>
+                            <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-4 w-fit mx-auto">
+                              <Upload className="h-12 w-12 text-white" />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-lg font-bold text-gray-900">
+                              Drop Files Here or Tap to Browse
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Any file type • Multiple files → ZIP
+                            </p>
+                          </div>
+                        </div>
+                      </DragDropZone>
+
+                      {/* Selected Files Preview */}
+                      {selectedFiles.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium">Selected Files ({selectedFiles.length})</h4>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {selectedFiles.map((file, index) => (
+                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                  <FileText className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                                  <span className="text-sm truncate">{file.name}</span>
+                                  <span className="text-xs text-gray-500">
+                                    {(file.size / 1024 / 1024).toFixed(1)}MB
+                                  </span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newFiles = selectedFiles.filter((_, i) => i !== index);
+                                    setSelectedFiles(newFiles);
+                                  }}
+                                  data-testid={`button-remove-file-${index}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Upload Progress */}
+                      {isUploading && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Uploading...</span>
+                            <span className="text-sm text-gray-500">{uploadProgress.toFixed(0)}%</span>
+                          </div>
+                          <Progress value={uploadProgress} className="w-full" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Share Step */}
+                  {sendStep === 'share' && filesReady && transferCode && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Share Your Code</h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setSendStep('files')}
+                          data-testid="button-back-files"
+                        >
+                          ← Back
+                        </Button>
+                      </div>
+                      
+                      <div className="text-center space-y-4">
+                        <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl">
+                          <p className="text-sm text-gray-600 mb-2">Share this code:</p>
+                          <div className="text-4xl font-bold tracking-widest text-blue-600 mb-4">
+                            {transferCode}
+                          </div>
+                          <Button 
+                            onClick={copyCode} 
+                            variant="outline" 
+                            className="w-full"
+                            data-testid="button-copy-code"
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy Code
+                          </Button>
+                        </div>
+
+                        {/* QR Code for Local Network */}
+                        {transferType === 'local' && localServerInfo?.qrCode && (
+                          <div className="p-4 bg-white rounded-lg border">
+                            <p className="text-sm text-gray-600 mb-3">Or scan QR code:</p>
+                            <div 
+                              className="mx-auto w-40 h-40 border rounded-lg flex items-center justify-center"
+                              dangerouslySetInnerHTML={{ __html: localServerInfo.qrCode }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* Receive Sheet */}
+            <Sheet open={showReceiveSheet} onOpenChange={setShowReceiveSheet}>
+              <SheetTrigger asChild>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-14 text-lg font-semibold border-2 border-purple-200 text-purple-700 hover:bg-purple-50 transition-all duration-200"
+                  disabled={!isConnected}
+                  data-testid="button-receive"
+                >
+                  <Download className="h-6 w-6 mr-2" />
+                  Receive Files
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[90vh] max-h-[90vh] overflow-y-auto">
+                <SheetHeader className="pb-4">
+                  <SheetTitle className="text-xl font-bold">Receive Files</SheetTitle>
+                  <SheetDescription>
+                    Enter the code to download files
+                  </SheetDescription>
+                </SheetHeader>
+                
+                {/* Receive Stepper Content */}
+                <div className="space-y-6">
+                  {/* Method Selection Step */}
+                  {receiveStep === 'method' && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Choose Transfer Method</h3>
+                      <Tabs value={transferType} onValueChange={(value) => setTransferType(value as TransferType)} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="internet" data-testid="tab-internet-receive">Internet</TabsTrigger>
+                          <TabsTrigger value="local" data-testid="tab-local-receive">Local Network</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="internet" className="mt-4">
+                          <div className="text-center p-4 bg-blue-50 rounded-lg">
+                            <Globe className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+                            <p className="text-sm text-blue-700">Receive files from anywhere</p>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="local" className="mt-4">
+                          <div className="text-center p-4 bg-purple-50 rounded-lg">
+                            <Wifi className="h-12 w-12 text-purple-600 mx-auto mb-2" />
+                            <p className="text-sm text-purple-700">High-speed downloads on your network</p>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                      <Button 
+                        onClick={() => setReceiveStep('code')} 
+                        className="w-full h-12"
+                        data-testid="button-next-code"
+                      >
+                        Continue to Enter Code
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Code Entry Step */}
+                  {receiveStep === 'code' && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Enter Code</h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setReceiveStep('method')}
+                          data-testid="button-back-method-receive"
+                        >
+                          ← Back
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <Input
+                          placeholder="Enter 6-digit code"
+                          value={inputCode}
+                          onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+                          maxLength={6}
+                          className="h-14 text-2xl text-center font-bold tracking-widest"
+                          inputMode="numeric"
+                          autoCapitalize="characters"
+                          data-testid="input-code"
+                        />
+                        
+                        <Button 
+                          onClick={handleReceiveFile}
+                          disabled={inputCode.length !== 6 || isReceiving}
+                          className="w-full h-12"
+                          data-testid="button-receive-files"
+                        >
+                          {isReceiving ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Receiving...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4 mr-2" />
+                              Get Files
+                            </>
+                          )}
+                        </Button>
+
+                        {/* Receive Progress */}
+                        {isReceiving && (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Receiving files...</span>
+                              <span className="text-sm text-gray-500">{receiveProgress.toFixed(0)}%</span>
+                            </div>
+                            <Progress value={receiveProgress} className="w-full" />
+                            
+                            {/* Multi-file progress */}
+                            {expectedFilesCount > 0 && (
+                              <div className="text-center text-sm text-gray-600">
+                                {receivedFilesCount}/{expectedFilesCount} files received
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Local Network Device Scanning */}
+                        {transferType === 'local' && (
+                          <div className="space-y-3">
+                            <Button 
+                              onClick={scanForDevices}
+                              disabled={isScanning}
+                              variant="outline"
+                              className="w-full"
+                              data-testid="button-scan-devices"
+                            >
+                              {isScanning ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Scanning...
+                                </>
+                              ) : (
+                                <>
+                                  <Search className="h-4 w-4 mr-2" />
+                                  Scan for Devices
+                                </>
+                              )}
+                            </Button>
+
+                            {availableDevices.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium">Available Devices:</h4>
+                                {availableDevices.map((device) => (
+                                  <div key={device.id} className="p-2 bg-gray-50 rounded-lg">
+                                    <span className="text-sm">{device.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Download Step */}
+                  {receiveStep === 'download' && receivedFiles.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Download Files</h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setReceiveStep('code')}
+                          data-testid="button-back-code"
+                        >
+                          ← Back
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="text-center p-4 bg-green-50 rounded-lg">
+                          <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
+                          <p className="font-medium text-green-800">
+                            {receivedFiles.length} file(s) ready to download
+                          </p>
+                        </div>
+
+                        {/* Files List */}
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {receivedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                <FileText className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                                <span className="text-sm truncate">{file.name}</span>
+                                <span className="text-xs text-gray-500">
+                                  {(file.size / 1024 / 1024).toFixed(1)}MB
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Download Actions */}
+                        {receivedFiles.length === 1 ? (
+                          <Button 
+                            onClick={() => downloadSingleFile(receivedFiles[0])}
+                            className="w-full h-12"
+                            data-testid="button-download-single"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download {receivedFiles[0].name}
+                          </Button>
+                        ) : (
+                          <Button 
+                            onClick={downloadFiles}
+                            className="w-full h-12"
+                            data-testid="button-download-zip"
+                          >
+                            <Archive className="h-4 w-4 mr-2" />
+                            Download as ZIP ({receivedFiles.length} files)
+                          </Button>
+                        )}
+
+                        {/* Download Progress */}
+                        {isDownloading && (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Downloading...</span>
+                              <span className="text-sm text-gray-500">{downloadProgress.toFixed(0)}%</span>
+                            </div>
+                            <Progress value={downloadProgress} className="w-full" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

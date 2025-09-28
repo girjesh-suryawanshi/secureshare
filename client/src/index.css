@@ -109,4 +109,32 @@
   .animate-pulse-slow {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  /* Safe area support for mobile devices */
+  .safe-area-padding-bottom {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  /* Touch-friendly tap targets */
+  .min-tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Optimize typography for mobile */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
