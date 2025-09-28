@@ -121,9 +121,13 @@ export default function Home() {
           const chunkBlob = file.slice(offset, offset + 1024 * 1024);
           const arrayBuffer = await chunkBlob.arrayBuffer();
           
-          // Convert to base64 only when needed for WebSocket
+          // Convert to base64 safely (fixed stack overflow for large files)
           const uint8Array = new Uint8Array(arrayBuffer);
-          const base64Chunk = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+          let binaryString = '';
+          for (let i = 0; i < uint8Array.length; i++) {
+            binaryString += String.fromCharCode(uint8Array[i]);
+          }
+          const base64Chunk = btoa(binaryString);
           chunks.push(base64Chunk);
           
           processedBytes += arrayBuffer.byteLength;
