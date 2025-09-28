@@ -63,7 +63,7 @@ export default function Home() {
     for (let i = 0; i < 6; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    console.log('Generated code:', code);
+    // Generated code for file transfer
     return code;
   };
 
@@ -204,7 +204,7 @@ export default function Home() {
     // Handle local network transfer
     if (transferType === 'local') {
       try {
-        console.log(`Looking for files with code: ${upperCode}`);
+        // Looking for files with code
         setReceiveProgress(30);
         
         // Try to get files directly from current server (local network)
@@ -217,7 +217,7 @@ export default function Home() {
         
         if (response.ok) {
           const files = await response.json();
-          console.log(`Found ${files.length} files on local network`);
+          // Found files on local network
           setReceiveProgress(60);
           
           // Validate that files have data
@@ -308,7 +308,7 @@ export default function Home() {
     }
 
     // Internet transfer - existing logic
-    console.log('Requesting file with code:', upperCode);
+    // Requesting file with code
     sendMessage({
       type: 'request-file',
       code: upperCode,
@@ -470,12 +470,12 @@ export default function Home() {
       // Set expected files count from the first file metadata
       if (file.totalFiles && expectedFilesCount === 0) {
         setExpectedFilesCount(file.totalFiles);
-        console.log(`Expecting ${file.totalFiles} total files`);
+        // Expecting total files from metadata
       }
       
       toast({
         title: "File Found",
-        description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB) - ${file.fileIndex + 1}/${file.totalFiles}`,
+        description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB) - ${(file.fileIndex || 0) + 1}/${file.totalFiles}`,
       });
     });
 
@@ -520,7 +520,7 @@ export default function Home() {
             const progress = 50 + ((newReceivedCount / data.totalFiles) * 40); // 50-90%
             setReceiveProgress(progress);
             
-            console.log(`Received ${newReceivedCount}/${data.totalFiles} files`);
+            // Received files progress tracking
             
             if (newReceivedCount === data.totalFiles) {
               setReceiveProgress(100);
@@ -584,7 +584,7 @@ export default function Home() {
     });
 
     onSenderDisconnected((data: any) => {
-      console.log('Sender disconnected:', data);
+      // Sender disconnected from transfer
       setIsReceiving(false);
       setReceiveProgress(0);
       setReceivedFiles([]);
