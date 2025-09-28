@@ -277,8 +277,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // If all chunks received, assemble the file
     if (file.receivedChunks === file.totalChunks) {
       const sortedChunks = Array.from(file.chunks.entries())
-        .sort(([a]: [number, any], [b]: [number, any]) => a - b)
-        .map(([, data]: [number, any]) => data);
+        .sort((a: any, b: any) => a[0] - b[0])
+        .map((entry: any) => entry[1]);
       
       file.data = sortedChunks.join('');
       delete file.chunks; // Clean up chunks to save memory
@@ -509,8 +509,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // If all chunks received, assemble the file
     if (file.receivedChunks === file.totalChunks) {
       const sortedChunks = Array.from(file.chunks.entries())
-        .sort((a: [number, any], b: [number, any]) => a[0] - b[0])
-        .map((entry: [number, any]) => entry[1]);
+        .sort((a: any, b: any) => a[0] - b[0])
+        .map((entry: any) => entry[1]);
       
       file.data = sortedChunks.join('');
       delete file.chunks; // Clean up chunks to save memory
