@@ -90,24 +90,38 @@ export function useLocalNetwork() {
   };
 
   // Start local server for file sharing with chunked upload
-  const startLocalServer = useCallback(async (files: File[], code: string) => {
+  const startLocalServer = useCallback(async (files: File[], code: string, onProgress?: (progress: number, fileName?: string) => void) => {
     try {
       const localIP = await getLocalIP();
       const port = parseInt(window.location.port) || 5000;
       
-      // Register files with the main server using chunked upload for better performance
-      const chunkSize = 1024 * 1024; // 1MB chunks for faster processing
+      // Register files with the main server with progress tracking
+      let completedFiles = 0;
       
       const filePromises = files.map(async (file, index) => {
         console.log(`Registering local file: ${file.name} (${index + 1}/${files.length}) - ${(file.size / 1024 / 1024).toFixed(2)}MB`);
         
-        // Use direct upload for all files up to 200MB for better speed
-        // Only use chunked upload for extremely large files
-        if (file.size > 200 * 1024 * 1024) {
-          return await uploadFileInChunks(file, code, index, files.length);
-        } else {
-          // Use direct upload for most files (much faster)
-          return await uploadFileDirect(file, code, index, files.length);
+        try {
+          // Use direct upload for all files up to 200MB for better speed
+          // Only use chunked upload for extremely large files
+          if (file.size > 200 * 1024 * 1024) {
+            await uploadFileInChunks(file, code, index, files.length);
+          } else {
+            // Use direct upload for most files (much faster)
+            await uploadFileDirect(file, code, index, files.length);
+          }
+          
+          // Update progress after each file completes
+          completedFiles++;
+          const progress = (completedFiles / files.length) * 100;
+          if (onProgress) {
+            onProgress(progress, file.name);
+          }
+          
+          return { success: true, fileName: file.name };
+        } catch (error) {
+          console.error(`Failed to upload file ${file.name}:`, error);
+          throw error;
         }
       });
       

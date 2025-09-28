@@ -85,14 +85,23 @@ export default function Home() {
       
       // Handle local network transfer
       if (transferType === 'local') {
-        const serverInfo = await startLocalServer(files, code);
+        const serverInfo = await startLocalServer(files, code, (progress, fileName) => {
+          setUploadProgress(progress);
+          if (fileName && files.length > 1) {
+            toast({
+              title: `📤 Uploading Files... ${Math.round(progress)}%`,
+              description: `${fileName} uploaded - ${Math.round((files.length * progress) / 100)} of ${files.length} files`,
+            });
+          }
+        });
+        
         if (serverInfo) {
           setUploadProgress(100);
           setIsUploading(false);
           setFilesReady(true);
           toast({
-            title: "Local Server Ready",
-            description: `Files available on local network. Share code ${code}`,
+            title: "✅ Local Server Ready",
+            description: `${files.length} file(s) available on local network. Share code ${code}`,
           });
         }
         return;
