@@ -44,6 +44,7 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
   const [dataChannels, setDataChannels] = useState<Map<string, RTCDataChannel>>(new Map());
   const [incomingFileRequests, setIncomingFileRequests] = useState<IncomingFileRequest[]>([]);
   const [activeTransfers, setActiveTransfers] = useState<Map<string, FileTransferState>>(new Map());
+  const [pendingFileTransfers, setPendingFileTransfers] = useState<Map<string, boolean>>(new Map());
   const { toast } = useToast();
 
   const iceServers = [
@@ -93,14 +94,98 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
     return pc;
   }, [sendSignalingMessage, toast]);
 
-  // New optimized binary chunk handler for Phase 1 (moved up for hoisting)
-  const handleBinaryFileChunk = useCallback((data: ArrayBuffer, peerId: string) => {
-    // For this phase, we'll still use the existing handler pattern
-    // but optimized for binary data
-    const uint8Array = new Uint8Array(data);
-    // TODO: Add chunk metadata handling for proper reconstruction
-    console.log(`Received binary chunk from ${peerId}: ${uint8Array.length} bytes`);
+  // Track pending binary chunks awaiting metadata
+  const pendingBinaryChunks = useRef<Map<string, {metadata: any, data: ArrayBuffer}>>(new Map());
+
+  // Binary chunk handler with proper file reconstruction (Phase 1)
+  const handleBinaryFileChunk = useCallback((data: ArrayBuffer, peerId: string, metadata?: any) => {
+    if (!metadata) {
+      // Store binary data temporarily until metadata arrives
+      pendingBinaryChunks.current.set(`${peerId}-pending`, {metadata: null, data});
+      return;
+    }
+
+    // Process binary chunk with metadata for file reconstruction
+    const chunk: FileChunk = {
+      fileName: metadata.fileName,
+      chunkIndex: metadata.chunkIndex,
+      totalChunks: metadata.totalChunks,
+      data: new Uint8Array(data),
+    };
+
+    // Use existing reconstruction logic but with binary data
+    const transferKey = `${peerId}-${chunk.fileName}`;
+    
+    setActiveTransfers(prev => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(transferKey) || {
+        fileName: chunk.fileName,
+        totalSize: metadata.fileSize || 0,
+        receivedChunks: new Map(),
+        totalChunks: chunk.totalChunks,
+        progress: 0,
+      };
+
+      existing.receivedChunks.set(chunk.chunkIndex, chunk.data);
+      existing.progress = (existing.receivedChunks.size / existing.totalChunks) * 100;
+
+      newMap.set(transferKey, existing);
+
+      // If all chunks received, reconstruct file
+      if (existing.receivedChunks.size === existing.totalChunks) {
+        reconstructBinaryFile(existing, peerId);
+        newMap.delete(transferKey);
+      }
+
+      return newMap;
+    });
+
+    console.log(`Binary chunk ${chunk.chunkIndex}/${chunk.totalChunks} received for ${chunk.fileName}`);
   }, []);
+
+  // Reconstruct binary file from chunks
+  const reconstructBinaryFile = useCallback((transfer: FileTransferState, peerId: string) => {
+    try {
+      // Sort chunks by index and concatenate binary data
+      const sortedChunks = Array.from(transfer.receivedChunks.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([, data]) => data);
+
+      // Calculate total size
+      const totalSize = sortedChunks.reduce((size, chunk) => size + chunk.length, 0);
+      
+      // Create combined binary array
+      const combinedData = new Uint8Array(totalSize);
+      let offset = 0;
+      for (const chunk of sortedChunks) {
+        combinedData.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      // Create blob and download
+      const blob = new Blob([combinedData]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = transfer.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "File Received",
+        description: `Successfully received ${transfer.fileName} (${formatFileSize(totalSize)})`,
+      });
+    } catch (error) {
+      console.error('Error reconstructing binary file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reconstruct received file",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   const setupDataChannel = useCallback((channel: RTCDataChannel, peerId: string) => {
     // Optimize data channel for large file transfers (Phase 1)
@@ -120,9 +205,11 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
       });
     };
 
+    // Track last metadata for binary chunks
+    let lastChunkMetadata: any = null;
+
     channel.onmessage = (event) => {
       try {
-        // Handle both text (control messages) and binary (file chunks) data
         if (typeof event.data === 'string') {
           const data = JSON.parse(event.data);
           
@@ -136,7 +223,19 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
               totalChunks: data.chunks,
             };
             setIncomingFileRequests(prev => [...prev, request]);
+          } else if (data.type === 'binary-chunk-metadata') {
+            // Store metadata for next binary chunk
+            lastChunkMetadata = data;
+          } else if (data.type === 'file-chunk') {
+            // Legacy JSON chunk handling for backward compatibility
+            handleFileChunk(data, peerId);
           } else if (data.type === 'transfer-accepted') {
+            // Set flag to start sending for this peer
+            setPendingFileTransfers(prev => {
+              const newMap = new Map(prev);
+              newMap.set(peerId, true);
+              return newMap;
+            });
             toast({
               title: "Transfer Accepted",
               description: `${peerId} accepted the file transfer`,
@@ -149,8 +248,13 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
             });
           }
         } else if (event.data instanceof ArrayBuffer) {
-          // Handle binary file chunk data (optimized for Phase 1)
-          handleBinaryFileChunk(event.data, peerId);
+          // Handle binary chunk with metadata
+          if (lastChunkMetadata) {
+            handleBinaryFileChunk(event.data, peerId, lastChunkMetadata);
+            lastChunkMetadata = null; // Reset after use
+          } else {
+            console.warn('Received binary chunk without metadata');
+          }
         }
       } catch (error) {
         console.error('Error parsing data channel message:', error);
@@ -261,13 +365,20 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
         ...transferRequest,
       }));
 
-      // Wait for acceptance and send optimized chunks (Phase 1)
-      setTimeout(async () => {
-        const chunks = await createFileChunks(file);
-        for (let i = 0; i < chunks.length; i++) {
-          // Send binary chunks directly instead of JSON (Phase 1 optimization)
-          const binaryChunk = chunks[i];
-          
+      // Wait for acceptance, then stream file with proper gating (Phase 1 Fixed)
+      const waitForAcceptanceAndSend = async () => {
+        // Wait for acceptance signal
+        while (!pendingFileTransfers.get(targetId)) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        console.log(`Starting optimized transfer for ${file.name} (${formatFileSize(file.size)})`);
+        
+        // Use streaming instead of preloading entire file
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        let chunkIndex = 0;
+        
+        await streamFileChunks(file, chunkSize, async (chunk: Uint8Array) => {
           // Check buffer before sending to prevent overwhelming
           if (channel.bufferedAmount > 1024 * 1024) { // 1MB buffer threshold
             await new Promise(resolve => {
@@ -282,18 +393,48 @@ export function useWebRTC(sendSignalingMessage: (message: any) => void) {
             });
           }
           
-          // Send binary chunk directly (much faster than JSON)
-          channel.send(binaryChunk.buffer);
-
+          // Send metadata first, then binary chunk (critical fix)
+          const metadata = {
+            type: 'binary-chunk-metadata',
+            fileName: file.name,
+            fileSize: file.size,
+            chunkIndex: chunkIndex,
+            totalChunks: totalChunks,
+          };
+          
+          channel.send(JSON.stringify(metadata));
+          
+          // Immediately send binary chunk
+          channel.send(chunk.buffer);
+          
+          chunkIndex++;
+          
           // Smaller delay for 1MB chunks (better throughput)
           await new Promise(resolve => setTimeout(resolve, 5));
-        }
+        });
+        
+        // Clear acceptance flag
+        setPendingFileTransfers(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(targetId);
+          return newMap;
+        });
         
         toast({
           title: "File Sent",
-          description: `Successfully sent ${file.name} (${formatFileSize(file.size)})`,
+          description: `Successfully sent ${file.name} (${formatFileSize(file.size)}) using optimized streaming`,
         });
-      }, 1000);
+      };
+      
+      // Start the acceptance-gated transfer
+      waitForAcceptanceAndSend().catch(error => {
+        console.error('Error in optimized file transfer:', error);
+        toast({
+          title: "Transfer Error",
+          description: `Failed to send ${file.name}`,
+          variant: "destructive",
+        });
+      });
     }
   }, [dataChannels, toast]);
 
