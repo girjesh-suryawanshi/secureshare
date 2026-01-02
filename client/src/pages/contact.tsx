@@ -136,7 +136,7 @@ export default function Contact() {
                   <h3 className="text-lg font-semibold text-gray-900">Phone Support</h3>
                 </div>
                 <p className="text-gray-600">
-                  +1 (555) 123-4567
+                  +918989997018
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   Business hours only
@@ -151,9 +151,7 @@ export default function Contact() {
                   <h3 className="text-lg font-semibold text-gray-900">Office</h3>
                 </div>
                 <p className="text-gray-600">
-                  123 Tech Street<br />
-                  San Francisco, CA 94102<br />
-                  United States
+                  office :78 shankar Bagh indore
                 </p>
               </CardContent>
             </Card>
