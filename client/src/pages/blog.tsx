@@ -7,6 +7,17 @@ import { useState } from "react";
 // Blog posts data with SEO-optimized titles and trending keywords
 const blogPosts = [
   {
+    id: 300,
+    title: "Share Files Without Signup: The Easiest Way to Send Files Instantly",
+    excerpt: "Tired of account requirements? Learn how to share files instantly without signup for faster, frictionless transfers.",
+    category: "Guide",
+    readTime: "5 min read",
+    date: "January 2, 2026",
+    slug: "share-files-without-signup-instant-send",
+    tags: ["no signup", "instant", "file sharing", "frictionless"],
+    icon: Zap
+  },
+  {
     id: 200,
     title: "Send Files Using a 6 Digit Code: A Simple, Secure Way to Share Files Without Login",
     excerpt: "Tired of slow uploads and complicated sharing? Learn how to send files using a 6-digit code instantly without any accounts or logins.",
