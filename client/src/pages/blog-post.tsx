@@ -70,6 +70,72 @@ const getBlogPost = (slug: string) => {
         <p><strong>Use P2P for:</strong> One-time transfers, large files, sensitive documents, privacy-focused sharing</p>
         <p><strong>Use Cloud for:</strong> Long-term storage, collaboration projects, regular access needs, backup purposes</p>
       `
+    },
+    "best-free-file-sharing-no-registration": {
+      title: "Best Free File Sharing Services Without Registration in 2025",
+      date: "January 10, 2025",
+      readTime: "12 min read",
+      category: "Reviews",
+      tags: ["free", "no registration", "file sharing", "reviews"],
+      content: `
+        <h2>Top 10 File Sharing Platforms Without Sign-ups</h2>
+        <p>In 2025, speed and privacy are the primary drivers for file sharing innovation. We've reviewed the top services that allow you to send files instantly without creating an account.</p>
+        <h3>1. HexaSend</h3>
+        <p>HexaSend leads the pack with its unique 6-digit code system and pure P2P architecture. By eliminating server storage entirely, it offers unmatched privacy.</p>
+        <h3>Why Skip Registration?</h3>
+        <ul>
+          <li>Save time by skipping onboarding flows</li>
+          <li>Protect your email address from marketing lists</li>
+          <li>Reduce your digital footprint</li>
+        </ul>
+      `
+    },
+    "send-large-files-instantly-methods": {
+      title: "How to Send Large Files Instantly: 5 Fast Methods",
+      date: "January 8, 2025",
+      readTime: "7 min read",
+      category: "Tips",
+      tags: ["large files", "instant", "transfer", "tips"],
+      content: `
+        <h2>Mastering Large File Transfers</h2>
+        <p>Email attachments often cap out at 25MB, which is insufficient for high-resolution videos or large datasets. Here are the best ways to bypass those limits.</p>
+        <h3>Top Methods</h3>
+        <ul>
+          <li><strong>Direct P2P:</strong> The fastest way to move data between two active devices.</li>
+          <li><strong>Chunked Uploads:</strong> Splitting files into smaller parts to handle network interruptions.</li>
+          <li><strong>Local Network Transfer:</strong> Using your Wi-Fi's full bandwidth for near-instant transfers between nearby devices.</li>
+        </ul>
+      `
+    },
+    "6-digit-code-file-sharing-future": {
+      title: "6-Digit Code File Sharing: The Future of Simple Transfer",
+      date: "January 5, 2025",
+      readTime: "5 min read",
+      category: "Innovation",
+      tags: ["6-digit code", "innovation", "simple", "future"],
+      content: `
+        <h2>The Power of the 6-Digit Code</h2>
+        <p>Complex URLs and QR codes are useful, but nothing beats the simplicity of a 6-digit alphanumeric code. It's easy to read over the phone, text, or remember long enough to type into another device.</p>
+        <h3>Security of Codes</h3>
+        <p>While 6 digits might seem short, with alphanumeric characters, there are over 2 billion possible combinations. Combined with short expiry times, these codes are incredibly secure for temporary transfers.</p>
+      `
+    },
+    "share-files-iphone-android-cross-platform": {
+      title: "Share Files Between iPhone and Android: Cross-Platform Guide",
+      date: "January 3, 2025",
+      readTime: "9 min read",
+      category: "Mobile",
+      tags: ["iphone", "android", "cross-platform", "mobile"],
+      content: `
+        <h2>Bridging the Mobile Gap</h2>
+        <p>Transferring files between iOS and Android used to be a headache. AirDrop only works with Apple devices, and Nearby Share is mostly for Android. Web-based P2P tools have changed the game.</p>
+        <h3>How to do it:</h3>
+        <ol>
+          <li>Open HexaSend in both device browsers.</li>
+          <li>Upload the file on the source device.</li>
+          <li>Enter the code on the target device.</li>
+        </ol>
+      `
     }
   };
   
@@ -173,7 +239,7 @@ export default function BlogPost() {
             <div className="mt-12 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
               <h3 className="text-xl font-bold text-gray-900 mb-3">Ready to Share Files Securely?</h3>
               <p className="text-gray-600 mb-4">
-                Try SecureShare now - the fastest and most secure way to share files with just a 6-digit code.
+                Try HexaSend now - the fastest and most secure way to share files with just a 6-digit code.
               </p>
               <Link href="/">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg">
