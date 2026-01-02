@@ -128,6 +128,248 @@ const blogPosts = [
     icon: Zap
   },
   {
+    id: 3,
+    title: "Best Free File Sharing Services Without Registration in 2025",
+    excerpt: "Top 10 file sharing platforms that don't require sign-ups. Send files instantly with simple codes and links.",
+    category: "Reviews",
+    readTime: "12 min read",
+    date: "January 10, 2025",
+    slug: "best-free-file-sharing-no-registration",
+    tags: ["free", "no registration", "file sharing", "reviews"],
+    icon: FileText
+  },
+  {
+    id: 4,
+    title: "How to Send Large Files Instantly: 5 Fast Methods",
+    excerpt: "Send files of any size without email limitations. Learn about file compression, peer-to-peer transfer, and instant sharing.",
+    category: "Tips",
+    readTime: "7 min read",
+    date: "January 8, 2025",
+    slug: "send-large-files-instantly-methods",
+    tags: ["large files", "instant", "transfer", "tips"],
+    icon: Zap
+  },
+  {
+    id: 5,
+    title: "6-Digit Code File Sharing: The Future of Simple Transfer",
+    excerpt: "Why alphanumeric codes are revolutionizing file sharing. Easy to remember, impossible to guess, and universally compatible.",
+    category: "Innovation",
+    readTime: "5 min read",
+    date: "January 5, 2025",
+    slug: "6-digit-code-file-sharing-future",
+    tags: ["6-digit code", "innovation", "simple", "future"],
+    icon: Share
+  },
+  {
+    id: 7,
+    title: "ZIP File Sharing Made Easy: Compress and Send Multiple Files",
+    excerpt: "Learn how to automatically package multiple files into ZIP format for convenient sharing and downloading.",
+    category: "Tutorials",
+    readTime: "6 min read",
+    date: "January 1, 2025",
+    slug: "zip-file-sharing-compress-multiple-files",
+    tags: ["zip files", "compression", "multiple files", "tutorial"],
+    icon: Archive
+  },
+  {
+    id: 8,
+    title: "File Sharing for Teams: Collaborate Without Compromising Security",
+    excerpt: "Best practices for team file sharing with focus on security, speed, and ease of use across remote teams.",
+    category: "Business",
+    readTime: "10 min read",
+    date: "December 30, 2024",
+    slug: "file-sharing-teams-security-collaboration",
+    tags: ["teams", "collaboration", "business", "security"],
+    icon: Users
+  },
+  {
+    id: 9,
+    title: "No Download File Sharing: Transfer Files Without Installing Apps",
+    excerpt: "Share files directly through your web browser. No software installation, no account creation, just instant sharing.",
+    category: "Convenience",
+    readTime: "4 min read",
+    date: "December 28, 2024",
+    slug: "no-download-file-sharing-browser-based",
+    tags: ["no download", "browser", "web-based", "convenience"],
+    icon: Globe
+  },
+  {
+    id: 10,
+    title: "Temporary File Sharing: Share Files That Auto-Delete",
+    excerpt: "Protect your privacy with temporary file sharing that automatically removes files after download or time expiry.",
+    category: "Privacy",
+    readTime: "7 min read",
+    date: "December 25, 2024",
+    slug: "temporary-file-sharing-auto-delete",
+    tags: ["temporary", "auto-delete", "privacy", "security"],
+    icon: Shield
+  },
+  {
+    id: 11,
+    title: "Cross-Device File Transfer: PC to Phone to Tablet Guide",
+    excerpt: "Universal methods to share files between any devices - Windows, Mac, iPhone, Android, and tablets.",
+    category: "Guide",
+    readTime: "11 min read",
+    date: "December 22, 2024",
+    slug: "cross-device-file-transfer-universal-guide",
+    tags: ["cross-device", "universal", "pc", "mobile"],
+    icon: Globe
+  },
+  {
+    id: 12,
+    title: "Encrypted File Sharing: Military-Grade Security for Everyone",
+    excerpt: "How end-to-end encryption protects your files during transfer. Understanding security levels and choosing safe platforms.",
+    category: "Security",
+    readTime: "8 min read",
+    date: "December 20, 2024",
+    slug: "encrypted-file-sharing-military-grade-security",
+    tags: ["encryption", "military-grade", "security", "protection"],
+    icon: Shield
+  },
+  {
+    id: 13,
+    title: "Quick File Sharing for Professionals: Business Solutions",
+    excerpt: "Professional file sharing tools for lawyers, doctors, consultants, and freelancers who need secure, fast transfers.",
+    category: "Business",
+    readTime: "9 min read",
+    date: "December 18, 2024",
+    slug: "quick-file-sharing-professionals-business",
+    tags: ["professional", "business", "quick", "secure"],
+    icon: Users
+  },
+  {
+    id: 14,
+    title: "Anonymous File Sharing: Transfer Files Without Identity",
+    excerpt: "Share files completely anonymously without revealing personal information, email addresses, or creating accounts.",
+    category: "Privacy",
+    readTime: "6 min read",
+    date: "December 15, 2024",
+    slug: "anonymous-file-sharing-no-identity",
+    tags: ["anonymous", "privacy", "no identity", "secure"],
+    icon: Shield
+  },
+  {
+    id: 15,
+    title: "Direct File Transfer: Skip the Cloud, Share Directly",
+    excerpt: "Benefits of direct device-to-device file transfer. Faster speeds, better privacy, and no server storage.",
+    category: "Technology",
+    readTime: "7 min read",
+    date: "December 12, 2024",
+    slug: "direct-file-transfer-skip-cloud",
+    tags: ["direct transfer", "skip cloud", "device-to-device", "fast"],
+    icon: Zap
+  },
+  {
+    id: 16,
+    title: "File Sharing Without Limits: Send Files of Any Size",
+    excerpt: "Overcome email attachment limits and cloud storage restrictions. Share videos, presentations, and large datasets freely.",
+    category: "Tips",
+    readTime: "5 min read",
+    date: "December 10, 2024",
+    slug: "file-sharing-without-limits-any-size",
+    tags: ["no limits", "any size", "large files", "unlimited"],
+    icon: Zap
+  },
+  {
+    id: 17,
+    title: "Instant File Sharing: Zero Wait Time, Maximum Speed",
+    excerpt: "Achieve lightning-fast file transfers with peer-to-peer technology. No queues, no waiting, just instant sharing.",
+    category: "Speed",
+    readTime: "6 min read",
+    date: "December 8, 2024",
+    slug: "instant-file-sharing-zero-wait-maximum-speed",
+    tags: ["instant", "zero wait", "maximum speed", "fast"],
+    icon: Zap
+  },
+  {
+    id: 18,
+    title: "Drag and Drop File Sharing: Simplest Way to Send Files",
+    excerpt: "Master drag-and-drop file sharing interfaces. The most intuitive way to select and share files across platforms.",
+    category: "User Experience",
+    readTime: "4 min read",
+    date: "December 5, 2024",
+    slug: "drag-drop-file-sharing-simplest-way",
+    tags: ["drag and drop", "simple", "intuitive", "easy"],
+    icon: FileText
+  },
+  {
+    id: 19,
+    title: "Mobile File Sharing: Best Apps and Browser Solutions",
+    excerpt: "Compare mobile file sharing apps vs browser-based solutions. Which works better for smartphones and tablets?",
+    category: "Mobile",
+    readTime: "8 min read",
+    date: "December 3, 2024",
+    slug: "mobile-file-sharing-apps-vs-browser",
+    tags: ["mobile", "apps", "browser", "smartphone"],
+    icon: Globe
+  },
+  {
+    id: 20,
+    title: "File Transfer Codes: Why Alphanumeric is Most Secure",
+    excerpt: "Security analysis of different code systems. Why 6-digit alphanumeric codes offer the best balance of security and usability.",
+    category: "Security",
+    readTime: "7 min read",
+    date: "December 1, 2024",
+    slug: "file-transfer-codes-alphanumeric-secure",
+    tags: ["transfer codes", "alphanumeric", "secure", "analysis"],
+    icon: Shield
+  },
+  {
+    id: 21,
+    title: "Share Documents Securely: Best Practices for Professionals",
+    excerpt: "How lawyers, accountants, and consultants can share confidential documents safely with clients and colleagues.",
+    category: "Professional",
+    readTime: "10 min read",
+    date: "November 28, 2024",
+    slug: "share-documents-securely-professionals",
+    tags: ["documents", "professionals", "confidential", "safe"],
+    icon: FileText
+  },
+  {
+    id: 22,
+    title: "Photo Sharing Without Social Media: Private Image Transfer",
+    excerpt: "Share photos and images privately without posting on social media. Direct transfer methods for personal photos.",
+    category: "Personal",
+    readTime: "5 min read",
+    date: "November 25, 2024",
+    slug: "photo-sharing-without-social-media-private",
+    tags: ["photo sharing", "private", "images", "personal"],
+    icon: Share
+  },
+  {
+    id: 23,
+    title: "File Sharing Alternatives to WeTransfer: Better Options",
+    excerpt: "Top alternatives to WeTransfer with better security, speed, and features. Compare free and paid options.",
+    category: "Alternatives",
+    readTime: "12 min read",
+    date: "November 22, 2024",
+    slug: "file-sharing-alternatives-wetransfer-better",
+    tags: ["alternatives", "wetransfer", "comparison", "better options"],
+    icon: Globe
+  },
+  {
+    id: 24,
+    title: "Remote Work File Sharing: Tools for Distributed Teams",
+    excerpt: "Essential file sharing solutions for remote teams. Security, collaboration, and productivity in distributed work environments.",
+    category: "Remote Work",
+    readTime: "11 min read",
+    date: "November 20, 2024",
+    slug: "remote-work-file-sharing-distributed-teams",
+    tags: ["remote work", "distributed teams", "collaboration", "productivity"],
+    icon: Users
+  },
+  {
+    id: 25,
+    title: "Future of File Sharing: Trends and Predictions for 2025",
+    excerpt: "Emerging trends in file sharing technology. Blockchain, AI integration, and the evolution of peer-to-peer networks.",
+    category: "Future",
+    readTime: "9 min read",
+    date: "November 18, 2024",
+    slug: "future-file-sharing-trends-predictions-2025",
+    tags: ["future", "trends", "predictions", "emerging tech"],
+    icon: Zap
+  },
+  {
     id: 1,
     title: "How to Share Files Securely Online in 2025: Complete Guide",
     excerpt: "Discover the safest methods to share files online with end-to-end encryption, no registration required, and complete privacy protection.",
@@ -151,7 +393,7 @@ const blogPosts = [
   }
 ];
 
-const categories = ["All", "Security", "Technology", "Tips", "Business", "Mobile", "Privacy", "Guide", "Speed", "Reviews", "Innovation"];
+const categories = ["All", "Security", "Technology", "Tips", "Business", "Mobile", "Privacy", "Guide", "Speed", "Reviews", "Innovation", "Tutorials", "Professional", "Personal", "Alternatives", "Remote Work", "Future"];
 
 export default function Blog() {
   const [searchTerm, setSearchTerm] = useState("");
