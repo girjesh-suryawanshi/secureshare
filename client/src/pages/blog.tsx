@@ -7,6 +7,17 @@ import { useState } from "react";
 // Blog posts data with SEO-optimized titles and trending keywords
 const blogPosts = [
   {
+    id: 200,
+    title: "Send Files Using a 6 Digit Code: A Simple, Secure Way to Share Files Without Login",
+    excerpt: "Tired of slow uploads and complicated sharing? Learn how to send files using a 6-digit code instantly without any accounts or logins.",
+    category: "Guide",
+    readTime: "8 min read",
+    date: "January 2, 2026",
+    slug: "send-files-using-6-digit-code-secure-way",
+    tags: ["6-digit code", "secure sharing", "no login", "file transfer"],
+    icon: Shield
+  },
+  {
     id: 101,
     title: "The Ultimate Guide to P2P File Sharing in 2026",
     excerpt: "Master peer-to-peer technology in 2026. Learn how P2P platforms like HexaSend are making file transfers faster and more secure.",
