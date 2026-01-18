@@ -80,6 +80,30 @@ export default function Home() {
       setIsUploading(true);
       setUploadProgress(0);
       
+      // Validate file sizes - especially important for large video files
+      // Base64 encoding adds 33% overhead, so max single file is ~375MB
+      const MAX_SINGLE_FILE = 375 * 1024 * 1024; // 375MB max for single message
+      const oversizedFiles = files.filter(f => f.size > MAX_SINGLE_FILE);
+      
+      if (oversizedFiles.length > 0) {
+        setIsUploading(false);
+        const fileNames = oversizedFiles.map(f => f.name).join(', ');
+        const maxSizeMB = Math.round(MAX_SINGLE_FILE / 1024 / 1024);
+        toast({
+          title: "⚠️ Files Too Large for Internet Transfer",
+          description: `${fileNames} (${oversizedFiles.map(f => (f.size / 1024 / 1024).toFixed(0)).join(', ')}MB). Max size is ${maxSizeMB}MB due to WebSocket limits. Try using Local Network transfer instead.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Warn if total size is large (helps with network timeouts)
+      const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+      const totalSizeBase64 = totalSize * 1.33; // Base64 overhead
+      if (totalSizeBase64 > 400 * 1024 * 1024) {
+        console.warn(`[FileTransfer] ⚠️  Total transfer size after base64 encoding: ${(totalSizeBase64 / 1024 / 1024).toFixed(0)}MB - this may take a while`);
+      }
+      
       const code = generateCode();
       setTransferCode(code);
       
@@ -108,17 +132,20 @@ export default function Home() {
       }
       
       const startTime = Date.now();
-      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
       
-      // Process all files with progress tracking
-      const filePromises = files.map((file, index) => {
-        return new Promise<void>((resolve) => {
+      // Process all files with proper sequencing
+      // IMPORTANT: Send all register-file messages first, then all file-data messages
+      // This ensures the server knows how many files to expect before receiving data
+      
+      // First phase: Send all register-file messages
+      console.log(`[FileTransfer] Registering ${files.length} files with code ${code}`);
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
+        // Create a promise for file reading
+        await new Promise<void>((resolve) => {
           const reader = new FileReader();
           reader.onload = () => {
-            const base64 = reader.result as string;
-            const base64Data = base64.split(',')[1];
-            
-            // Register each file with the same code but different index
+            // Send register-file message
             sendMessage({
               type: 'register-file',
               code: code,
@@ -129,8 +156,28 @@ export default function Home() {
               totalFiles: files.length,
               transferType: transferType,
             });
+            console.log(`[FileTransfer] Registered file ${index + 1}/${files.length}: ${file.name}`);
+            resolve();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
 
-            // Send file data
+      // Wait 200ms after all registrations to ensure server processed them
+      console.log(`[FileTransfer] Waiting for server to process file registrations...`);
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Second phase: Send all file-data messages
+      console.log(`[FileTransfer] Sending file data for ${files.length} files`);
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
+        await new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            const base64Data = base64.split(',')[1];
+            
+            // Send file-data message
             sendMessage({
               type: 'file-data',
               code: code,
@@ -138,6 +185,7 @@ export default function Home() {
               data: base64Data,
               fileIndex: index,
             });
+            console.log(`[FileTransfer] Sent file data ${index + 1}/${files.length}: ${file.name}`);
             
             // Update progress
             const progress = ((index + 1) / files.length) * 100;
@@ -157,10 +205,7 @@ export default function Home() {
           };
           reader.readAsDataURL(file);
         });
-      });
-
-      // Wait for all files to be processed
-      await Promise.all(filePromises);
+      }
       
       setIsUploading(false);
       setFilesReady(true);
@@ -553,11 +598,24 @@ export default function Home() {
     onFileNotFound((code) => {
       setIsReceiving(false);
       setReceiveProgress(0);
+      
+      // Enhanced error message based on message from server
+      let errorDescription = `No file found with code ${code}.`;
+      
+      if (code.includes('expired')) {
+        errorDescription = `Code ${code} has expired (older than 1 hour). Ask sender to share files again.`;
+      } else if (code.includes('case mismatch')) {
+        errorDescription = `Code case mismatch. Please try the suggested code.`;
+      } else {
+        errorDescription += `\n\n💡 Possible reasons:\n• Code expired (>1 hour old)\n• Sender still uploading\n• Wrong code entered\n• Server restarted`;
+      }
+      
       toast({
-        title: "File Not Found",
-        description: `No file found with code ${code}`,
+        title: "File Not Found ❌",
+        description: errorDescription,
         variant: "destructive",
       });
+      console.error(`[FileNotFound] Code: ${code}`);
     });
 
     onDownloadAck((data: any) => {
