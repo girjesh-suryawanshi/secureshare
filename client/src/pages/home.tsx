@@ -902,7 +902,7 @@ export default function Home() {
                               Drop Files Here or Click to Browse
                             </p>
                             <p className="text-sm md:text-lg text-gray-600">
-                              Support for any file type • Multiple files automatically ZIP packaged
+                              Support for all file types • Documents, Videos, ZIP, JAR, Archives & More
                             </p>
                             <div className="flex justify-center space-x-4 text-sm font-medium">
                               <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">✓ Secure</span>
@@ -914,11 +914,12 @@ export default function Home() {
                       </DragDropZone>
                       
                       <div className="mt-8 p-4 md:p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
-                        <h4 className="font-bold text-gray-900 mb-3 text-sm md:text-base">💡 Pro Tips</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm text-gray-700">
-                          <div>• Multiple files = Auto ZIP</div>
-                          <div>• Files expire in 1 hour</div>
-                          <div>• No size limits</div>
+                        <h4 className="font-bold text-gray-900 mb-3 text-sm md:text-base">💡 Supported Files</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4 text-xs md:text-sm text-gray-700">
+                          <div>✓ Archives (.zip, .rar, .7z, .tar)</div>
+                          <div>✓ Code (.jar, .exe, .dll, .sh)</div>
+                          <div>✓ Documents (PDF, Word, Excel)</div>
+                          <div>✓ Media (Video, Audio, Images)</div>
                         </div>
                       </div>
                     </div>

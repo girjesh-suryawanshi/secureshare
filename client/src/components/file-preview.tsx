@@ -1,4 +1,4 @@
-import { FileText, Image, Video, Music, Archive, File } from "lucide-react";
+import { FileText, Image, Video, Music, Archive, File, Code2 } from "lucide-react";
 
 interface FilePreviewProps {
   file: File;
@@ -6,14 +6,35 @@ interface FilePreviewProps {
 }
 
 export function FilePreview({ file, showSize = true }: FilePreviewProps) {
-  const getFileIcon = (fileType: string) => {
+  const getFileIcon = (fileName: string, fileType: string) => {
+    // Check by file extension first (more reliable than MIME type)
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    // Image files
     if (fileType.startsWith('image/')) return <Image className="h-8 w-8 text-blue-500" />;
+    
+    // Video files
     if (fileType.startsWith('video/')) return <Video className="h-8 w-8 text-purple-500" />;
+    
+    // Audio files
     if (fileType.startsWith('audio/')) return <Music className="h-8 w-8 text-green-500" />;
-    if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) 
+    
+    // Archive files (.zip, .rar, .7z, .tar, .gz, etc.)
+    if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(extension) || 
+        fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) 
       return <Archive className="h-8 w-8 text-orange-500" />;
-    if (fileType.includes('text') || fileType.includes('document')) 
+    
+    // Code/Executable files (.jar, .exe, .dll, .so, .sh, .bat, etc.)
+    if (['jar', 'exe', 'dll', 'so', 'sh', 'bat', 'cmd', 'app', 'bin', 'py', 'js', 'ts'].includes(extension) ||
+        fileType.includes('java') || fileType.includes('executable'))
+      return <Code2 className="h-8 w-8 text-red-500" />;
+    
+    // Text/Document files
+    if (fileType.includes('text') || fileType.includes('document') || 
+        ['txt', 'md', 'doc', 'docx', 'pdf', 'xlsx', 'csv'].includes(extension))
       return <FileText className="h-8 w-8 text-gray-500" />;
+    
+    // Default
     return <File className="h-8 w-8 text-gray-400" />;
   };
 
@@ -47,7 +68,7 @@ export function FilePreview({ file, showSize = true }: FilePreviewProps) {
             />
           </div>
         ) : (
-          getFileIcon(file.type)
+          getFileIcon(file.name, file.type)
         )}
       </div>
       <div className="flex-1 min-w-0">
