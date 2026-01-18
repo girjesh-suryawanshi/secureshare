@@ -653,15 +653,15 @@ export default function Home() {
 
   if (mode === 'select') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-        <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="text-center space-y-12">
             
             {/* Clean Hero Section */}
             <div className="space-y-12">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-3xl opacity-20 w-32 h-32 mx-auto"></div>
-                <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl mb-6">
+                <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl shadow-lg mb-8">
                   <Share className="h-16 w-16 text-white" />
                 </div>
               </div>
@@ -688,16 +688,16 @@ export default function Home() {
             </div>
 
             {/* Transfer Type Selection */}
-            <div className="max-w-xl mx-auto mb-8">
-              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Choose Transfer Method</h3>
+            <div className="max-w-xl mx-auto mb-12">
+              <div className="bg-white rounded-3xl shadow-md p-6 sm:p-8 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">Choose Transfer Method</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setTransferType('internet')}
-                    className={`p-4 rounded-xl border-2 transition-all ${
+                    className={`p-4 rounded-2xl border-2 transition-all duration-200 ${
                       transferType === 'internet'
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
                     }`}
                   >
                     <Globe className="h-8 w-8 mx-auto mb-2" />
@@ -710,10 +710,10 @@ export default function Home() {
                   
                   <button
                     onClick={() => setTransferType('local')}
-                    className={`p-4 rounded-xl border-2 transition-all ${
+                    className={`p-4 rounded-2xl border-2 transition-all duration-200 ${
                       transferType === 'local'
                         ? 'border-green-500 bg-green-50 text-green-700'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
                     }`}
                   >
                     <Wifi className="h-8 w-8 mx-auto mb-2" />
@@ -732,7 +732,7 @@ export default function Home() {
               <div className="grid md:grid-cols-2 gap-6">
                 
                 {/* Send Files Card */}
-                <Card className="group hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden relative">
+                <Card className="group hover:shadow-lg transition-all duration-200 shadow-md border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <CardContent className="p-8 relative z-10">
                     <div className="text-center space-y-6">
@@ -749,7 +749,7 @@ export default function Home() {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => setMode('send'), 100);
                         }} 
-                        className="w-full h-12 text-base bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold"
+                        className="w-full h-11 text-sm bg-white text-blue-600 hover:bg-blue-50 shadow-md font-semibold rounded-lg transition-shadow duration-200"
                         disabled={!isConnected}
                       >
                         Start Sending {transferType === 'local' ? '(Local)' : ''}
@@ -759,7 +759,7 @@ export default function Home() {
                 </Card>
 
                 {/* Receive Files Card */}
-                <Card className="group hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white overflow-hidden relative">
+                <Card className="group hover:shadow-lg transition-all duration-200 shadow-md border-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white overflow-hidden relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <CardContent className="p-8 relative z-10">
                     <div className="text-center space-y-6">
@@ -776,7 +776,7 @@ export default function Home() {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => setMode('receive'), 100);
                         }} 
-                        className="w-full h-12 text-base bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold"
+                        className="w-full h-11 text-sm bg-white text-purple-600 hover:bg-purple-50 shadow-md font-semibold rounded-lg transition-shadow duration-200"
                         disabled={!isConnected}
                       >
                         Start Receiving {transferType === 'local' ? '(Local)' : ''}
@@ -788,14 +788,14 @@ export default function Home() {
               </div>
 
               {!isConnected && (
-                <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl">
-                  <p className="text-red-600 font-medium">🔄 Connecting to secure servers...</p>
+                <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-amber-700 font-medium">🔄 Connecting to secure servers...</p>
                 </div>
               )}
             </div>
 
             {/* Simple How It Works */}
-            <div className="grid md:grid-cols-3 gap-8 mt-16 mx-4">
+            <div className="grid md:grid-cols-3 gap-8 mt-20 mx-4">
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
                   <Upload className="h-8 w-8 text-white" />
