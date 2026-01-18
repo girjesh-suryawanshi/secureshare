@@ -458,23 +458,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Return file metadata and data
-    const files = registry.files.map(file => ({
-      fileName: file.fileName,
-      fileSize: file.fileSize,
-      fileType: file.fileType,
-      data: file.data,
-      fileIndex: file.fileIndex
-    }));
+    // Filter out incomplete files (files still receiving chunks)
+    const files = registry.files
+      .filter(file => file.data && file.data.length > 0) // Only return files with complete data
+      .map(file => ({
+        fileName: file.fileName,
+        fileSize: file.fileSize,
+        fileType: file.fileType,
+        data: file.data,
+        fileIndex: file.fileIndex
+      }));
+
+    if (files.length === 0) {
+      const incompleteCount = registry.files.filter(f => !f.data || f.data.length === 0).length;
+      const assemblingCount = registry.files.filter(f => f.chunks && f.chunks.size > 0).length;
+      
+      console.log(`[LocalNetwork] ⚠️ No complete files found for code: ${upperCode}. Registry has ${registry.files.length} files, ${assemblingCount} assembling, ${incompleteCount} incomplete`);
+      
+      // Wait a bit for large files to finish assembly
+      return setTimeout(() => {
+        const retryFiles = registry.files
+          .filter(file => file.data && file.data.length > 0)
+          .map(file => ({
+            fileName: file.fileName,
+            fileSize: file.fileSize,
+            fileType: file.fileType,
+            data: file.data,
+            fileIndex: file.fileIndex
+          }));
+        
+        if (retryFiles.length > 0) {
+          console.log(`[LocalNetwork] ✅ Retrying - now found ${retryFiles.length} complete files`);
+          res.json(retryFiles);
+        } else {
+          res.status(202).json({ 
+            message: "Files are still being uploaded. Please try again in a moment.",
+            totalExpected: registry.totalFiles,
+            completeFiles: retryFiles.length,
+            incompleteFiles: registry.files.filter(f => !f.data || f.data.length === 0).length
+          });
+        }
+      }, 500); // Wait 500ms for assembly to complete
+    }
 
     res.json(files);
   });
 
-  // Register files for local network sharing
+  // Register files for local network sharing with enhanced error handling
   app.post("/api/register-local-file", (req, res) => {
-    const { code, fileName, fileSize, fileType, data, fileIndex, totalFiles } = req.body;
+    const { code, fileName, fileSize, fileType, data, fileIndex, totalFiles, isCompressed } = req.body;
     
     if (!code || !fileName || !data) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: "Missing required fields: code, fileName, data" });
     }
 
     // Normalize code to uppercase for consistency
@@ -482,130 +517,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Log file size for debugging large files
     const fileSizeMB = fileSize ? (fileSize / 1024 / 1024).toFixed(2) : 'unknown';
-    console.log(`Registering large file: ${fileName} - ${fileSizeMB}MB (${fileIndex + 1}/${totalFiles})`);
+    const compressionInfo = isCompressed ? ' (compressed)' : '';
+    console.log(`[LocalNetwork] Registering file: ${fileName} - ${fileSizeMB}MB${compressionInfo} (${fileIndex + 1}/${totalFiles})`);
 
-    // Get or create file registry entry
-    let registry = fileRegistry.get(upperCode);
-    if (!registry) {
-      registry = {
-        code: upperCode,
-        files: [],
-        totalFiles: totalFiles || 1,
-        createdAt: new Date(),
-        transferType: 'local',
-        senderWs: null, // No WebSocket for local transfers
+    try {
+      // Get or create file registry entry
+      let registry = fileRegistry.get(upperCode);
+      if (!registry) {
+        registry = {
+          code: upperCode,
+          files: [],
+          totalFiles: totalFiles || 1,
+          createdAt: new Date(),
+          transferType: 'local',
+          senderWs: null, // No WebSocket for local transfers
+        };
+        fileRegistry.set(upperCode, registry);
+        console.log(`[LocalNetwork] Created new registry for code: ${upperCode}`);
+      }
+
+      // Add file to registry
+      const fileData = {
+        fileName,
+        fileSize,
+        fileType,
+        data,
+        isCompressed: isCompressed || false,
+        fileIndex: fileIndex || 0,
       };
-      fileRegistry.set(upperCode, registry);
-      console.log(`Created new local registry for code: ${upperCode}`);
+
+      registry.files.push(fileData);
+      console.log(`[LocalNetwork] File registered: ${fileName} with code: ${upperCode} (${registry.files.length}/${totalFiles})`);
+
+      res.json({ success: true, message: "File registered for local sharing", fileIndex, fileName });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[LocalNetwork] Error registering file: ${errorMsg}`);
+      res.status(500).json({ error: `Failed to register file: ${errorMsg}` });
     }
-
-    // Add file to registry
-    const fileData = {
-      fileName,
-      fileSize,
-      fileType,
-      data,
-      fileIndex: fileIndex || 0,
-    };
-
-    registry.files.push(fileData);
-    console.log(`Local file registered: ${fileName} with code: ${upperCode} (${registry.files.length}/${totalFiles})`);
-
-    res.json({ success: true, message: "File registered for local sharing" });
   });
 
-  // Register file metadata for chunked upload (large files)
+  // Register file metadata for chunked upload with improved error handling
   app.post("/api/register-local-file-meta", (req, res) => {
     const { code, fileName, fileSize, fileType, fileIndex, totalFiles, totalChunks } = req.body;
     
     if (!code || !fileName || !fileSize) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: "Missing required fields: code, fileName, fileSize" });
     }
 
     // Normalize code to uppercase for consistency
     const upperCode = code.toUpperCase();
 
     const fileSizeMB = (fileSize / 1024 / 1024).toFixed(2);
-    console.log(`Registering chunked file metadata: ${fileName} - ${fileSizeMB}MB (${totalChunks} chunks)`);
+    console.log(`[LocalNetwork] Registering chunked file: ${fileName} - ${fileSizeMB}MB (${totalChunks} chunks)`);
 
-    // Get or create file registry entry
-    let registry = fileRegistry.get(upperCode);
-    if (!registry) {
-      registry = {
-        code: upperCode,
-        files: [],
-        totalFiles: totalFiles || 1,
-        createdAt: new Date(),
-        transferType: 'local',
-        senderWs: null,
+    try {
+      // Get or create file registry entry
+      let registry = fileRegistry.get(upperCode);
+      if (!registry) {
+        registry = {
+          code: upperCode,
+          files: [],
+          totalFiles: totalFiles || 1,
+          createdAt: new Date(),
+          transferType: 'local',
+          senderWs: null,
+        };
+        fileRegistry.set(upperCode, registry);
+        console.log(`[LocalNetwork] Created new registry for chunked file: ${upperCode}`);
+      }
+
+      // Create file entry for chunked upload
+      const fileData: any = {
+        fileName,
+        fileSize,
+        fileType,
+        data: '', // Will be built from chunks
+        fileIndex: fileIndex || 0,
+        chunks: new Map<number, string>(), // Store chunks temporarily
+        totalChunks,
+        receivedChunks: 0,
       };
-      fileRegistry.set(upperCode, registry);
-      console.log(`Created new local registry for code: ${upperCode}`);
+
+      registry.files.push(fileData);
+      console.log(`[LocalNetwork] Chunked file metadata registered: ${fileName} with code: ${upperCode}`);
+
+      res.json({ success: true, message: "File metadata registered for chunked upload", fileName, totalChunks });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[LocalNetwork] Error registering chunked file: ${errorMsg}`);
+      res.status(500).json({ error: `Failed to register chunked file metadata: ${errorMsg}` });
     }
-
-    // Create file entry for chunked upload
-    const fileData: any = {
-      fileName,
-      fileSize,
-      fileType,
-      data: '', // Will be built from chunks
-      fileIndex: fileIndex || 0,
-      chunks: new Map<number, string>(), // Store chunks temporarily
-      totalChunks,
-      receivedChunks: 0,
-    };
-
-    registry.files.push(fileData);
-    console.log(`File metadata registered: ${fileName} with code: ${upperCode}`);
-
-    res.json({ success: true, message: "File metadata registered for chunked upload" });
   });
 
-  // Upload file chunk
+  // Upload file chunk with improved error handling and verification
   app.post("/api/upload-local-chunk", (req, res) => {
     const { code, fileIndex, chunkIndex, data, isLastChunk } = req.body;
     
     if (!code || fileIndex === undefined || chunkIndex === undefined || !data) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: "Missing required fields: code, fileIndex, chunkIndex, data" });
     }
 
     // Normalize code to uppercase for consistency
     const upperCode = code.toUpperCase();
-    const registry = fileRegistry.get(upperCode);
-    if (!registry) {
-      return res.status(404).json({ error: "File registry not found" });
+    
+    try {
+      const registry = fileRegistry.get(upperCode);
+      if (!registry) {
+        return res.status(404).json({ error: `File registry not found for code: ${upperCode}` });
+      }
+
+      const file: any = registry.files.find(f => f.fileIndex === fileIndex);
+      if (!file || !file.chunks) {
+        return res.status(404).json({ error: `File not found in registry with index: ${fileIndex}` });
+      }
+
+      // Store chunk
+      file.chunks.set(chunkIndex, data);
+      file.receivedChunks = (file.receivedChunks || 0) + 1;
+
+      console.log(`[LocalNetwork] Chunk ${chunkIndex} received for ${file.fileName} (${file.receivedChunks}/${file.totalChunks})`);
+
+      // If all chunks received, assemble the file
+      if (file.receivedChunks === file.totalChunks) {
+        const sortedChunks = Array.from(file.chunks.entries() as any[])
+          .sort(([a]: any, [b]: any) => a - b)
+          .map(([, chunkData]: any) => chunkData);
+        
+        file.data = sortedChunks.join('');
+        delete file.chunks; // Clean up chunks to save memory
+        delete file.totalChunks;
+        delete file.receivedChunks;
+        
+        console.log(`[LocalNetwork] ✅ File assembled: ${file.fileName} - ${(file.fileSize / 1024 / 1024).toFixed(2)}MB`);
+      }
+
+      res.json({ 
+        success: true, 
+        message: isLastChunk ? "File upload completed" : "Chunk uploaded successfully",
+        chunkIndex,
+        progress: Math.round((file.receivedChunks / file.totalChunks) * 100)
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[LocalNetwork] Error uploading chunk: ${errorMsg}`);
+      res.status(500).json({ error: `Failed to upload chunk: ${errorMsg}` });
     }
-
-    const file: any = registry.files.find(f => f.fileIndex === fileIndex);
-    if (!file || !file.chunks) {
-      return res.status(404).json({ error: "File not found in registry" });
-    }
-
-    // Store chunk
-    file.chunks.set(chunkIndex, data);
-    file.receivedChunks = (file.receivedChunks || 0) + 1;
-
-    console.log(`Chunk ${chunkIndex} received for ${file.fileName} (${file.receivedChunks}/${file.totalChunks})`);
-
-    // If all chunks received, assemble the file
-    if (file.receivedChunks === file.totalChunks) {
-      const sortedChunks = Array.from(file.chunks.entries())
-        .sort(([a], [b]) => a - b)
-        .map(([, data]) => data);
-      
-      file.data = sortedChunks.join('');
-      delete file.chunks; // Clean up chunks to save memory
-      delete file.totalChunks;
-      delete file.receivedChunks;
-      
-      console.log(`File assembled: ${file.fileName} - ${(file.fileSize / 1024 / 1024).toFixed(2)}MB`);
-    }
-
-    res.json({ 
-      success: true, 
-      message: isLastChunk ? "File upload completed" : "Chunk uploaded successfully",
-      progress: Math.round((file.receivedChunks / file.totalChunks) * 100)
-    });
   });
 
   return httpServer;

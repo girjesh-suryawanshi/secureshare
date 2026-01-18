@@ -80,28 +80,39 @@ export default function Home() {
       setIsUploading(true);
       setUploadProgress(0);
       
-      // Validate file sizes - especially important for large video files
-      // Base64 encoding adds 33% overhead, so max single file is ~375MB
-      const MAX_SINGLE_FILE = 375 * 1024 * 1024; // 375MB max for single message
-      const oversizedFiles = files.filter(f => f.size > MAX_SINGLE_FILE);
+      // Validate file sizes based on transfer method
+      // Internet: 375MB max (base64 encoding adds 33% overhead on 500MB WebSocket limit)
+      // Local Network: 2GB max (chunked upload with 5MB chunks, max 3 concurrent)
+      const MAX_INTERNET_FILE = 375 * 1024 * 1024; // 375MB max for internet transfer
+      const MAX_LOCAL_FILE = 2000 * 1024 * 1024; // 2GB max for local network transfer
+      const MAX_FILE_LIMIT = transferType === 'local' ? MAX_LOCAL_FILE : MAX_INTERNET_FILE;
+      
+      // Check for files exceeding the appropriate limit based on transfer method
+      const oversizedFiles = files.filter(f => f.size > MAX_FILE_LIMIT);
       
       if (oversizedFiles.length > 0) {
         setIsUploading(false);
         const fileNames = oversizedFiles.map(f => f.name).join(', ');
-        const maxSizeMB = Math.round(MAX_SINGLE_FILE / 1024 / 1024);
-        toast({
-          title: "⚠️ Files Too Large for Internet Transfer",
-          description: `${fileNames} (${oversizedFiles.map(f => (f.size / 1024 / 1024).toFixed(0)).join(', ')}MB). Max size is ${maxSizeMB}MB due to WebSocket limits. Try using Local Network transfer instead.`,
-          variant: "destructive",
-        });
+        const fileSizesMB = oversizedFiles.map(f => (f.size / 1024 / 1024).toFixed(0)).join(', ');
+        const maxSizeMB = Math.round(MAX_FILE_LIMIT / 1024 / 1024);
+        
+        if (transferType === 'local') {
+          // Local network size limit exceeded
+          toast({
+            title: "❌ Files Too Large for Local Network",
+            description: `${fileNames} (${fileSizesMB}MB) exceeds local network limit of ${maxSizeMB}MB. Try splitting the file or using smaller files.`,
+            variant: "destructive",
+          });
+        } else {
+          // Internet size limit exceeded, but suggest local network
+          toast({
+            title: "⚠️ Files Too Large for Internet Transfer",
+            description: `${fileNames} (${fileSizesMB}MB) exceeds internet limit of ${maxSizeMB}MB. These files CAN be transferred via Local Network (WiFi). Please use the 'Local Network' transfer method instead for better performance.`,
+            variant: "destructive",
+          });
+        }
+        setSelectedFiles([]); // Clear selected files on validation error
         return;
-      }
-      
-      // Warn if total size is large (helps with network timeouts)
-      const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-      const totalSizeBase64 = totalSize * 1.33; // Base64 overhead
-      if (totalSizeBase64 > 400 * 1024 * 1024) {
-        console.warn(`[FileTransfer] ⚠️  Total transfer size after base64 encoding: ${(totalSizeBase64 / 1024 / 1024).toFixed(0)}MB - this may take a while`);
       }
       
       const code = generateCode();
@@ -129,6 +140,13 @@ export default function Home() {
           });
         }
         return;
+      }
+      
+      // Warn if total size is large (helps with network timeouts for internet transfer)
+      const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+      const totalSizeBase64 = totalSize * 1.33; // Base64 overhead
+      if (totalSizeBase64 > 400 * 1024 * 1024) {
+        console.warn(`[FileTransfer] ⚠️  Total transfer size after base64 encoding: ${(totalSizeBase64 / 1024 / 1024).toFixed(0)}MB - this may take a while`);
       }
       
       const startTime = Date.now();
@@ -253,6 +271,19 @@ export default function Home() {
             'Accept': 'application/json',
           }
         });
+        
+        if (response.status === 202) {
+          // Files are still being uploaded, wait and retry
+          const data = await response.json();
+          console.log(`⏳ Files still uploading: ${data.completeFiles}/${data.totalExpected} files complete`);
+          toast({
+            title: "Files Still Uploading",
+            description: `${data.completeFiles}/${data.totalExpected} files ready. Please wait a moment and try again.`,
+            variant: "default",
+          });
+          setIsReceiving(false);
+          return;
+        }
         
         if (response.ok) {
           const files = await response.json();
@@ -514,7 +545,7 @@ export default function Home() {
       
       toast({
         title: "File Found",
-        description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB) - ${file.fileIndex + 1}/${file.totalFiles}`,
+        description: `Found ${file.fileName} (${Math.round(file.fileSize / 1024)} KB) - ${(file.fileIndex ?? 0) + 1}/${file.totalFiles}`,
       });
     });
 
@@ -929,8 +960,26 @@ export default function Home() {
                         <h3 className="text-lg md:text-2xl font-bold text-gray-900">
                           Ready to Send ({selectedFiles.length} files)
                         </h3>
-                        <div className="text-sm text-gray-500">
-                          Total: {(selectedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024)).toFixed(1)} MB
+                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                          <div className="text-sm text-gray-500">
+                            Total: {(selectedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024)).toFixed(1)} MB
+                          </div>
+                          {(() => {
+                            const totalSize = selectedFiles.reduce((acc, file) => acc + file.size, 0);
+                            const MAX_INTERNET = 375 * 1024 * 1024;
+                            const MAX_LOCAL = 2000 * 1024 * 1024;
+                            const currentLimit = transferType === 'local' ? MAX_LOCAL : MAX_INTERNET;
+                            
+                            if (totalSize > MAX_LOCAL) {
+                              return <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full font-medium">❌ Too large for any method (2GB max)</span>;
+                            } else if (transferType === 'local' && totalSize <= MAX_LOCAL) {
+                              return <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">✓ OK for Local Network (2GB)</span>;
+                            } else if (transferType === 'internet' && totalSize > MAX_INTERNET) {
+                              return <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">⚠️ Too large for Internet (375MB max)</span>;
+                            } else {
+                              return <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">✓ OK for {transferType === 'local' ? 'Local Network' : 'Internet'}</span>;
+                            }
+                          })()}
                         </div>
                       </div>
                       

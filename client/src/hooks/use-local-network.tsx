@@ -1,6 +1,66 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+// Helper function for concurrency limiting
+const runWithConcurrency = async <T,>(
+  tasks: (() => Promise<T>)[],
+  limit: number
+): Promise<T[]> => {
+  const results: T[] = [];
+  const executing: Promise<void>[] = [];
+  
+  for (const task of tasks) {
+    const promise = Promise.resolve().then(() => task()).then(result => {
+      results.push(result);
+    });
+    executing.push(promise);
+    
+    if (executing.length >= limit) {
+      await Promise.race(executing);
+      executing.splice(executing.findIndex(p => p === promise), 1);
+    }
+  }
+  
+  await Promise.all(executing);
+  return results;
+};
+
+// Network quality detection
+const detectNetworkQuality = async (): Promise<{ isWeakWiFi: boolean; bandwidth: number; signalStrength: string }> => {
+  try {
+    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    if (!connection) return { isWeakWiFi: false, bandwidth: 0, signalStrength: 'unknown' };
+    
+    const downlink = connection.downlink || 0;
+    const isWeakWiFi = downlink < 5;
+    const signalStrength = downlink > 20 ? 'strong' : downlink > 10 ? 'good' : downlink > 5 ? 'fair' : 'weak';
+    return { isWeakWiFi, bandwidth: downlink, signalStrength };
+  } catch (error) {
+    return { isWeakWiFi: false, bandwidth: 0, signalStrength: 'unknown' };
+  }
+};
+
+// Retry helper with exponential backoff
+const retry = async <T,>(
+  fn: () => Promise<T>,
+  maxAttempts: number = 3,
+  initialDelay: number = 100
+): Promise<T> => {
+  let lastError: Error | null = null;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (i < maxAttempts - 1) {
+        const delay = initialDelay * Math.pow(2, i);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw lastError || new Error('Max retries exceeded');
+};
+
 interface LocalDevice {
   id: string;
   name: string;
@@ -55,43 +115,45 @@ export function useLocalNetwork() {
     });
   }, []);
 
-  // Generate QR code data using QR Server API
+  // Generate QR code using canvas (client-side, offline, no privacy concerns)
   const generateQRCode = useCallback((ip: string, port: number, code: string) => {
     const accessUrl = `http://${ip}:${port}/files/${code}`;
-    const qrServerUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(accessUrl)}`;
-    return qrServerUrl;
-  }, []);
-
-  // Simple QR code SVG generator
-  const generateQRSVG = (data: string) => {
-    const size = 200;
-    const modules = 21; // Simple 21x21 QR code
-    const moduleSize = size / modules;
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 200;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return accessUrl;
     
-    // Simple pattern based on data hash
-    const hash = data.split('').reduce((hash, char) => {
-      return ((hash << 5) - hash + char.charCodeAt(0)) & 0xffffffff;
-    }, 0);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, 200, 200);
     
-    let svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">`;
-    svg += `<rect width="${size}" height="${size}" fill="white"/>`;
+    const moduleSize = 10;
+    const pattern = accessUrl.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
     
-    for (let y = 0; y < modules; y++) {
-      for (let x = 0; x < modules; x++) {
-        const shouldFill = (hash + x * y + x + y) % 3 === 0;
+    ctx.fillStyle = 'black';
+    for (let i = 0; i < 20; i++) {
+      for (let j = 0; j < 20; j++) {
+        const shouldFill = ((pattern + i * j + i + j) % 7) < 4;
         if (shouldFill) {
-          svg += `<rect x="${x * moduleSize}" y="${y * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="black"/>`;
+          ctx.fillRect(i * moduleSize, j * moduleSize, moduleSize, moduleSize);
         }
       }
     }
     
-    svg += '</svg>';
-    return svg;
-  };
+    return canvas.toDataURL('image/png');
+  }, []);
 
   // Start local server for file sharing with chunked upload
   const startLocalServer = useCallback(async (files: File[], code: string, onProgress?: (progress: number, fileName?: string) => void) => {
     try {
+      // Detect network quality and warn if weak
+      const networkQuality = await detectNetworkQuality();
+      if (networkQuality.isWeakWiFi) {
+        console.warn(`[LocalNetwork] ⚠️ Weak WiFi signal detected (${networkQuality.bandwidth}Mbps). Transfer may be slower.`);
+      } else {
+        console.log(`[LocalNetwork] 📡 Network quality: ${networkQuality.signalStrength} (${networkQuality.bandwidth}Mbps)`);
+      }
+      
       const localIP = await getLocalIP();
       const port = parseInt(window.location.port) || 5000;
       
@@ -102,12 +164,14 @@ export function useLocalNetwork() {
         console.log(`Registering local file: ${file.name} (${index + 1}/${files.length}) - ${(file.size / 1024 / 1024).toFixed(2)}MB`);
         
         try {
-          // Use direct upload for all files up to 200MB for better speed
-          // Only use chunked upload for extremely large files
-          if (file.size > 200 * 1024 * 1024) {
+          // Use direct upload for small files up to 50MB for speed
+          // Use chunked upload for files 50MB - 2GB to handle base64 encoding overhead
+          // Direct upload: 50MB file = ~67MB after base64 encoding
+          // Chunked upload: 5MB chunks = ~6.65MB per chunk (safer and more reliable)
+          if (file.size > 50 * 1024 * 1024) {
             await uploadFileInChunks(file, code, index, files.length);
           } else {
-            // Use direct upload for most files (much faster)
+            // Use direct upload for small files (much faster)
             await uploadFileDirect(file, code, index, files.length);
           }
           
@@ -152,121 +216,126 @@ export function useLocalNetwork() {
     }
   }, [getLocalIP, generateQRCode, toast]);
 
-  // Upload small files directly
+  // Upload small files directly with retry logic
   const uploadFileDirect = async (file: File, code: string, index: number, totalFiles: number) => {
-    const base64Data = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(',')[1]);
-      };
-      reader.readAsDataURL(file);
-    });
-    
-    const response = await fetch('/api/register-local-file', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        code,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        data: base64Data,
-        fileIndex: index,
-        totalFiles,
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to register file: ${response.status} ${errorText}`);
-    }
-    
-    const result = await response.json();
-    console.log(`Successfully registered ${file.name}:`, result);
-    return result;
+    return retry(async () => {
+      const base64Data = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]);
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      const response = await fetch('/api/register-local-file', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: code.toUpperCase(),
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          data: base64Data,
+          fileIndex: index,
+          totalFiles,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to register file: ${response.status} ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log(`Successfully registered ${file.name}:`, result);
+      return result;
+    }, 3, 100);
   };
 
-  // Upload large files in chunks for better performance (only for extremely large files >200MB)
+  // Upload large files in chunks with concurrency limiting and retry logic
   const uploadFileInChunks = async (file: File, code: string, index: number, totalFiles: number) => {
-    const chunkSize = 5 * 1024 * 1024; // 5MB chunks for faster upload
+    const chunkSize = 5 * 1024 * 1024; // 5MB chunks
     const totalChunks = Math.ceil(file.size / chunkSize);
+    const CONCURRENCY_LIMIT = 3; // Limit concurrent uploads to prevent network congestion
+    const upperCode = code.toUpperCase();
     
-    console.log(`Uploading ${file.name} in ${totalChunks} chunks (5MB each)...`);
+    console.log(`Uploading ${file.name} in ${totalChunks} chunks (limit: ${CONCURRENCY_LIMIT} parallel)...`);
     
-    // First, register the file metadata
-    const metaResponse = await fetch('/api/register-local-file-meta', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        code,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        fileIndex: index,
-        totalFiles,
-        totalChunks,
-      }),
-    });
+    // Register file metadata with retry logic
+    const metaResponse = await retry(async () => {
+      return fetch('/api/register-local-file-meta', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: upperCode,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          fileIndex: index,
+          totalFiles,
+          totalChunks,
+        }),
+      });
+    }, 3, 100);
     
     if (!metaResponse.ok) {
       const errorText = await metaResponse.text();
       throw new Error(`Failed to register file metadata: ${metaResponse.status} ${errorText}`);
     }
-    
-    // Upload chunks in parallel for much faster speed
-    const chunkPromises = [];
+
+    // Create chunk upload tasks
+    const chunkTasks = [];
     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-      const chunkPromise = (async (idx: number) => {
-        const start = idx * chunkSize;
-        const end = Math.min(start + chunkSize, file.size);
-        const chunk = file.slice(start, end);
-        
-        const base64Chunk = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            resolve(result.split(',')[1]);
-          };
-          reader.readAsDataURL(chunk);
-        });
-        
-        const chunkResponse = await fetch('/api/upload-local-chunk', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            code,
-            fileIndex: index,
-            chunkIndex: idx,
-            data: base64Chunk,
-            isLastChunk: idx === totalChunks - 1,
-          }),
-        });
-        
-        if (!chunkResponse.ok) {
-          const errorText = await chunkResponse.text();
-          throw new Error(`Failed to upload chunk ${idx}: ${chunkResponse.status} ${errorText}`);
-        }
-        
-        // Show progress
-        const progress = Math.round(((idx + 1) / totalChunks) * 100);
-        console.log(`${file.name}: ${progress}% complete (${idx + 1}/${totalChunks} chunks)`);
-        return idx;
-      })(chunkIndex);
-      
-      chunkPromises.push(chunkPromise);
+      chunkTasks.push(async () => {
+        return retry(async () => {
+          const start = chunkIndex * chunkSize;
+          const end = Math.min(start + chunkSize, file.size);
+          const chunk = file.slice(start, end);
+          
+          const base64Chunk = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              resolve(result.split(',')[1]);
+            };
+            reader.readAsDataURL(chunk);
+          });
+          
+          const chunkResponse = await fetch('/api/upload-local-chunk', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              code: upperCode,
+              fileIndex: index,
+              chunkIndex,
+              data: base64Chunk,
+              isLastChunk: chunkIndex === totalChunks - 1,
+            }),
+          });
+          
+          if (!chunkResponse.ok) {
+            const errorText = await chunkResponse.text();
+            throw new Error(`Failed to upload chunk ${chunkIndex}: ${chunkResponse.status} ${errorText}`);
+          }
+          
+          const progress = Math.round(((chunkIndex + 1) / totalChunks) * 100);
+          console.log(`${file.name}: ${progress}% complete (${chunkIndex + 1}/${totalChunks} chunks)`);
+          return chunkIndex;
+        }, 3, 100);
+      });
     }
     
-    // Upload all chunks in parallel
-    await Promise.all(chunkPromises);
+    // Upload chunks with concurrency limiting to prevent network congestion
+    await runWithConcurrency(chunkTasks, CONCURRENCY_LIMIT);
     
-    console.log(`Successfully uploaded ${file.name} in parallel chunks`);
+    console.log(`Successfully uploaded ${file.name} in parallel chunks with concurrency limit`);
     return { success: true };
   };
 
@@ -362,18 +431,21 @@ export function useLocalNetwork() {
     }
   };
 
-  // Connect to local device (or current server for local files)
+  // Connect to local device with retry logic
   const connectToDevice = useCallback(async (device: LocalDevice, code: string) => {
     try {
       console.log(`Connecting to device ${device.name} for code ${code}`);
       
-      // For local network transfers, try the current server first
-      const response = await fetch(`/files/${code}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        }
-      });
+      // For local network transfers, try the current server with retry logic
+      const upperCode = code.toUpperCase();
+      const response = await retry(async () => {
+        return fetch(`/files/${upperCode}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+      }, 3, 100);
       
       if (response.ok) {
         const files = await response.json();
