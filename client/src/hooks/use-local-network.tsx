@@ -21,7 +21,7 @@ export function useLocalNetwork() {
   const [isScanning, setIsScanning] = useState(false);
   const [availableDevices, setAvailableDevices] = useState<LocalDevice[]>([]);
   const [isLocalServerRunning, setIsLocalServerRunning] = useState(false);
-  const [localServerInfo, setLocalServerInfo] = useState<{ ip: string; port: number; qrCode: string } | null>(null);
+  const [localServerInfo, setLocalServerInfo] = useState<{ ip: string; port: number } | null>(null);
   const [localFiles, setLocalFiles] = useState<Map<string, LocalFile[]>>(new Map());
   const serverRef = useRef<any>(null);
   const { toast } = useToast();
@@ -54,40 +54,6 @@ export function useLocalNetwork() {
       }, 3000);
     });
   }, []);
-
-  // Generate QR code data using QR Server API
-  const generateQRCode = useCallback((ip: string, port: number, code: string) => {
-    const accessUrl = `http://${ip}:${port}/files/${code}`;
-    const qrServerUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(accessUrl)}`;
-    return qrServerUrl;
-  }, []);
-
-  // Simple QR code SVG generator
-  const generateQRSVG = (data: string) => {
-    const size = 200;
-    const modules = 21; // Simple 21x21 QR code
-    const moduleSize = size / modules;
-    
-    // Simple pattern based on data hash
-    const hash = data.split('').reduce((hash, char) => {
-      return ((hash << 5) - hash + char.charCodeAt(0)) & 0xffffffff;
-    }, 0);
-    
-    let svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">`;
-    svg += `<rect width="${size}" height="${size}" fill="white"/>`;
-    
-    for (let y = 0; y < modules; y++) {
-      for (let x = 0; x < modules; x++) {
-        const shouldFill = (hash + x * y + x + y) % 3 === 0;
-        if (shouldFill) {
-          svg += `<rect x="${x * moduleSize}" y="${y * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="black"/>`;
-        }
-      }
-    }
-    
-    svg += '</svg>';
-    return svg;
-  };
 
   // Start local server for file sharing with chunked upload
   const startLocalServer = useCallback(async (files: File[], code: string, onProgress?: (progress: number, fileName?: string) => void) => {
@@ -129,9 +95,7 @@ export function useLocalNetwork() {
       
       console.log(`All ${files.length} files registered successfully for code ${code}`);
       
-      const qrCode = generateQRCode(localIP, port, code);
-      
-      setLocalServerInfo({ ip: localIP, port, qrCode });
+      setLocalServerInfo({ ip: localIP, port });
       setIsLocalServerRunning(true);
       
       toast({
@@ -139,7 +103,7 @@ export function useLocalNetwork() {
         description: `${files.length} file(s) available on local network with code ${code}`,
       });
       
-      return { ip: localIP, port, qrCode };
+      return { ip: localIP, port };
     } catch (error) {
       console.error('Failed to start local server:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -150,19 +114,34 @@ export function useLocalNetwork() {
       });
       return null;
     }
-  }, [getLocalIP, generateQRCode, toast]);
+  }, [getLocalIP, toast]);
 
-  // Upload small files directly
-  const uploadFileDirect = async (file: File, code: string, index: number, totalFiles: number) => {
-    const base64Data = await new Promise<string>((resolve) => {
+  // Convert File/Blob to base64 using ArrayBuffer (works for HEIC and all binary types; readAsDataURL can fail on HEIC in some browsers)
+  const fileToBase64 = (blob: Blob | File): Promise<string> =>
+    new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(',')[1]);
+        const buffer = reader.result as ArrayBuffer;
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode(...Array.from(bytes.subarray(i, i + chunkSize)));
+        }
+        resolve(btoa(binary));
       };
-      reader.readAsDataURL(file);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(blob);
     });
-    
+
+  // Upload small files directly (all file types supported, including HEIC)
+  const uploadFileDirect = async (file: File, code: string, index: number, totalFiles: number) => {
+    const base64Data = await fileToBase64(file);
+
+    const fileName = (file.name && file.name.trim()) || `file-${index}`;
+    const fileSize = file.size ?? 0;
+    const fileType = (file.type && file.type.trim()) ? file.type : 'application/octet-stream';
+
     const response = await fetch('/api/register-local-file', {
       method: 'POST',
       headers: {
@@ -170,9 +149,9 @@ export function useLocalNetwork() {
       },
       body: JSON.stringify({
         code,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
+        fileName,
+        fileSize,
+        fileType,
         data: base64Data,
         fileIndex: index,
         totalFiles,
@@ -196,6 +175,10 @@ export function useLocalNetwork() {
     
     console.log(`Uploading ${file.name} in ${totalChunks} chunks (5MB each)...`);
     
+    const fileName = (file.name && file.name.trim()) || `file-${index}`;
+    const fileSize = file.size ?? 0;
+    const fileType = (file.type && file.type.trim()) ? file.type : 'application/octet-stream';
+
     // First, register the file metadata
     const metaResponse = await fetch('/api/register-local-file-meta', {
       method: 'POST',
@@ -204,9 +187,9 @@ export function useLocalNetwork() {
       },
       body: JSON.stringify({
         code,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
+        fileName,
+        fileSize,
+        fileType,
         fileIndex: index,
         totalFiles,
         totalChunks,
@@ -225,16 +208,9 @@ export function useLocalNetwork() {
         const start = idx * chunkSize;
         const end = Math.min(start + chunkSize, file.size);
         const chunk = file.slice(start, end);
-        
-        const base64Chunk = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            resolve(result.split(',')[1]);
-          };
-          reader.readAsDataURL(chunk);
-        });
-        
+
+        const base64Chunk = await fileToBase64(chunk);
+
         const chunkResponse = await fetch('/api/upload-local-chunk', {
           method: 'POST',
           headers: {
@@ -376,20 +352,23 @@ export function useLocalNetwork() {
       });
       
       if (response.ok) {
-        const files = await response.json();
-        console.log(`Successfully retrieved ${files.length} files from local network`);
-        
-        // Validate that files have data
-        const validFiles = files.filter((file: any) => file.data && file.data.length > 0);
-        if (validFiles.length === 0) {
-          throw new Error('No valid file data found');
+        const payload = await response.json();
+        const files = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.files)
+            ? payload.files
+            : [];
+
+        const readyFiles = files.filter((file: any) => file.downloadUrl);
+        if (readyFiles.length === 0) {
+          throw new Error('No ready files found');
         }
-        
+
         toast({
           title: "Files Found",
-          description: `Found ${validFiles.length} file(s) with code ${code}`,
+          description: `Found ${readyFiles.length} file(s) with code ${code}`,
         });
-        return validFiles;
+        return readyFiles;
       } else {
         const errorText = await response.text();
         console.error(`Server responded with ${response.status}: ${errorText}`);
