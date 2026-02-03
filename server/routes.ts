@@ -37,6 +37,36 @@ type FileMeta = {
   totalChunks?: number;
 };
 
+// Rate limiting: track request timestamps per WebSocket connection
+const requestRateLimit = new Map<WebSocket, { lastRequest: number; count: number }>();
+const RATE_LIMIT_WINDOW_MS = 1000; // 1 second window
+const MAX_REQUESTS_PER_WINDOW = 5; // Max 5 requests per second per connection
+
+function checkRateLimit(ws: WebSocket): boolean {
+  const now = Date.now();
+  const record = requestRateLimit.get(ws);
+  
+  if (!record) {
+    requestRateLimit.set(ws, { lastRequest: now, count: 1 });
+    return true;
+  }
+  
+  // Reset if window expired
+  if (now - record.lastRequest > RATE_LIMIT_WINDOW_MS) {
+    record.lastRequest = now;
+    record.count = 1;
+    return true;
+  }
+  
+  // Check if limit exceeded
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  
+  record.count += 1;
+  return true;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   await fileStore.ensureBaseDir();
 
@@ -103,6 +133,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     ws.on("close", () => {
       logger.info("Client disconnected");
+      
+      // Clean up rate limit tracking
+      requestRateLimit.delete(ws);
+      
       for (const [code, registry] of fileRegistry.entries()) {
         if (registry.senderWs === ws) {
           notifySenderDisconnected(code, registry);
@@ -118,6 +152,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   async function handleRegisterFile(message: any, ws: WebSocket) {
+    // Rate limiting check
+    if (!checkRateLimit(ws)) {
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Too many requests. Please wait a moment.",
+        }),
+      );
+      return;
+    }
+
     const { code: rawCode, fileName: rawFileName, fileSize: rawFileSize, fileType, fileIndex = 0, totalFiles = 1, totalChunks } = message;
     const code = normalizeCode(rawCode);
     const fileSize = typeof rawFileSize === "number" && !Number.isNaN(rawFileSize) ? rawFileSize : 0;
@@ -162,6 +207,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function handleRequestFile(message: any, ws: WebSocket) {
+    // Rate limiting check
+    if (!checkRateLimit(ws)) {
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Too many requests. Please wait a moment.",
+        }),
+      );
+      return;
+    }
+
     const code = normalizeCode(message.code);
 
     if (!code) {
@@ -234,17 +290,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const fileNameNorm = (fileName || "").toLowerCase();
-    const file = registry.files.find(
+    let file = registry.files.find(
       (f) => f.fileIndex === fileIndex && (f.fileName === fileName || f.fileName.toLowerCase() === fileNameNorm)
     );
+    
+    // If file metadata is missing, try to find by fileIndex only
+    // This handles cases where fileName doesn't match exactly (e.g., special characters, encoding)
     if (!file) {
-      ws.send(
-        JSON.stringify({
-          type: "error",
-          message: "File metadata missing",
-        }),
-      );
-      return;
+      file = registry.files.find((f) => f.fileIndex === fileIndex);
+      
+      if (file) {
+        // File exists but fileName doesn't match - update it to match what client sent
+        logger.info({ code, oldFileName: file.fileName, newFileName: fileName, fileIndex }, "File name mismatch, updating from file-data");
+        file.fileName = fileName || file.fileName;
+      } else {
+        // File truly doesn't exist - this is a race condition or registration failure
+        logger.error({ code, fileName, fileIndex, registryFiles: registry.files.map(f => ({ index: f.fileIndex, name: f.fileName })) }, "File metadata missing - registration may not have completed");
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            message: "File metadata missing. Please ensure file registration completed before sending data.",
+          }),
+        );
+        return;
+      }
     }
 
     const bytesWritten = await fileStore.appendBase64Chunk(file.filePath, data);

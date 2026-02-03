@@ -26,6 +26,18 @@ const getLatestBlogPosts = () => {
   return blogPosts.slice(0, 3);
 };
 
+/** Format current date/time for ZIP filename: YYYY-MM-DD_HH-mm-ss */
+const getZipFileName = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const h = String(now.getHours()).padStart(2, "0");
+  const min = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  return `HexaSend-${y}-${m}-${d}_${h}-${min}-${s}.zip`;
+};
+
 const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
   let binary = "";
   const bytes = new Uint8Array(buffer);
@@ -75,6 +87,8 @@ export default function Home() {
   const receiveRetryCountRef = useRef<number>(0);
   const receiveRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const receiveCodeInputRef = useRef<HTMLInputElement>(null);
+  const pendingRequestRef = useRef<Map<string, number>>(new Map()); // Track pending requests with timestamps
+  const lastRequestTimeRef = useRef<number>(0); // Rate limiting for request-file
 
   const { isConnected, reconnect, sendMessage, onFileAvailable, onFileReady, onFileNotFound, onDownloadAck, onSenderDisconnected } = useWebSocket();
   const { 
@@ -91,6 +105,11 @@ export default function Home() {
   const { toast } = useToast();
   const { stats, addTransfer } = useTransferStats();
   const fileKey = (code: string, index: number) => `${code}-${index}`;
+  
+  const normalizeCode = (code: string | undefined | null): string => {
+    if (code == null || typeof code !== "string") return "";
+    return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  };
 
   const generateCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -289,6 +308,11 @@ export default function Home() {
             transferType,
           });
 
+          // Wait a small delay to ensure registration completes before sending chunks
+          // This prevents "file metadata missing" errors due to race conditions
+          // Increased to 150ms to be safer for slower connections
+          await new Promise((resolve) => setTimeout(resolve, 150));
+
           let offset = 0;
           let chunkIndex = 0;
           const size = file.size ?? 0;
@@ -369,9 +393,43 @@ export default function Home() {
     }
 
     const upperCode = normalized;
+    
+    // Rate limiting: prevent rapid repeated requests
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTimeRef.current;
+    if (timeSinceLastRequest < 1000) { // Minimum 1 second between requests
+      toast({
+        title: "Please wait",
+        description: "Requesting too quickly. Please wait a moment.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if we already have a pending request for this code
+    const pendingTime = pendingRequestRef.current.get(upperCode);
+    if (pendingTime && (now - pendingTime) < 5000) { // 5 second cooldown per code
+      toast({
+        title: "Request already pending",
+        description: "Please wait for the current request to complete.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Clear any existing retry timeout
+    if (receiveRetryTimeoutRef.current) {
+      clearTimeout(receiveRetryTimeoutRef.current);
+      receiveRetryTimeoutRef.current = null;
+    }
+    
     setIsReceiving(true);
     setReceiveProgress(10);
     resetReceiveState();
+    
+    // Mark this request as pending
+    pendingRequestRef.current.set(upperCode, now);
+    lastRequestTimeRef.current = now;
 
     // Handle local network transfer
     if (transferType === 'local') {
@@ -546,11 +604,12 @@ export default function Home() {
         
         setDownloadProgress(95);
         
-        // Download ZIP
+        // Download ZIP (filename = current date and time)
+        const zipFileName = getZipFileName();
         const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `files-${inputCode}.zip`;
+        a.download = zipFileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -585,8 +644,19 @@ export default function Home() {
     const activeCode = inputCode.toUpperCase();
 
     onFileAvailable((file) => {
+      const fileCode = normalizeCode(file.code || activeCode);
       receiveRequestCodeRef.current = null;
       receiveRetryCountRef.current = 0;
+      
+      // Clear pending request since we got a response
+      pendingRequestRef.current.delete(fileCode);
+      
+      // Clear retry timeout
+      if (receiveRetryTimeoutRef.current) {
+        clearTimeout(receiveRetryTimeoutRef.current);
+        receiveRetryTimeoutRef.current = null;
+      }
+      
       setReceiveProgress(30);
       if (file.totalFiles && expectedFilesCount === 0) {
         setExpectedFilesCount(file.totalFiles);
@@ -600,7 +670,7 @@ export default function Home() {
 
       if (file.isReady && file.downloadUrl) {
         downloadFileJob({
-          code: file.code || activeCode,
+          code: fileCode,
           downloadUrl: file.downloadUrl,
           fileName: file.fileName,
           fileType: file.fileType,
@@ -611,11 +681,22 @@ export default function Home() {
     });
 
     onFileReady((data: any) => {
+      const fileCode = normalizeCode(data.code || activeCode);
       receiveRequestCodeRef.current = null;
       receiveRetryCountRef.current = 0;
+      
+      // Clear pending request
+      pendingRequestRef.current.delete(fileCode);
+      
+      // Clear retry timeout
+      if (receiveRetryTimeoutRef.current) {
+        clearTimeout(receiveRetryTimeoutRef.current);
+        receiveRetryTimeoutRef.current = null;
+      }
+      
       if (data.downloadUrl) {
         downloadFileJob({
-          code: data.code || activeCode,
+          code: fileCode,
           downloadUrl: data.downloadUrl,
           fileName: data.fileName,
           fileType: data.fileType,
@@ -626,24 +707,40 @@ export default function Home() {
     });
 
     onFileNotFound((code) => {
-      const requestedCode = receiveRequestCodeRef.current ?? code;
+      const requestedCode = receiveRequestCodeRef.current ?? normalizeCode(code);
+      const normalizedCode = normalizeCode(requestedCode);
       const isOurRequest = receiveRequestCodeRef.current != null;
 
-      if (isOurRequest && receiveRetryCountRef.current < 3) {
+      // Clear retry timeout if exists
+      if (receiveRetryTimeoutRef.current) {
+        clearTimeout(receiveRetryTimeoutRef.current);
+        receiveRetryTimeoutRef.current = null;
+      }
+
+      if (isOurRequest && receiveRetryCountRef.current < 2) { // Reduced to max 2 retries (3 total attempts)
         receiveRetryCountRef.current += 1;
         const attempt = receiveRetryCountRef.current;
+        const delay = Math.min(2000 * attempt, 5000); // Exponential backoff: 2s, 4s, max 5s
+        
         toast({
           title: "Still looking...",
-          description: `File not ready yet. Retrying (${attempt}/3)... Ask sender to finish uploading.`,
+          description: `File not ready yet. Retrying (${attempt}/2)... Ask sender to finish uploading.`,
         });
+        
         receiveRetryTimeoutRef.current = setTimeout(() => {
-          sendMessage({ type: 'request-file', code: requestedCode });
-        }, 2000);
+          // Check if we're still in receive mode and code hasn't changed
+          if (mode === 'receive' && receiveRequestCodeRef.current === normalizedCode) {
+            lastRequestTimeRef.current = Date.now();
+            sendMessage({ type: 'request-file', code: normalizedCode });
+          }
+        }, delay);
         return;
       }
 
+      // Max retries reached or not our request - give up
       receiveRequestCodeRef.current = null;
       receiveRetryCountRef.current = 0;
+      pendingRequestRef.current.delete(normalizedCode);
       setIsReceiving(false);
       setReceiveProgress(0);
       toast({
@@ -703,6 +800,45 @@ export default function Home() {
   useEffect(() => {
     if (mode === "receive" && receiveCodeInputRef.current) {
       receiveCodeInputRef.current.focus();
+    }
+  }, [mode]);
+
+  // Cleanup state when switching modes to prevent stuck state
+  useEffect(() => {
+    // Cleanup when leaving receive mode
+    if (mode !== 'receive') {
+      if (receiveRetryTimeoutRef.current) {
+        clearTimeout(receiveRetryTimeoutRef.current);
+        receiveRetryTimeoutRef.current = null;
+      }
+      receiveRequestCodeRef.current = null;
+      receiveRetryCountRef.current = 0;
+      pendingRequestRef.current.clear();
+      setIsReceiving(false);
+      setReceiveProgress(0);
+    }
+    
+    // Cleanup when leaving send mode
+    if (mode !== 'send') {
+      setIsUploading(false);
+      setUploadProgress(0);
+      setIsPreparingLocal(false);
+      setFilesReady(false);
+      setTransferSpeed('');
+      setEstimatedTime('');
+    }
+    
+    // Cleanup when switching to select mode
+    if (mode === 'select') {
+      setSelectedFiles([]);
+      setReceivedFiles([]);
+      setExpectedFilesCount(0);
+      setReceivedFilesCount(0);
+      setTransferCode('');
+      setInputCode('');
+      setAcknowledgments([]);
+      downloadedFileKeys.current.clear();
+      pendingRequestRef.current.clear();
     }
   }, [mode]);
 
@@ -1594,7 +1730,7 @@ export default function Home() {
                             </>
                           )}
                         </Button>
-                        <p className="text-center text-xs text-gray-500">ZIP will be named files-{inputCode || "code"}.zip.</p>
+                        <p className="text-center text-xs text-gray-500">ZIP will be named with current date and time (e.g. HexaSend-2026-02-01_14-30-00.zip).</p>
                         {isDownloading && (
                           <div className="space-y-2">
                             <div className="flex justify-between text-xs text-gray-600">
