@@ -5,7 +5,7 @@ import { Search, Calendar, Clock, ArrowRight, FileText, Share, Shield, Zap, Glob
 import { useState } from "react";
 
 // Blog posts data with SEO-optimized titles and trending keywords
-const blogPosts = [
+export const blogPosts = [
   {
     id: 401,
     title: "How to transfer files from PC to Mobile without USB",

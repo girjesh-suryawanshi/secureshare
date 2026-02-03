@@ -15,9 +15,16 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import JSZip from "jszip";
+import { Link } from "wouter";
+import { ArrowRight } from "lucide-react";
+import { blogPosts } from "./blog";
 import type { TransferType } from "@shared/schema";
 
 const FILE_CHUNK_SIZE = 256 * 1024; // 256KB
+
+const getLatestBlogPosts = () => {
+  return blogPosts.slice(0, 3);
+};
 
 const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
   let binary = "";
@@ -866,6 +873,37 @@ export default function Home() {
               )}
             </div>
 
+            {/* FAQ Section */}
+            <div className="max-w-3xl mx-auto mt-16 text-left">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Frequently Asked Questions</h3>
+              <div className="space-y-3">
+                <details className="bg-white rounded-lg p-4 border border-gray-100">
+                  <summary className="font-medium cursor-pointer">How long do transfer codes last?</summary>
+                  <p className="mt-2 text-gray-600">
+                    Codes expire after 1 hour for security. If you need another transfer, generate a new code.
+                  </p>
+                </details>
+                <details className="bg-white rounded-lg p-4 border border-gray-100">
+                  <summary className="font-medium cursor-pointer">Are my files stored on HexaSend servers?</summary>
+                  <p className="mt-2 text-gray-600">
+                    Files are held temporarily in server memory only during active transfers and are deleted after transfer or expiration.
+                  </p>
+                </details>
+                <details className="bg-white rounded-lg p-4 border border-gray-100">
+                  <summary className="font-medium cursor-pointer">Do I need an account to use HexaSend?</summary>
+                  <p className="mt-2 text-gray-600">
+                    No. HexaSend works without signup—simply send files and share the short code with your recipient.
+                  </p>
+                </details>
+                <details className="bg-white rounded-lg p-4 border border-gray-100">
+                  <summary className="font-medium cursor-pointer">Is there a file size limit?</summary>
+                  <p className="mt-2 text-gray-600">
+                    File size depends on your device and browser memory. For very large files, use local WiFi mode for best performance.
+                  </p>
+                </details>
+              </div>
+            </div>
+
             {/* Simple How It Works */}
             <div className="grid md:grid-cols-3 gap-8 mt-16 mx-4">
               <div className="text-center">
@@ -890,6 +928,56 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Download</h3>
                 <p className="text-gray-600">Enter code and download files</p>
+              </div>
+            </div>
+
+            {/* Blog Section */}
+            <div className="mt-16">
+              <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">Latest from Our Blog</h3>
+              <div className="grid md:grid-cols-3 gap-8">
+                {getLatestBlogPosts().map((post) => {
+                  const IconComponent = post.icon;
+                  return (
+                    <Card
+                      key={post.id}
+                      className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm"
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-center space-x-3 mb-4">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <IconComponent className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                            {post.category}
+                          </span>
+                        </div>
+
+                        <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+                          {post.title}
+                        </h4>
+
+                        <p className="text-gray-600 mb-4 leading-relaxed">{post.excerpt}</p>
+
+                        <Link href={`/blog/${post.slug}`}>
+                          <button className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg hover:shadow-lg transition-all group-hover:scale-105">
+                            <span>Read Article</span>
+                            <ArrowRight className="h-4 w-4" />
+                          </button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              <div className="text-center mt-12">
+                <Link href="/blog">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    View All Articles
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
