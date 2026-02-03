@@ -1,22 +1,18 @@
 version: '3.8'
 
 services:
-  # HexaSend Application (No database needed - uses memory storage)
+  # HexaSend Application (No database - uses in-memory file storage)
   hexasend-app:
     build:
       context: .
       dockerfile: Dockerfile
+    image: hexasend-app:latest
     container_name: hexasend-app
     restart: unless-stopped
     ports:
-      - "3001:5000"  # Map to port 3001 on host to avoid conflicts
+      - "${APP_PORT:-3001}:5000"   # Host:Container. On VPS set APP_PORT=3001 (or 80 if no Nginx).
+    env_file:
+      - .env   # Optional: copy .env.example to .env on VPS
     environment:
       NODE_ENV: production
       PORT: 5000
-    volumes:
-      # Optional: Mount logs directory for debugging
-      - hexasend_app_logs:/app/logs
-
-volumes:
-  hexasend_app_logs:
-    driver: local

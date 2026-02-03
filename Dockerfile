@@ -32,21 +32,23 @@ RUN addgroup -g 1001 -S nodejs && \
 # Copy package files
 COPY --chown=appuser:nodejs package*.json ./
 
-# Install ALL dependencies in production (needed because server imports vite)
-RUN npm ci && npm cache clean --force
+# Install production dependencies only (smaller image)
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy built application from builder stage
+# Copy built application from builder stage (dist/public = frontend, dist/index.js = server)
 COPY --from=builder --chown=appuser:nodejs /app/dist ./dist
 
 # Switch to non-root user
 USER appuser
 
-# Expose port
+# App listens on PORT (default 5000)
+ENV NODE_ENV=production
+ENV PORT=5000
 EXPOSE 5000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "const http = require('http'); const options = { host: 'localhost', port: 5000, timeout: 2000 }; const req = http.request(options, (res) => { if (res.statusCode === 200 || res.statusCode === 404) process.exit(0); else process.exit(1); }); req.on('error', () => process.exit(1)); req.end();"
+# Health check: hit /api/health
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "const h=require('http');const o={host:'localhost',port:5000,path:'/api/health',timeout:3000};h.get(o,(r)=>{const s=r.statusCode;process.exit(s>=200&&s<500?0:1)}).on('error',()=>process.exit(1));"
 
-# Start the application
-CMD ["npm", "start"]
+# Start the server (no cross-env needed; NODE_ENV set above)
+CMD ["node", "dist/index.js"]
