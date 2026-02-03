@@ -178,7 +178,7 @@ export function ConnectionPanel({
                 <div key={peer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <div className="mr-3">
-                      {getDeviceIcon(peer.deviceType)}
+                      {getDeviceIcon(peer.deviceType ?? 'desktop')}
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{peer.name}</p>

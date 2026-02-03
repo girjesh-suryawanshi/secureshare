@@ -1,422 +1,395 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { MessageSchema, type FileRegistry } from "@shared/schema";
+import { MessageSchema, type FileRegistry, type TransferType } from "@shared/schema";
+import { fileStore } from "./storage";
+import { config } from "./config";
+import { logger } from "./logger";
+
+const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+const DEFAULT_FILE_TYPE = "application/octet-stream";
+
+/** Normalize MIME type; accepts any file type (no blocklist). Empty/unknown → application/octet-stream. */
+const normalizeFileType = (fileType?: string | null) => {
+  if (!fileType) {
+    return DEFAULT_FILE_TYPE;
+  }
+  const trimmed = fileType.trim();
+  return trimmed.length > 0 ? trimmed : DEFAULT_FILE_TYPE;
+};
+
+/** Normalize share code for consistent lookup (cross-device, different keyboards) */
+const normalizeCode = (code: string | undefined | null): string => {
+  if (code == null || typeof code !== "string") return "";
+  return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+};
+
+const buildDownloadUrl = (code: string, fileIndex: number) =>
+  `/api/files/${code}/${fileIndex}/download`;
+
+type RegistryMap = Map<string, FileRegistry>;
+
+type FileMeta = {
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  fileIndex: number;
+  totalChunks?: number;
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  const httpServer = createServer(app);
-  
-  // WebSocket server for file sharing with increased payload limits
-  const wss = new WebSocketServer({ 
-    server: httpServer, 
-    path: '/ws',
-    maxPayload: 100 * 1024 * 1024, // 100MB max payload for large files
-    perMessageDeflate: false // Disable compression for faster transfer
-  });
-  const fileRegistry = new Map<string, FileRegistry>();
+  await fileStore.ensureBaseDir();
 
-  // Clean up old files every 10 minutes (files expire after 1 hour)
-  setInterval(() => {
-    const now = new Date();
-    const registryArray = Array.from(fileRegistry.entries());
-    for (const [code, registry] of registryArray) {
-      if (now.getTime() - registry.createdAt.getTime() > 60 * 60 * 1000) { // 1 hour
-        fileRegistry.delete(code);
-        console.log(`Cleaned up expired files: ${code}`);
+  const httpServer = createServer(app);
+  const wss = new WebSocketServer({
+    server: httpServer,
+    path: "/ws",
+    maxPayload: config.wsMaxPayloadBytes,
+    perMessageDeflate: false,
+  });
+  const fileRegistry: RegistryMap = new Map();
+
+  const cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [code, registry] of fileRegistry.entries()) {
+      if (now - registry.createdAt.getTime() > config.fileTtlMs) {
+        logger.info({ code }, "Cleaning up expired transfer");
+        void cleanupRegistryEntry(code, registry, fileRegistry);
       }
     }
-  }, 10 * 60 * 1000);
+  }, CLEANUP_INTERVAL_MS);
 
-  wss.on('connection', (ws) => {
-    console.log('Client connected');
+  httpServer.on("close", () => clearInterval(cleanupInterval));
 
-    ws.on('message', (data) => {
-      try {
-        const message = JSON.parse(data.toString());
-        const validatedMessage = MessageSchema.parse(message);
+  wss.on("connection", (ws) => {
+    logger.info("Client connected");
 
-        switch (validatedMessage.type) {
-          case 'register-file':
-            handleRegisterFile(validatedMessage, ws);
-            break;
-          
-          case 'request-file':
-            handleRequestFile(validatedMessage, ws);
-            break;
-          
-          case 'file-data':
-            handleFileData(validatedMessage, ws);
-            break;
-          
-          case 'download-success':
-            handleDownloadAck(validatedMessage, 'success');
-            break;
-          
-          case 'download-error':
-            handleDownloadAck(validatedMessage, 'error');
-            break;
-          
-          default:
-            console.log('Unknown message type:', validatedMessage.type);
-        }
-      } catch (error) {
-        console.error('Invalid message received:', error);
-        ws.send(JSON.stringify({
-          type: 'error',
-          message: 'Invalid message format',
-        }));
-      }
-    });
+    ws.on("message", (raw) => {
+      void (async () => {
+        try {
+          const parsed = JSON.parse(raw.toString());
+          const message = MessageSchema.parse(parsed);
 
-    ws.on('close', () => {
-      console.log('Client disconnected');
-      // Find and notify any receivers waiting for files from this sender
-      for (const [code, registry] of Array.from(fileRegistry.entries())) {
-        if (registry.senderWs === ws) {
-          console.log(`Sender disconnected for code: ${code}`);
-          // Notify all receivers waiting for this code
-          if (registry.requesters && registry.requesters.length > 0) {
-            registry.requesters.forEach((requesterWs: any) => {
-              if (requesterWs.readyState === WebSocket.OPEN) {
-                requesterWs.send(JSON.stringify({
-                  type: 'sender-disconnected',
-                  code: code,
-                  message: 'The sender has disconnected. Please try requesting the files again.'
-                }));
-                console.log(`Notified receiver of sender disconnection for code: ${code}`);
-              }
-            });
+          switch (message.type) {
+            case "register-file":
+              await handleRegisterFile(message, ws);
+              break;
+            case "request-file":
+              await handleRequestFile(message, ws);
+              break;
+            case "file-data":
+              await handleFileData(message, ws);
+              break;
+            case "download-success":
+              handleDownloadAck(message, "success");
+              break;
+            case "download-error":
+              handleDownloadAck(message, "error");
+              break;
+            default:
+              logger.warn({ type: message.type }, "Unknown message type received");
           }
-          // Clean up the registry entry since sender is gone
-          fileRegistry.delete(code);
-          console.log(`Cleaned up registry for disconnected sender: ${code}`);
+        } catch (error) {
+          logger.error({ error }, "Invalid WebSocket message received");
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: "Invalid message format",
+            }),
+          );
         }
+      })();
+    });
+
+    ws.on("close", () => {
+      logger.info("Client disconnected");
+      for (const [code, registry] of fileRegistry.entries()) {
+        if (registry.senderWs === ws) {
+          notifySenderDisconnected(code, registry);
+          void cleanupRegistryEntry(code, registry, fileRegistry);
+        }
+        registry.requesters?.delete(ws);
       }
     });
 
-    ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
+    ws.on("error", (error) => {
+      logger.error({ error }, "WebSocket error");
     });
   });
 
-  function handleRegisterFile(message: any, ws: WebSocket) {
-    const { code, fileName, fileSize, fileType, fileIndex, totalFiles } = message;
-    
-    if (!code || !fileName || !fileSize || !fileType) {
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Missing required fields',
-      }));
+  async function handleRegisterFile(message: any, ws: WebSocket) {
+    const { code: rawCode, fileName: rawFileName, fileSize: rawFileSize, fileType, fileIndex = 0, totalFiles = 1, totalChunks } = message;
+    const code = normalizeCode(rawCode);
+    const fileSize = typeof rawFileSize === "number" && !Number.isNaN(rawFileSize) ? rawFileSize : 0;
+    const fileName = (rawFileName != null && String(rawFileName).trim()) ? String(rawFileName).trim() : `file-${fileIndex}`;
+
+    if (!code) {
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Missing required fields",
+        }),
+      );
       return;
     }
 
-    console.log(`Registering file: ${fileName} with code: ${code}`);
+    if (fileSize < 0) {
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Invalid file size",
+        }),
+      );
+      return;
+    }
 
-    // Get or create file registry entry
-    let registry = fileRegistry.get(code);
-    if (!registry) {
-      registry = {
+    const registry = getOrCreateRegistry(code, totalFiles, message.transferType || "internet", ws);
+    const safeFileType = normalizeFileType(fileType);
+    const file = await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex, totalChunks });
+
+    if (fileSize === 0) {
+      file.completed = true;
+      notifyRequestersFileReady(registry, file);
+    }
+
+    ws.send(
+      JSON.stringify({
+        type: "file-registered",
         code,
-        files: [],
-        totalFiles: totalFiles || 1,
-        createdAt: new Date(),
-        transferType: message.transferType || 'internet', // Use provided transfer type or default to internet
-        senderWs: ws, // Store sender's WebSocket connection
-      };
-      fileRegistry.set(code, registry);
-      console.log(`Created new registry for code: ${code}`);
-    }
-
-    // Add or update file in registry
-    const existingFileIndex = registry.files.findIndex(f => f.fileIndex === (fileIndex || 0));
-    const fileData = {
-      fileName,
-      fileSize,
-      fileType,
-      data: '', // Will be populated by file-data messages
-      fileIndex: fileIndex || 0,
-    };
-
-    if (existingFileIndex >= 0) {
-      registry.files[existingFileIndex] = fileData;
-    } else {
-      registry.files.push(fileData);
-    }
-
-    console.log(`File registered with code: ${code} - ${fileName} (${fileIndex + 1}/${totalFiles})`);
-    
-    ws.send(JSON.stringify({
-      type: 'file-registered',
-      code,
-    }));
+        fileIndex,
+      }),
+    );
   }
 
-  function handleRequestFile(message: any, ws: WebSocket) {
-    const { code } = message;
-    
+  async function handleRequestFile(message: any, ws: WebSocket) {
+    const code = normalizeCode(message.code);
+
     if (!code) {
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Code is required',
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Code is required",
+        }),
+      );
       return;
     }
-
-    console.log(`File request received for code: ${code}`);
-    console.log(`Registry has ${fileRegistry.size} entries:`, Array.from(fileRegistry.keys()));
 
     const registry = fileRegistry.get(code);
     if (!registry) {
-      console.log(`No registry found for code: ${code}`);
-      ws.send(JSON.stringify({
-        type: 'file-not-found',
-        code,
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "file-not-found",
+          code,
+        }),
+      );
       return;
     }
 
-    console.log(`Registry found for code: ${code}, files: ${registry.files.length}, totalFiles: ${registry.totalFiles}`);
-
-    // Store the requester's WebSocket for sending data when files arrive
     if (!registry.requesters) {
-      registry.requesters = [];
+      registry.requesters = new Set();
     }
-    registry.requesters.push(ws);
+    registry.requesters.add(ws);
 
-    // Send file metadata for all files
-    registry.files.forEach(file => {
-      ws.send(JSON.stringify({
-        type: 'file-available',
-        code,
-        fileName: file.fileName,
-        fileSize: file.fileSize,
-        fileType: file.fileType,
-        fileIndex: file.fileIndex,
-        totalFiles: registry.totalFiles,
-      }));
-
-      // If file data is available, send it immediately
-      if (file.data) {
-        ws.send(JSON.stringify({
-          type: 'file-data',
+    for (const file of registry.files) {
+      ws.send(
+        JSON.stringify({
+          type: "file-available",
           code,
           fileName: file.fileName,
-          data: file.data,
+          fileSize: file.fileSize,
+          fileType: file.fileType,
           fileIndex: file.fileIndex,
           totalFiles: registry.totalFiles,
-        }));
-      }
-    });
-
-    console.log(`Files requested with code: ${code} (${registry.files.length} files)`);
+          isReady: file.completed,
+          downloadUrl: file.completed ? buildDownloadUrl(code, file.fileIndex) : undefined,
+          receivedBytes: file.receivedBytes,
+        }),
+      );
+    }
   }
 
-  function handleFileData(message: any, ws: WebSocket) {
-    const { code, data, fileName, fileIndex } = message;
-    
-    if (!code || !data) {
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Code and data are required',
-      }));
+  async function handleFileData(message: any, ws: WebSocket) {
+    const { data, fileName, fileIndex = 0, isLastChunk } = message;
+    const code = normalizeCode(message.code);
+
+    if (!code || !data || !fileName) {
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Code, fileName and data are required",
+        }),
+      );
       return;
     }
 
     const registry = fileRegistry.get(code);
     if (!registry) {
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'File not registered',
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "File not registered",
+        }),
+      );
       return;
     }
 
-    // Find and update the specific file
-    const fileToUpdate = registry.files.find(f => 
-      f.fileIndex === (fileIndex || 0) && f.fileName === fileName
+    const fileNameNorm = (fileName || "").toLowerCase();
+    const file = registry.files.find(
+      (f) => f.fileIndex === fileIndex && (f.fileName === fileName || f.fileName.toLowerCase() === fileNameNorm)
     );
-    
-    if (fileToUpdate) {
-      fileToUpdate.data = data;
-      console.log(`File data stored for code: ${code} - ${fileName} (${fileIndex + 1}/${registry.totalFiles})`);
-      
-      // Send file data to any pending requesters
-      if (registry.requesters && registry.requesters.length > 0) {
-        registry.requesters.forEach((requesterWs: any) => {
-          if (requesterWs.readyState === WebSocket.OPEN) {
-            requesterWs.send(JSON.stringify({
-              type: 'file-data',
-              code,
-              fileName: fileToUpdate.fileName,
-              data: fileToUpdate.data,
-              fileIndex: fileToUpdate.fileIndex,
-              totalFiles: registry.totalFiles,
-            }));
-            console.log(`Sent late-arriving file data to requester: ${fileName}`);
-          }
-        });
-      }
-    } else {
-      console.log(`File not found in registry: ${code} - ${fileName}`);
+    if (!file) {
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "File metadata missing",
+        }),
+      );
+      return;
     }
-    
-    ws.send(JSON.stringify({
-      type: 'file-stored',
-      code,
-    }));
+
+    const bytesWritten = await fileStore.appendBase64Chunk(file.filePath, data);
+    file.receivedBytes += bytesWritten;
+
+    if (isLastChunk || file.receivedBytes >= file.fileSize) {
+      file.completed = true;
+      notifyRequestersFileReady(registry, file);
+    }
+
+    ws.send(
+      JSON.stringify({
+        type: "file-stored",
+        code,
+        fileIndex,
+      }),
+    );
   }
 
-  function handleDownloadAck(message: any, status: 'success' | 'error') {
-    const { code, fileName, totalFiles, completedFiles } = message;
-    
+  function handleDownloadAck(message: any, status: "success" | "error") {
+    const { fileName, totalFiles, completedFiles } = message;
+    const code = normalizeCode(message.code);
     const registry = fileRegistry.get(code);
-    if (!registry || !registry.senderWs) {
-      return; // No sender to notify
+
+    if (!registry || !registry.senderWs || registry.senderWs.readyState !== WebSocket.OPEN) {
+      return;
     }
 
-    // Check if sender's WebSocket is still connected
-    if (registry.senderWs.readyState === WebSocket.OPEN) {
-      registry.senderWs.send(JSON.stringify({
-        type: 'download-acknowledgment',
+    registry.senderWs.send(
+      JSON.stringify({
+        type: "download-acknowledgment",
         status,
         code,
         fileName,
         totalFiles,
         completedFiles,
-        message: status === 'success' 
-          ? `File${totalFiles && totalFiles > 1 ? 's' : ''} downloaded successfully by recipient`
-          : `Download failed for ${fileName || 'file'}`
-      }));
-      
-      console.log(`Sent ${status} acknowledgment for code: ${code}`);
-    }
+        message:
+          status === "success"
+            ? `File${totalFiles && totalFiles > 1 ? "s" : ""} downloaded successfully`
+            : `Download failed for ${fileName || "file"}`,
+      }),
+    );
   }
 
   // Health check endpoint
-  app.get('/api/health', (req, res) => {
+  app.get("/api/health", (_req, res) => {
     res.json({
-      status: 'ok',
+      status: "ok",
       activeFiles: fileRegistry.size,
       timestamp: new Date().toISOString(),
     });
   });
 
-  // Local network file sharing endpoints
   app.get("/ping", (_req, res) => {
     res.json({ status: "SecureShare", version: "1.0.0" });
   });
 
   app.get("/files/:code", (req, res) => {
-    const { code } = req.params;
+    const code = normalizeCode(req.params.code);
     const registry = fileRegistry.get(code);
-    
+
     if (!registry) {
       return res.status(404).json({ error: "File not found" });
     }
 
-    // Return file metadata and data
-    const files = registry.files.map(file => ({
+    const files = registry.files.map((file) => ({
       fileName: file.fileName,
       fileSize: file.fileSize,
       fileType: file.fileType,
-      data: file.data,
-      fileIndex: file.fileIndex
+      fileIndex: file.fileIndex,
+      isReady: file.completed,
+      downloadUrl: file.completed ? buildDownloadUrl(code, file.fileIndex) : undefined,
     }));
 
-    res.json(files);
+    res.json({ code, files });
   });
 
-  // Register files for local network sharing
-  app.post("/api/register-local-file", (req, res) => {
-    const { code, fileName, fileSize, fileType, data, fileIndex, totalFiles } = req.body;
-    
-    if (!code || !fileName || !data) {
+  app.get("/api/files/:code/:fileIndex/download", async (req, res) => {
+    const code = normalizeCode(req.params.code);
+    const fileIndex = req.params.fileIndex;
+    const registry = fileRegistry.get(code);
+
+    if (!registry) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const file = registry.files.find((f) => f.fileIndex === Number(fileIndex));
+    if (!file || !file.completed) {
+      return res.status(404).json({ error: "File not ready" });
+    }
+
+    res.setHeader("Content-Type", file.fileType || "application/octet-stream");
+    res.setHeader("Content-Length", file.fileSize.toString());
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(file.fileName)}"`,
+    );
+
+    const stream = fileStore.createReadStream(file.filePath);
+    stream.on("error", (error) => {
+      logger.error({ error }, "Download stream failed");
+      res.status(500).end();
+    });
+    stream.pipe(res);
+  });
+
+  app.post("/api/register-local-file", async (req, res) => {
+    const { code: rawCode, fileName, fileSize, fileType, data, fileIndex = 0, totalFiles = 1 } = req.body;
+    const code = normalizeCode(rawCode);
+
+    if (!code || !fileName || typeof fileSize !== "number" || fileSize <= 0 || !data) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Log file size for debugging large files
-    const fileSizeMB = fileSize ? (fileSize / 1024 / 1024).toFixed(2) : 'unknown';
-    console.log(`Registering large file: ${fileName} - ${fileSizeMB}MB (${fileIndex + 1}/${totalFiles})`);
+    const registry = getOrCreateRegistry(code, totalFiles, "local");
+    const safeFileType = normalizeFileType(fileType);
+    const file = await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex });
+    const bytesWritten = await fileStore.appendBase64Chunk(file.filePath, data);
+    file.receivedBytes += bytesWritten;
+    file.completed = true;
+    notifyRequestersFileReady(registry, file);
 
-    // Get or create file registry entry
-    let registry = fileRegistry.get(code);
-    if (!registry) {
-      registry = {
-        code,
-        files: [],
-        totalFiles: totalFiles || 1,
-        createdAt: new Date(),
-        transferType: 'local',
-        senderWs: null, // No WebSocket for local transfers
-      };
-      fileRegistry.set(code, registry);
-      console.log(`Created new local registry for code: ${code}`);
-    }
-
-    // Add file to registry
-    const fileData = {
-      fileName,
-      fileSize,
-      fileType,
-      data,
-      fileIndex: fileIndex || 0,
-    };
-
-    registry.files.push(fileData);
-    console.log(`Local file registered: ${fileName} with code: ${code} (${registry.files.length}/${totalFiles})`);
-
-    res.json({ success: true, message: "File registered for local sharing" });
+    res.json({ success: true, downloadUrl: buildDownloadUrl(code, fileIndex) });
   });
 
-  // Register file metadata for chunked upload (large files)
-  app.post("/api/register-local-file-meta", (req, res) => {
-    const { code, fileName, fileSize, fileType, fileIndex, totalFiles, totalChunks } = req.body;
-    
-    if (!code || !fileName || !fileSize) {
+  app.post("/api/register-local-file-meta", async (req, res) => {
+    const { code: rawCode, fileName, fileSize, fileType, fileIndex = 0, totalFiles = 1, totalChunks } = req.body;
+    const code = normalizeCode(rawCode);
+
+    if (!code || !fileName || typeof fileSize !== "number" || fileSize <= 0) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const fileSizeMB = (fileSize / 1024 / 1024).toFixed(2);
-    console.log(`Registering chunked file metadata: ${fileName} - ${fileSizeMB}MB (${totalChunks} chunks)`);
+    const registry = getOrCreateRegistry(code, totalFiles, "local");
+    const safeFileType = normalizeFileType(fileType);
+    await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex, totalChunks });
 
-    // Get or create file registry entry
-    let registry = fileRegistry.get(code);
-    if (!registry) {
-      registry = {
-        code,
-        files: [],
-        totalFiles: totalFiles || 1,
-        createdAt: new Date(),
-        transferType: 'local',
-        senderWs: null,
-      };
-      fileRegistry.set(code, registry);
-      console.log(`Created new local registry for code: ${code}`);
-    }
-
-    // Create file entry for chunked upload
-    const fileData: any = {
-      fileName,
-      fileSize,
-      fileType,
-      data: '', // Will be built from chunks
-      fileIndex: fileIndex || 0,
-      chunks: new Map<number, string>(), // Store chunks temporarily
-      totalChunks,
-      receivedChunks: 0,
-    };
-
-    registry.files.push(fileData);
-    console.log(`File metadata registered: ${fileName} with code: ${code}`);
-
-    res.json({ success: true, message: "File metadata registered for chunked upload" });
+    res.json({ success: true, message: "Metadata registered" });
   });
 
-  // Upload file chunk
-  app.post("/api/upload-local-chunk", (req, res) => {
-    const { code, fileIndex, chunkIndex, data, isLastChunk } = req.body;
-    
-    if (!code || fileIndex === undefined || chunkIndex === undefined || !data) {
+  app.post("/api/upload-local-chunk", async (req, res) => {
+    const { code: rawCode, fileIndex = 0, data, isLastChunk } = req.body;
+    const code = normalizeCode(rawCode);
+
+    if (!code || !data) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -425,37 +398,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "File registry not found" });
     }
 
-    const file: any = registry.files.find(f => f.fileIndex === fileIndex);
-    if (!file || !file.chunks) {
-      return res.status(404).json({ error: "File not found in registry" });
+    const file = registry.files.find((f) => f.fileIndex === fileIndex);
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
     }
 
-    // Store chunk
-    file.chunks.set(chunkIndex, data);
-    file.receivedChunks = (file.receivedChunks || 0) + 1;
+    const bytesWritten = await fileStore.appendBase64Chunk(file.filePath, data);
+    file.receivedBytes += bytesWritten;
 
-    console.log(`Chunk ${chunkIndex} received for ${file.fileName} (${file.receivedChunks}/${file.totalChunks})`);
-
-    // If all chunks received, assemble the file
-    if (file.receivedChunks === file.totalChunks) {
-      const sortedChunks = Array.from(file.chunks.entries())
-        .sort(([a], [b]) => a - b)
-        .map(([, data]) => data);
-      
-      file.data = sortedChunks.join('');
-      delete file.chunks; // Clean up chunks to save memory
-      delete file.totalChunks;
-      delete file.receivedChunks;
-      
-      console.log(`File assembled: ${file.fileName} - ${(file.fileSize / 1024 / 1024).toFixed(2)}MB`);
+    if (isLastChunk || file.receivedBytes >= file.fileSize) {
+      file.completed = true;
+      notifyRequestersFileReady(registry, file);
     }
 
-    res.json({ 
-      success: true, 
-      message: isLastChunk ? "File upload completed" : "Chunk uploaded successfully",
-      progress: Math.round((file.receivedChunks / file.totalChunks) * 100)
-    });
+    const progress = Math.round((file.receivedBytes / file.fileSize) * 100);
+    res.json({ success: true, progress });
   });
+
+  async function cleanupRegistryEntry(code: string, registry: FileRegistry, registryMap: RegistryMap) {
+    for (const file of registry.files) {
+      await fileStore.deleteFile(file.filePath);
+    }
+    await fileStore.deleteCodeFolder(code);
+    registryMap.delete(code);
+  }
+
+  function notifyRequestersFileReady(registry: FileRegistry, file: FileRegistry["files"][number]) {
+    if (!registry.requesters) {
+      return;
+    }
+
+    const payload = JSON.stringify({
+      type: "file-ready",
+      code: registry.code,
+      fileName: file.fileName,
+      fileSize: file.fileSize,
+      fileType: file.fileType,
+      fileIndex: file.fileIndex,
+      totalFiles: registry.totalFiles,
+      downloadUrl: buildDownloadUrl(registry.code, file.fileIndex),
+      isReady: true,
+    });
+
+    registry.requesters.forEach((requester) => {
+      if (requester.readyState === WebSocket.OPEN) {
+        requester.send(payload);
+      }
+    });
+  }
+
+  function notifySenderDisconnected(code: string, registry: FileRegistry) {
+    if (!registry.requesters || registry.requesters.size === 0) {
+      return;
+    }
+
+    const payload = JSON.stringify({
+      type: "sender-disconnected",
+      code,
+      message: "Sender disconnected. Please request the files again.",
+    });
+
+    registry.requesters.forEach((requester) => {
+      if (requester.readyState === WebSocket.OPEN) {
+        requester.send(payload);
+      }
+    });
+  }
+
+  function getOrCreateRegistry(code: string, totalFiles: number, transferType: TransferType, senderWs?: WebSocket | null) {
+    let registry = fileRegistry.get(code);
+
+    if (!registry) {
+      registry = {
+        code,
+        files: [],
+        totalFiles,
+        createdAt: new Date(),
+        transferType,
+        senderWs: senderWs ?? null,
+        requesters: new Set<WebSocket>(),
+      };
+      fileRegistry.set(code, registry);
+      return registry;
+    }
+
+    registry.totalFiles = Math.max(registry.totalFiles, totalFiles);
+    if (senderWs) {
+      registry.senderWs = senderWs;
+    }
+
+    if (!registry.requesters) {
+      registry.requesters = new Set<WebSocket>();
+    }
+
+    return registry;
+  }
+
+  async function upsertFileEntry(registry: FileRegistry, meta: FileMeta) {
+    let file = registry.files.find((f) => f.fileIndex === meta.fileIndex);
+
+    if (!file) {
+      const filePath = await fileStore.prepareFilePath(registry.code, meta.fileIndex, meta.fileName);
+      file = {
+        fileName: meta.fileName,
+        fileSize: meta.fileSize,
+        fileType: meta.fileType,
+        fileIndex: meta.fileIndex,
+        filePath,
+        receivedBytes: 0,
+        completed: false,
+        totalChunks: meta.totalChunks,
+      };
+      registry.files.push(file);
+      return file;
+    }
+
+    await fileStore.deleteFile(file.filePath);
+    file.filePath = await fileStore.prepareFilePath(registry.code, meta.fileIndex, meta.fileName);
+    file.fileName = meta.fileName;
+    file.fileSize = meta.fileSize;
+    file.fileType = meta.fileType;
+    file.receivedBytes = 0;
+    file.completed = false;
+    file.totalChunks = meta.totalChunks;
+    return file;
+  }
 
   return httpServer;
 }

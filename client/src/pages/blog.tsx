@@ -1,11 +1,121 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-import { Search, Calendar, Clock, ArrowRight, FileText, Share, Shield, Zap, Globe, Users, Archive, Guide } from "lucide-react";
+import { Search, Calendar, Clock, ArrowRight, FileText, Share, Shield, Zap, Globe, Users, Archive, BookOpen } from "lucide-react";
 import { useState } from "react";
 
 // Blog posts data with SEO-optimized titles and trending keywords
 const blogPosts = [
+  {
+    id: 401,
+    title: "How to transfer files from PC to Mobile without USB",
+    excerpt: "Skip cables and dongles. Learn simple ways to move files from your computer to your phone using WiFi, codes, and browser-based tools.",
+    category: "Guide",
+    readTime: "6 min read",
+    date: "February 1, 2026",
+    slug: "how-to-transfer-files-from-pc-to-mobile-without-usb",
+    tags: ["PC to mobile", "no USB", "WiFi transfer", "file transfer"],
+    icon: Zap
+  },
+  {
+    id: 402,
+    title: "Share large files online without registration",
+    excerpt: "Send big files without creating accounts. Compare the best no-signup options for sharing large videos, folders, and documents.",
+    category: "Guide",
+    readTime: "6 min read",
+    date: "February 1, 2026",
+    slug: "share-large-files-online-without-registration",
+    tags: ["large files", "no registration", "online sharing", "no signup"],
+    icon: Globe
+  },
+  {
+    id: 403,
+    title: "Fastest way to send files between two laptops on the same WiFi",
+    excerpt: "Get the quickest method to transfer files between two laptops on the same network. No cloud uploads, no accounts—just direct transfer.",
+    category: "Tips",
+    readTime: "5 min read",
+    date: "February 1, 2026",
+    slug: "fastest-way-to-send-files-between-two-laptops-on-same-wifi",
+    tags: ["same WiFi", "laptop to laptop", "fast transfer", "local network"],
+    icon: Zap
+  },
+  {
+    id: 404,
+    title: "Secure file sharing with 6 digit code",
+    excerpt: "Why 6-digit codes are a simple and secure way to share files. How they work, why they're safe, and the best tools that use them.",
+    category: "Security",
+    readTime: "6 min read",
+    date: "February 1, 2026",
+    slug: "secure-file-sharing-with-6-digit-code",
+    tags: ["6 digit code", "secure sharing", "file transfer", "privacy"],
+    icon: Shield
+  },
+  {
+    id: 405,
+    title: "Send files anonymously without email",
+    excerpt: "Share files without revealing your email or identity. Methods and tools for anonymous, one-off file transfers.",
+    category: "Privacy",
+    readTime: "6 min read",
+    date: "February 1, 2026",
+    slug: "send-files-anonymously-without-email",
+    tags: ["anonymous", "no email", "privacy", "file sharing"],
+    icon: Shield
+  },
+  {
+    id: 406,
+    title: "Transfer large files between Android and iPhone instantly",
+    excerpt: "Bridge the Android–iPhone gap. Practical ways to move large files between the two platforms without cables or complicated setup.",
+    category: "Mobile",
+    readTime: "6 min read",
+    date: "February 1, 2026",
+    slug: "transfer-large-files-between-android-and-iphone-instantly",
+    tags: ["Android", "iPhone", "cross-platform", "large files"],
+    icon: Globe
+  },
+  {
+    id: 407,
+    title: "Best WeTransfer alternatives for small files",
+    excerpt: "WeTransfer isn't always the best fit. Top alternatives for sending small files quickly, with no signup and better privacy.",
+    category: "Reviews",
+    readTime: "6 min read",
+    date: "February 1, 2026",
+    slug: "best-wetransfer-alternatives-for-small-files",
+    tags: ["WeTransfer", "alternatives", "small files", "no signup"],
+    icon: FileText
+  },
+  {
+    id: 408,
+    title: "How to send files to another computer using a code",
+    excerpt: "Step-by-step guide to sending files to any computer using only a short code—no accounts, no links, no complexity.",
+    category: "Guide",
+    readTime: "5 min read",
+    date: "February 1, 2026",
+    slug: "how-to-send-files-to-another-computer-using-a-code",
+    tags: ["code", "computer", "file send", "simple"],
+    icon: Share
+  },
+  {
+    id: 409,
+    title: "Temporary file sharing for one-time use",
+    excerpt: "Share files that aren't stored forever. How temporary and one-time file sharing works and why it's better for privacy.",
+    category: "Privacy",
+    readTime: "6 min read",
+    date: "February 1, 2026",
+    slug: "temporary-file-sharing-for-one-time-use",
+    tags: ["temporary", "one-time", "privacy", "ephemeral"],
+    icon: Shield
+  },
+  {
+    id: 410,
+    title: "Browser-to-browser file transfer no setup",
+    excerpt: "Send files from one browser to another with zero installation. How web-based transfer works and the best tools to use.",
+    category: "Technology",
+    readTime: "5 min read",
+    date: "February 1, 2026",
+    slug: "browser-to-browser-file-transfer-no-setup",
+    tags: ["browser", "no setup", "web transfer", "instant"],
+    icon: Globe
+  },
   {
     id: 300,
     title: "Share Files Without Signup: The Easiest Way to Send Files Instantly",

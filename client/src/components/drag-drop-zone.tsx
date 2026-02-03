@@ -4,8 +4,11 @@ import { cn } from "@/lib/utils";
 
 interface DragDropZoneProps {
   onFilesSelected: (files: File[]) => void;
+  /** Leave undefined to allow all file types (default). Use e.g. "image/*" to restrict. */
   accept?: string;
   multiple?: boolean;
+  /** Aria-label for the file input (e.g. "Choose files to send. All file types supported."). */
+  ariaLabel?: string;
   children?: React.ReactNode;
 }
 
@@ -13,6 +16,7 @@ export function DragDropZone({
   onFilesSelected, 
   accept, 
   multiple = true,
+  ariaLabel,
   children 
 }: DragDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -64,10 +68,11 @@ export function DragDropZone({
         <input
           ref={fileInputRef}
           type="file"
-          accept={accept}
+          accept={accept ?? undefined}
           multiple={multiple}
           onChange={handleFileSelect}
           className="hidden"
+          aria-label={ariaLabel ?? "Choose files. All file types supported."}
         />
         {children}
       </div>
@@ -88,10 +93,11 @@ export function DragDropZone({
       <input
         ref={fileInputRef}
         type="file"
-        accept={accept}
+        accept={accept ?? undefined}
         multiple={multiple}
         onChange={handleFileSelect}
         className="hidden"
+        aria-label={ariaLabel ?? "Choose files. All file types supported."}
       />
       
       <div className="space-y-4">

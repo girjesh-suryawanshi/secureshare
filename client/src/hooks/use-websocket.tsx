@@ -3,9 +3,10 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface WebSocketHook {
   isConnected: boolean;
+  reconnect: () => void;
   sendMessage: (message: any) => void;
-  onFileAvailable: (callback: (file: { code: string; fileName: string; fileSize: number; fileType: string; fileIndex?: number; totalFiles?: number }) => void) => void;
-  onFileData: (callback: (data: { code: string; data: string }) => void) => void;
+  onFileAvailable: (callback: (file: { code: string; fileName: string; fileSize: number; fileType: string; fileIndex?: number; totalFiles?: number; isReady?: boolean; downloadUrl?: string; receivedBytes?: number }) => void) => void;
+  onFileReady: (callback: (file: { code: string; downloadUrl: string; fileName: string; fileType?: string; fileIndex?: number; totalFiles?: number }) => void) => void;
   onFileNotFound: (callback: (code: string) => void) => void;
   onDownloadAck: (callback: (data: { status: string; message: string; code: string }) => void) => void;
   onSenderDisconnected: (callback: (data: { code: string; message: string }) => void) => void;
@@ -16,16 +17,48 @@ export function useWebSocket(): WebSocketHook {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
   const fileAvailableCallbackRef = useRef<((file: any) => void) | null>(null);
-  const fileDataCallbackRef = useRef<((data: any) => void) | null>(null);
+  const fileReadyCallbackRef = useRef<((file: any) => void) | null>(null);
   const fileNotFoundCallbackRef = useRef<((code: string) => void) | null>(null);
   const downloadAckCallbackRef = useRef<((data: any) => void) | null>(null);
   const senderDisconnectedCallbackRef = useRef<((data: any) => void) | null>(null);
   const { toast } = useToast();
 
+  const sanitizePort = (value?: string | number | null) => {
+    if (value === undefined || value === null) {
+      return "";
+    }
+    const normalized = String(value).trim();
+    if (!normalized || normalized === "undefined" || normalized === "null") {
+      return "";
+    }
+    return normalized;
+  };
+
+  const resolveWebSocketUrl = () => {
+    const explicit = import.meta.env.VITE_WS_URL as string | undefined;
+    if (explicit) {
+      if (explicit.startsWith("ws://") || explicit.startsWith("wss://")) {
+        return explicit;
+      }
+      if (explicit.startsWith("http://") || explicit.startsWith("https://")) {
+        const url = new URL(explicit);
+        url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+        return url.toString();
+      }
+    }
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const hostname = window.location.hostname || "localhost";
+    const fallbackPort = sanitizePort(import.meta.env.VITE_WS_PORT as string | undefined);
+    const browserPort = sanitizePort(window.location.port);
+    const inferredPort = browserPort || fallbackPort || (hostname === "localhost" ? "5000" : "");
+    const portSegment = inferredPort ? `:${inferredPort}` : "";
+    return `${protocol}//${hostname}${portSegment}/ws`;
+  };
+
   const connect = useCallback(() => {
     try {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const wsUrl = resolveWebSocketUrl();
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
@@ -52,9 +85,9 @@ export function useWebSocket(): WebSocketHook {
               }
               break;
             
-            case 'file-data':
-              if (fileDataCallbackRef.current) {
-                fileDataCallbackRef.current(message);
+            case 'file-ready':
+              if (fileReadyCallbackRef.current) {
+                fileReadyCallbackRef.current(message);
               }
               break;
             
@@ -127,8 +160,8 @@ export function useWebSocket(): WebSocketHook {
     fileAvailableCallbackRef.current = callback;
   }, []);
 
-  const onFileData = useCallback((callback: (data: any) => void) => {
-    fileDataCallbackRef.current = callback;
+  const onFileReady = useCallback((callback: (file: any) => void) => {
+    fileReadyCallbackRef.current = callback;
   }, []);
 
   const onFileNotFound = useCallback((callback: (code: string) => void) => {
@@ -156,11 +189,24 @@ export function useWebSocket(): WebSocketHook {
     };
   }, [connect]);
 
+  const reconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = undefined;
+    }
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    connect();
+  }, [connect]);
+
   return {
     isConnected,
+    reconnect,
     sendMessage,
     onFileAvailable,
-    onFileData,
+    onFileReady,
     onFileNotFound,
     onDownloadAck,
     onSenderDisconnected,

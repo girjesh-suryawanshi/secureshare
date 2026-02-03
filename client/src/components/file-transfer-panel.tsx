@@ -203,17 +203,17 @@ export function FileTransferPanel({
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {Math.round((transfer.progress / 100) * transfer.fileSize / 1024 / 1024 * 10) / 10} MB / {Math.round(transfer.fileSize / 1024 / 1024 * 10) / 10} MB
+                        {Math.round(((transfer.progress ?? 0) / 100) * transfer.fileSize / 1024 / 1024 * 10) / 10} MB / {Math.round(transfer.fileSize / 1024 / 1024 * 10) / 10} MB
                       </p>
                       <p className="text-sm text-gray-500">
-                        {Math.round(transfer.progress)}% • {transfer.timeRemaining || 0}s remaining
+                        {Math.round(transfer.progress ?? 0)}% • {transfer.timeRemaining ?? 0}s remaining
                       </p>
                     </div>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-material-green h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${transfer.progress}%` }}
+                      style={{ width: `${transfer.progress ?? 0}%` }}
                     />
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 mt-1">

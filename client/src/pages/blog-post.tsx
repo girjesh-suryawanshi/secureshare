@@ -7,6 +7,274 @@ import { Link } from "wouter";
 // This would normally come from a CMS or API
 const getBlogPost = (slug: string) => {
   const posts: { [key: string]: any } = {
+    "how-to-transfer-files-from-pc-to-mobile-without-usb": {
+      title: "How to transfer files from PC to Mobile without USB",
+      date: "February 1, 2026",
+      readTime: "6 min read",
+      category: "Guide",
+      tags: ["PC to mobile", "no USB", "WiFi transfer", "file transfer"],
+      content: `
+        <h2>Why Skip the Cable?</h2>
+        <p>Transferring files from your PC to your phone used to mean hunting for a USB cable, installing drivers, or dealing with "file not found" errors. Today you can move documents, photos, and videos from computer to mobile in seconds—no cable, no dongle, and often no app install.</p>
+        <p>Whether you need to get a PDF onto your phone before a meeting or send a batch of photos from your laptop to your tablet, wireless methods are faster and more convenient. They also work across operating systems: Windows to Android, Mac to iPhone, or any mix.</p>
+        
+        <h3>Use the Same WiFi and a Share Code</h3>
+        <p>One of the simplest approaches is a browser-based tool that uses a short code. On your PC, open the site, choose "Send," and add your files. You get a 6-digit code. On your phone, open the same site, choose "Receive," and enter that code. The files stream directly to your device. No account, no USB, and no cloud upload that you have to wait for.</p>
+        <p>This works because both devices talk over your local network or through a minimal relay. Files go from your computer to your phone without being stored on a server. You can transfer large videos or many photos without hitting typical email or messaging limits.</p>
+        
+        <h3>Cloud and Messaging Fallbacks</h3>
+        <p>If you already use cloud storage (Google Drive, OneDrive, iCloud), you can upload on the PC and open the app on your phone to download. It works, but you need an account, and upload then download can be slow. Messaging apps (WhatsApp, Telegram) are handy for small batches of photos or documents, but they compress images and often have size limits.</p>
+        <p>For one-off, no-signup transfers, a code-based web tool is often the fastest. Both devices stay on the same WiFi when possible for best speed; some tools also work over the internet so you can send to a phone on another network.</p>
+        
+        <h3>Tips for Smooth PC-to-Mobile Transfers</h3>
+        <ul>
+          <li>Keep the PC and phone on the same WiFi when you can for faster local transfer.</li>
+          <li>Use a browser that both devices support (Chrome, Safari, Edge) for consistent behavior.</li>
+          <li>For large files, avoid leaving the page or locking the phone until the transfer finishes.</li>
+        </ul>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend is built for exactly this: moving files from PC to mobile without USB or signup. You get a 6-digit code on the sender device and enter it on the receiver. Files can go over your local WiFi for speed or over the internet when devices are on different networks. No account, no app install, and no files left on a server—ideal for quick, private transfers between your own devices.</p>
+      `
+    },
+    "share-large-files-online-without-registration": {
+      title: "Share large files online without registration",
+      date: "February 1, 2026",
+      readTime: "6 min read",
+      category: "Guide",
+      tags: ["large files", "no registration", "online sharing", "no signup"],
+      content: `
+        <h2>The Problem with Signup Walls</h2>
+        <p>You need to send a large video, a design pack, or a dataset. Many services force you to create an account before you can upload—adding friction and leaving your email in another database. For one-off or occasional sharing, registration is unnecessary and often unwanted.</p>
+        <p>Thankfully, several options let you share large files online without registration. They range from link-based upload services to peer-to-peer transfer where files never touch a central server. Choosing the right method depends on size, speed, and how much you care about privacy.</p>
+        
+        <h3>Link-Based vs Direct Transfer</h3>
+        <p>Classic "upload and get a link" tools let you drop files, get a URL, and share it. No signup often means the link expires after a short time or a single download, which is good for privacy. The downside is that you must upload the full file to their server first, so upload speed and storage limits apply.</p>
+        <p>With direct or peer-to-peer transfer, your file streams from your device to the recipient's. No central storage means no account and no long-term retention. You typically get a short code or link that connects the two devices; once the transfer is done, there's nothing left to delete.</p>
+        
+        <h3>What Counts as "Large"?</h3>
+        <p>Email attachments often cap at 25 MB. Many free cloud tiers limit single files to 2–5 GB. "Large" here means anything from tens of megabytes to several gigabytes. For very large files, P2P or direct transfer avoids uploading to a third party and can feel faster because the recipient can start downloading as soon as the connection is established.</p>
+        
+        <h3>Why No Registration Helps</h3>
+        <ul>
+          <li>Faster: no forms, no verification emails, no passwords to remember.</li>
+          <li>More private: no account means less data tied to your identity.</li>
+          <li>Fewer surprises: no marketing emails or account recovery later.</li>
+        </ul>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend lets you share large files online without registration. You pick your files, get a 6-digit code, and share the code with the recipient. They enter it in their browser and receive the files directly. No account, no upload to a permanent server, and no size limit imposed by a free tier—just a simple, one-time transfer that works on any device with a browser.</p>
+      `
+    },
+    "fastest-way-to-send-files-between-two-laptops-on-same-wifi": {
+      title: "Fastest way to send files between two laptops on the same WiFi",
+      date: "February 1, 2026",
+      readTime: "5 min read",
+      category: "Tips",
+      tags: ["same WiFi", "laptop to laptop", "fast transfer", "local network"],
+      content: `
+        <h2>Same Network, Maximum Speed</h2>
+        <p>When two laptops are on the same WiFi, the fastest way to send files is to use that network directly instead of routing through the internet. Uploading to Google Drive or Dropbox from one machine and downloading on the other adds delay, uses your internet bandwidth, and often involves compression or sync quirks. Local transfer uses the full capacity of your router between the two devices.</p>
+        <p>Tools that support "local" or "same network" mode detect when both sides are on the same WiFi and send data directly between them. You get a short code or link; the other laptop enters it, and the transfer runs at LAN speed. No cloud, no account, and typically no size limit beyond what your disk can handle.</p>
+        
+        <h3>How Local Transfer Works</h3>
+        <p>In local mode, the sending laptop may start a small temporary server or use WebRTC-style peer-to-peer over your LAN. The receiving laptop connects to it using the code. Data flows from one machine to the other without going through an external server. That means lower latency and higher throughput—ideal for large videos, disk images, or project folders.</p>
+        <p>You usually open the same website on both laptops, choose "Send" on one and "Receive" on the other, and enter the 6-digit code. The site handles the rest. No install, no port forwarding, and no IT setup.</p>
+        
+        <h3>When to Prefer Local Over Internet</h3>
+        <ul>
+          <li>Both devices are on the same WiFi or the same hotspot.</li>
+          <li>You want the fastest possible speed and minimal dependency on your ISP.</li>
+          <li>You prefer that data never leave your network.</li>
+        </ul>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend offers a dedicated "Local WiFi" option. When both laptops are on the same network, you select that mode, get a code, and the other laptop enters it. Transfer runs directly over your WiFi at local speed—no internet relay and no account. It's the fastest way to send files between two laptops on the same WiFi without installing anything.</p>
+      `
+    },
+    "secure-file-sharing-with-6-digit-code": {
+      title: "Secure file sharing with 6 digit code",
+      date: "February 1, 2026",
+      readTime: "6 min read",
+      category: "Security",
+      tags: ["6 digit code", "secure sharing", "file transfer", "privacy"],
+      content: `
+        <h2>Why a 6-Digit Code Works</h2>
+        <p>Secure file sharing doesn't have to mean long passwords and complex setup. A 6-character alphanumeric code can be strong enough for short-lived, one-time transfers. With 36 characters (A–Z, 0–9), there are millions of combinations, and when the code is only valid for a single session or a few minutes, the window for guessing or brute-forcing is tiny.</p>
+        <p>Codes are also easy to share: you can read them over the phone, type them into another device, or send them in a quick message. No long URLs, no QR codes required, and no account to log into. That simplicity reduces user error and makes secure sharing accessible to everyone.</p>
+        
+        <h3>What Makes Sharing "Secure"?</h3>
+        <p>Security here means confidentiality and minimal exposure. Confidentiality is achieved by sending files over an encrypted channel (e.g. HTTPS and/or end-to-end encryption) so that only the intended recipient can access them. Minimal exposure means files are not stored on a server indefinitely and are not tied to your identity—no account, no email, and optionally no logs.</p>
+        <p>When the transfer is direct (device to device), the file never sits on a central server. When the code is one-time and short-lived, the risk of someone else using it later is low. That combination gives you secure file sharing without the complexity of traditional security tools.</p>
+        
+        <h3>Best Practices</h3>
+        <ul>
+          <li>Share the code only through a channel you trust (in person, secure chat, or a quick call).</li>
+          <li>Use a service that doesn't store files after the transfer or that expires them quickly.</li>
+          <li>Prefer tools that work in the browser so you don't have to install or trust extra software.</li>
+        </ul>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend is built for secure file sharing with a 6-digit code. You get a code when you start a send; the recipient enters it to receive. Files can be sent over an encrypted connection and, in local mode, never leave your network. No account is required, so there's no identity tied to the transfer. For one-time, low-friction, secure sharing, HexaSend keeps the process simple and the exposure minimal.</p>
+      `
+    },
+    "send-files-anonymously-without-email": {
+      title: "Send files anonymously without email",
+      date: "February 1, 2026",
+      readTime: "6 min read",
+      category: "Privacy",
+      tags: ["anonymous", "no email", "privacy", "file sharing"],
+      content: `
+        <h2>Why Send Without Email or Identity?</h2>
+        <p>Sometimes you need to share a file without attaching your identity. Sending via email exposes your address and often leaves a trail in both sent folders and provider logs. For sensitive documents, whistleblowing, or simply keeping your inbox private, anonymous file sharing is a better fit.</p>
+        <p>Anonymous doesn't always mean "untraceable" in the strictest sense—it usually means no account, no email, and no requirement to hand over personal data. The recipient gets the file; the service doesn't need to know who you are.</p>
+        
+        <h3>How Anonymous Sharing Works in Practice</h3>
+        <p>Tools that allow anonymous sending typically avoid signup and don't ask for your email. You upload or offer a file, get a link or code, and share that with the recipient. The service may not log IPs long-term or may allow use over VPN or Tor. The file might be deleted after one download or after a short time window.</p>
+        <p>Email-free sharing also avoids the "reply all" and "forward" risks. The recipient gets the file via a one-time code or link; there's no thread to accidentally reply to or forward. That reduces exposure and keeps the exchange minimal.</p>
+        
+        <h3>What to Look For</h3>
+        <ul>
+          <li>No mandatory account or email.</li>
+          <li>One-time or short-lived links/codes.</li>
+          <li>Clear or configurable retention (e.g. delete after download).</li>
+        </ul>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend lets you send files anonymously without email. There's no signup and no email field. You choose your files, get a 6-digit code, and share that code through any channel you like. The recipient enters the code in their browser and receives the files. No account means no identity tied to the transfer—ideal for one-off, low-trace sharing.</p>
+      `
+    },
+    "transfer-large-files-between-android-and-iphone-instantly": {
+      title: "Transfer large files between Android and iPhone instantly",
+      date: "February 1, 2026",
+      readTime: "6 min read",
+      category: "Mobile",
+      tags: ["Android", "iPhone", "cross-platform", "large files"],
+      content: `
+        <h2>The Android–iPhone Gap</h2>
+        <p>Moving large files between Android and iPhone has always been awkward. AirDrop is Apple-only; Google's Nearby Share doesn't help with iOS. Bluetooth is slow and flaky for big files. Many people fall back on email or messaging apps, which compress images and impose size limits. For full-quality videos or big document sets, you need a method that works across both platforms and doesn't cap you at a few hundred megabytes.</p>
+        <p>Browser-based transfer solves this. If both phones can open a website, they can exchange files without installing an app. You get a code on one device and enter it on the other; the file streams across. No app store, no permissions beyond the browser, and no platform lock-in.</p>
+        
+        <h3>Why "Instant" Matters</h3>
+        <p>Instant here means no lengthy upload-to-cloud-then-download flow. With direct or relay-based transfer, the receiver can start getting the file as soon as the sender has shared the code. Speed depends on your connection, but you avoid the double delay of upload and download that cloud services add.</p>
+        <p>For very large files (e.g. 4K video), being on the same WiFi helps. Some tools use local network mode when both devices are on the same WiFi, giving you the fastest possible transfer between the two phones.</p>
+        
+        <h3>Practical Steps</h3>
+        <ul>
+          <li>Open the same transfer site in the browser on both phones.</li>
+          <li>On the sender: choose Send, add the file(s), and note the 6-digit code.</li>
+          <li>On the receiver: choose Receive and enter the code.</li>
+        </ul>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend is built for cross-platform transfer, including Android and iPhone. Open HexaSend in Chrome or Safari on both devices, use a 6-digit code to connect them, and transfer large files without an app or account. Local WiFi mode speeds things up when both phones are on the same network. You get instant, browser-based transfer between Android and iPhone with no signup and no size limit imposed by the service.</p>
+      `
+    },
+    "best-wetransfer-alternatives-for-small-files": {
+      title: "Best WeTransfer alternatives for small files",
+      date: "February 1, 2026",
+      readTime: "6 min read",
+      category: "Reviews",
+      tags: ["WeTransfer", "alternatives", "small files", "no signup"],
+      content: `
+        <h2>When WeTransfer Isn't the Best Fit</h2>
+        <p>WeTransfer is popular for sending large files via a link, but it has drawbacks: you often see ads, the free tier has limits, and for small files you might prefer something even simpler. Small files—documents, a few photos, a short clip—don't need a 2 GB upload. What you need is speed, no signup, and minimal friction.</p>
+        <p>Alternatives range from minimal "paste and share" tools to browser-based transfer that uses a short code instead of a link. For small files, the best options are usually the ones that skip registration and get you from "I have a file" to "recipient has the file" in the fewest steps.</p>
+        
+        <h3>What to Look For in an Alternative</h3>
+        <p>For small files, prioritize: no signup, fast transfer (ideally direct or minimal relay), and no unnecessary storage. A 6-digit code can be quicker to share than a long URL, especially over the phone or in person. If the service doesn't keep files after the transfer, that's better for privacy.</p>
+        <ul>
+          <li><strong>No account:</strong> Upload or send without creating an account.</li>
+          <li><strong>Short code or short link:</strong> Easy to type or say.</li>
+          <li><strong>Small files OK:</strong> No minimum size; quick for a few MB.</li>
+        </ul>
+        
+        <h3>Browser-Based Code Transfer</h3>
+        <p>Services that use a 6-digit code let both sides open the same website: sender gets the code, receiver enters it, and the file moves. No link to copy, no email to enter. For small files this is often faster than WeTransfer and avoids the "sign up for more" prompts.</p>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend is one of the best WeTransfer alternatives for small files. You don't need an account or an email. You pick your file(s), get a 6-digit code, and the recipient enters it to download. Small files transfer quickly; you can send a single PDF or a batch of photos with the same flow. No ads, no signup, and no file left on a server after the transfer—ideal when you just need to move a few files fast.</p>
+      `
+    },
+    "how-to-send-files-to-another-computer-using-a-code": {
+      title: "How to send files to another computer using a code",
+      date: "February 1, 2026",
+      readTime: "5 min read",
+      category: "Guide",
+      tags: ["code", "computer", "file send", "simple"],
+      content: `
+        <h2>Code-Based File Sending in a Nutshell</h2>
+        <p>Sending files to another computer using a code is simple: on the computer with the files, you open a website or app, add the files, and get a short code (often 6 characters). On the other computer, you open the same site, choose "Receive," and type in that code. The two machines connect and the files transfer. No account, no long URLs, and no need to install anything if you use a browser-based service.</p>
+        <p>This works across operating systems—Windows to Mac, Linux to Windows, or any combination. As long as both computers have a modern browser and internet (or are on the same network), the code is all you need.</p>
+        
+        <h3>Step-by-Step</h3>
+        <ol>
+          <li>On the sending computer: open the transfer site, click Send (or equivalent), and add the file(s) you want to share.</li>
+          <li>Note the 6-digit code shown on screen.</li>
+          <li>On the receiving computer: open the same site, click Receive, and enter the code.</li>
+          <li>Wait for the transfer to complete; download or save the file(s) when prompted.</li>
+        </ol>
+        <p>Some sites offer a "local network" or "same WiFi" mode. If both computers are on the same WiFi, select that for faster transfer and so data doesn't have to go through the internet.</p>
+        
+        <h3>Why Use a Code Instead of a Link?</h3>
+        <p>Codes are easy to read over the phone, type manually, or send in a quick message. They're shorter than most URLs and work even if the recipient can't click a link (e.g. they're typing on the other computer). For one-time transfers, a code is often the smoothest option.</p>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend is built for sending files to another computer using a code. Open HexaSend on both machines, get a 6-digit code on the sender, enter it on the receiver, and the files transfer. You can use Internet mode from anywhere or Local WiFi mode when both computers are on the same network. No signup, no install, and no files stored on a server—just a simple code-based transfer between two computers.</p>
+      `
+    },
+    "temporary-file-sharing-for-one-time-use": {
+      title: "Temporary file sharing for one-time use",
+      date: "February 1, 2026",
+      readTime: "6 min read",
+      category: "Privacy",
+      tags: ["temporary", "one-time", "privacy", "ephemeral"],
+      content: `
+        <h2>Why One-Time and Temporary?</h2>
+        <p>Not every file share needs to live forever. Sending a contract draft, a batch of photos, or a report for a single review is often a one-time exchange. You want the recipient to get the file once; you don't want it sitting on a server for months. Temporary file sharing is designed for exactly that: the file is available for a short time or a single download, then it's gone.</p>
+        <p>That approach reduces risk. There's no long-lived link for someone to find later, no backup copy in the cloud that you forget about, and less surface area for leaks or misuse. For sensitive or confidential material, temporary and one-time use is a good default.</p>
+        
+        <h3>How Temporary Sharing Works</h3>
+        <p>Services differ in implementation. Some generate a link or code that expires after a set time (e.g. 24 hours). Others make the file available only until the first download, then delete it. Some use direct transfer so the file never sits on a server at all—it goes from your device to the recipient's and that's it. The last option is the most private: there's nothing to expire or delete because nothing was stored.</p>
+        <p>When you use a 6-digit code with a direct-transfer tool, the code typically works only for that session. Once the transfer is done, the code is useless. No link to revoke, no "delete my file" button—the design is one-time by nature.</p>
+        
+        <h3>When to Choose Temporary Sharing</h3>
+        <ul>
+          <li>Confidential or sensitive documents.</li>
+          <li>One-off sends where you don't want a permanent link.</li>
+          <li>Compliance or policy that limits how long files may be stored.</li>
+        </ul>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend is built for temporary file sharing and one-time use. You send files via a 6-digit code; the recipient gets them in that session. In direct-transfer mode, files don't sit on a server—they go from your device to theirs. The code is valid only for that transfer, so there's no long-lived link or stored file to worry about. For one-time, low-retention sharing, HexaSend keeps the process simple and the footprint minimal.</p>
+      `
+    },
+    "browser-to-browser-file-transfer-no-setup": {
+      title: "Browser-to-browser file transfer no setup",
+      date: "February 1, 2026",
+      readTime: "5 min read",
+      category: "Technology",
+      tags: ["browser", "no setup", "web transfer", "instant"],
+      content: `
+        <h2>What "No Setup" Really Means</h2>
+        <p>Browser-to-browser file transfer means both the sender and the receiver use a web page to move files—no desktop app, no mobile app, and no plugin. "No setup" means you don't have to install software, create an account, or configure ports or firewalls. You open a URL, and you're ready to send or receive.</p>
+        <p>That's possible today because modern browsers support WebRTC and similar technologies, allowing direct or relayed connections between two tabs or devices. The website orchestrates the connection; you just pick your files and share a short code or link. It works on phones, tablets, and computers, across operating systems.</p>
+        
+        <h3>Why Use the Browser?</h3>
+        <p>Using the browser removes install friction. Everyone has a browser; not everyone wants to download an app for a one-time transfer. It also avoids app store policies and permissions—the site only needs access when you're on it. Updates happen on the server, so you always get the latest version without clicking "Update" in an app store.</p>
+        <p>Browser-based transfer is also cross-platform by default. The same URL works on Windows, Mac, Linux, Android, and iOS. You don't need a "Windows version" and a "Mac version"; one link does it all.</p>
+        
+        <h3>What You Need</h3>
+        <ul>
+          <li>A modern browser (Chrome, Safari, Edge, Firefox).</li>
+          <li>Internet access (or both devices on the same WiFi for local mode).</li>
+          <li>A way to share a short code or link with the other person.</li>
+        </ul>
+        
+        <h2>Why use HexaSend?</h2>
+        <p>HexaSend is a browser-to-browser file transfer tool with no setup. Open HexaSend on both devices, choose Send on one and Receive on the other, and use a 6-digit code to connect. No install, no account, and no configuration. It works over the internet or over your local WiFi when both devices are on the same network. For instant, no-setup file transfer in the browser, HexaSend keeps it simple and universal.</p>
+      `
+    },
     "how-to-share-files-securely-online-2025": {
       title: "How to Share Files Securely Online in 2025: Complete Guide",
       date: "January 15, 2025",
@@ -135,55 +403,6 @@ const getBlogPost = (slug: string) => {
           <li>Upload the file on the source device.</li>
           <li>Enter the code on the target device.</li>
         </ol>
-      `
-    },
-    "best-free-file-sharing-no-registration": {
-      title: "Best Free File Sharing Services Without Registration in 2025",
-      date: "January 10, 2025",
-      readTime: "12 min read",
-      category: "Reviews",
-      tags: ["free", "no registration", "file sharing", "reviews"],
-      content: `
-        <h2>Top 10 File Sharing Platforms Without Sign-ups</h2>
-        <p>In 2025, speed and privacy are the primary drivers for file sharing innovation. We've reviewed the top services that allow you to send files instantly without creating an account.</p>
-        <h3>1. HexaSend</h3>
-        <p>HexaSend leads the pack with its unique 6-digit code system and pure P2P architecture. By eliminating server storage entirely, it offers unmatched privacy.</p>
-        <h3>Why Skip Registration?</h3>
-        <ul>
-          <li>Save time by skipping onboarding flows</li>
-          <li>Protect your email address from marketing lists</li>
-          <li>Reduce your digital footprint</li>
-        </ul>
-      `
-    },
-    "send-large-files-instantly-methods": {
-      title: "How to Send Large Files Instantly: 5 Fast Methods",
-      date: "January 8, 2025",
-      readTime: "7 min read",
-      category: "Tips",
-      tags: ["large files", "instant", "transfer", "tips"],
-      content: `
-        <h2>Mastering Large File Transfers</h2>
-        <p>Email attachments often cap out at 25MB, which is insufficient for high-resolution videos or large datasets. Here are the best ways to bypass those limits.</p>
-        <h3>Top Methods</h3>
-        <ul>
-          <li><strong>Direct P2P:</strong> The fastest way to move data between two active devices.</li>
-          <li><strong>Chunked Uploads:</strong> Splitting files into smaller parts to handle network interruptions.</li>
-          <li><strong>Local Network Transfer:</strong> Using your Wi-Fi's full bandwidth for near-instant transfers between nearby devices.</li>
-        </ul>
-      `
-    },
-    "6-digit-code-file-sharing-future": {
-      title: "6-Digit Code File Sharing: The Future of Simple Transfer",
-      date: "January 5, 2025",
-      readTime: "5 min read",
-      category: "Innovation",
-      tags: ["6-digit code", "innovation", "simple", "future"],
-      content: `
-        <h2>The Power of the 6-Digit Code</h2>
-        <p>Complex URLs and QR codes are useful, but nothing beats the simplicity of a 6-digit alphanumeric code. It's easy to read over the phone, text, or remember long enough to type into another device.</p>
-        <h3>Security of Codes</h3>
-        <p>While 6 digits might seem short, with alphanumeric characters, there are over 2 billion possible combinations. Combined with short expiry times, these codes are incredibly secure for temporary transfers.</p>
       `
     },
     "zip-file-sharing-compress-multiple-files": {
@@ -722,13 +941,13 @@ export default function BlogPost() {
             
             {/* Call to Action */}
             <div className="mt-12 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Ready to Share Files Securely?</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Try Instant Sharing Now</h3>
               <p className="text-gray-600 mb-4">
-                Try HexaSend now - the fastest and most secure way to share files with just a 6-digit code.
+                Share files with a 6-digit code—no signup, no USB, no hassle. Works on any device.
               </p>
               <Link href="/">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg">
-                  Start Sharing Files
+                  Try Instant Sharing Now
                 </Button>
               </Link>
             </div>

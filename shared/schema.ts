@@ -5,7 +5,24 @@ export type TransferType = 'internet' | 'local';
 
 // WebSocket message types
 export const MessageSchema = z.object({
-  type: z.enum(['register-file', 'request-file', 'file-available', 'file-data', 'file-not-found', 'file-registered', 'file-stored', 'download-success', 'download-error', 'download-acknowledgment', 'local-discovery', 'local-offer', 'local-answer', 'error']),
+  type: z.enum([
+    'register-file',
+    'request-file',
+    'file-available',
+    'file-data',
+    'file-ready',
+    'file-not-found',
+    'file-registered',
+    'file-stored',
+    'download-success',
+    'download-error',
+    'download-acknowledgment',
+    'local-discovery',
+    'local-offer',
+    'local-answer',
+    'sender-disconnected',
+    'error'
+  ]),
   code: z.string().optional(),
   fileName: z.string().optional(),
   fileSize: z.number().optional(),
@@ -14,6 +31,10 @@ export const MessageSchema = z.object({
   message: z.string().optional(), // error messages
   fileIndex: z.number().optional(), // for multiple files
   totalFiles: z.number().optional(), // total number of files
+  totalChunks: z.number().optional(),
+  chunkIndex: z.number().optional(),
+  chunkSize: z.number().optional(),
+  isLastChunk: z.boolean().optional(),
   completedFiles: z.number().optional(), // acknowledgment data
   status: z.string().optional(), // acknowledgment status
   error: z.string().optional(), // error details
@@ -21,6 +42,9 @@ export const MessageSchema = z.object({
   localIp: z.string().optional(), // local network IP
   localPort: z.number().optional(), // local network port
   deviceName: z.string().optional(), // device identifier
+  downloadUrl: z.string().optional(),
+  isReady: z.boolean().optional(),
+  receivedBytes: z.number().optional(),
 });
 
 export type Message = z.infer<typeof MessageSchema>;
@@ -32,14 +56,17 @@ export interface FileRegistry {
     fileName: string;
     fileSize: number;
     fileType: string;
-    data: string; // base64 encoded
     fileIndex: number;
+    filePath: string;
+    receivedBytes: number;
+    completed: boolean;
+    totalChunks?: number;
   }>;
   totalFiles: number;
   createdAt: Date;
   transferType: TransferType;
   senderWs?: any; // WebSocket connection of the sender
-  requesters?: any[]; // WebSocket connections of requesters waiting for files
+  requesters?: Set<any>; // WebSocket connections of requesters waiting for files
   localIp?: string; // for local transfers
   localPort?: number; // for local transfers
   deviceName?: string; // device identifier
@@ -52,4 +79,46 @@ export interface LocalDevice {
   ip: string;
   port: number;
   lastSeen: Date;
+}
+
+// WebRTC / P2P file transfer types
+export interface SelectedFile {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+}
+
+export interface FileTransferRequest {
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  chunks: number;
+}
+
+export interface FileChunk {
+  fileName: string;
+  chunkIndex: number;
+  totalChunks: number;
+  data: string;
+}
+
+export interface PeerConnection {
+  id: string;
+  name?: string;
+  deviceType?: string;
+  status?: 'connected' | 'connecting' | 'disconnected';
+}
+
+export interface FileTransfer {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  status: 'active' | 'pending' | 'completed' | 'failed';
+  progress?: number;
+  direction?: 'sending' | 'receiving';
+  peerId?: string;
+  timeRemaining?: number;
+  speed?: number;
 }

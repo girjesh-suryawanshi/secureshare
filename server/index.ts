@@ -1,10 +1,71 @@
+import compression from "compression";
 import express, { type Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import pinoHttp from "pino-http";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic } from "./vite";
+import { config, isProduction } from "./config";
+import { logger } from "./logger";
 
 const app = express();
-app.use(express.json({ limit: '1gb' })); // Increase JSON payload limit for very large files
-app.use(express.urlencoded({ extended: false, limit: '1gb' })); // Increase URL-encoded payload limit
+app.set("trust proxy", 1);
+
+const requestLogger = pinoHttp({ logger });
+const limiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  limit: config.rateLimit.max,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+
+app.use(requestLogger);
+const jsonLdScriptHashes = [
+  "'sha256-XZvCzx836R3zaSDOFzc4EYBj48AAQk6oox2LzWAvftA='",
+  "'sha256-MGV40mJVz/c+FWPWxYcJoyKZyybAE9K8T3UNLJKzTSU='",
+];
+
+const contentSecurityPolicyOptions = isProduction
+  ? {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "https://www.googletagmanager.com",
+          "https://www.google-analytics.com",
+          ...jsonLdScriptHashes,
+        ],
+        scriptSrcAttr: ["'none'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "blob:", "https://www.google-analytics.com"],
+        connectSrc: [
+          "'self'",
+          "https://www.google-analytics.com",
+          "https://www.googletagmanager.com",
+          "ws:",
+          "wss:",
+        ],
+        frameSrc: ["'self'", "https://www.googletagmanager.com"],
+        workerSrc: ["'self'", "blob:"],
+        mediaSrc: ["'self'", "blob:"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    }
+  : false;
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: contentSecurityPolicyOptions,
+}));
+app.use(compression());
+app.use(express.json({ limit: config.maxJsonBody }));
+app.use(express.urlencoded({ extended: false, limit: config.maxUrlEncodedBody }));
+app.use(limiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -29,7 +90,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      logger.debug(logLine);
     }
   });
 
@@ -43,14 +104,14 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    logger.error({ err, path: _req.path }, "Unhandled error" );
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  if (!isProduction) {
     await setupVite(app, server);
   } else {
     serveStatic(app);
@@ -68,18 +129,14 @@ app.use((req, res, next) => {
   // }, () => {
   //   log(`serving on port ${port}`);
   // });
- const port = parseInt(process.env.PORT || "5000", 10);
-  const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "0.0.0.0";
+ const port = config.port;
+  const host = "0.0.0.0";
 
   // CRITICAL: Use server.listen() NOT app.listen()
   // The server object includes WebSocket support, app.listen() would break WebSocket
   server.listen(port, host, () => {
-    log(`✅ Server running at http://${host}:${port}`);
-    log(`🔌 WebSocket available at ws://${host}:${port}/ws`);
+    logger.info(`Server listening on http://${host}:${port}`);
+    logger.info(`WebSocket available at ws://${host}:${port}/ws`);
   });
-
-
-
-
 
 })();
