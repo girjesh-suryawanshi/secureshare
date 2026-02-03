@@ -33,7 +33,7 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --chown=appuser:nodejs package*.json ./
 
 # Install production dependencies only (smaller image)
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # Copy built application from builder stage (dist/public = frontend, dist/index.js = server)
 COPY --from=builder --chown=appuser:nodejs /app/dist ./dist
