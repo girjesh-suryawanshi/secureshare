@@ -75,9 +75,9 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Intellectual Property</h2>
               <p className="text-gray-600 leading-relaxed">
-                The SecureShare service, including its design, functionality, and content, is owned by us and protected by copyright, 
-                trademark, and other intellectual property laws. You may not copy, modify, distribute, or create derivative works 
-                based on our service without explicit permission.
+                The HexaSend service, including its design, functionality, and content, is owned by us and protected by copyright,
+                trademark, and other applicable intellectual property laws. You may not copy, modify, distribute, or create derivative
+                works based on our service without our prior written permission.
               </p>
             </div>
 
@@ -92,7 +92,7 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Disclaimers</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                SecureShare is provided on an "as is" and "as available" basis. We make no warranties, expressed or implied, including:
+                HexaSend is provided on an "as is" and "as available" basis. We make no warranties, expressed or implied, including:
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li>• Warranties of merchantability, fitness for a particular purpose, or non-infringement</li>
@@ -105,8 +105,8 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Limitation of Liability</h2>
               <p className="text-gray-600 leading-relaxed">
-                To the maximum extent permitted by law, SecureShare and its operators shall not be liable for any indirect, 
-                incidental, special, consequential, or punitive damages, including but not limited to loss of data, 
+                To the maximum extent permitted by law, HexaSend and its operators shall not be liable for any indirect,
+                incidental, special, consequential, or punitive damages, including but not limited to loss of data,
                 loss of profits, or business interruption, arising from your use of the service.
               </p>
             </div>
@@ -114,8 +114,8 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Indemnification</h2>
               <p className="text-gray-600 leading-relaxed">
-                You agree to indemnify and hold harmless SecureShare, its operators, and affiliates from any claims, 
-                damages, losses, or expenses arising from your use of the service, your violation of these terms, 
+                You agree to indemnify and hold harmless HexaSend, its operators, and affiliates from any claims,
+                damages, losses, or expenses arising from your use of the service, your violation of these terms,
                 or your violation of any rights of another party.
               </p>
             </div>
@@ -123,8 +123,8 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Termination</h2>
               <p className="text-gray-600 leading-relaxed">
-                We reserve the right to terminate or suspend your access to SecureShare immediately, without prior notice, 
-                for any violation of these Terms and Conditions or for any other reason we deem necessary to protect 
+                We reserve the right to terminate or suspend your access to HexaSend immediately, without prior notice,
+                for any violation of these Terms and Conditions or for any other reason we deem necessary to protect
                 our service and other users.
               </p>
             </div>
@@ -132,8 +132,8 @@ export default function Terms() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Governing Law</h2>
               <p className="text-gray-600 leading-relaxed">
-                These Terms and Conditions are governed by and construed in accordance with the laws of the United States 
-                and the State of California, without regard to conflict of law principles.
+                These Terms and Conditions are governed by and construed in accordance with the laws of India,
+                without regard to conflict of law principles.
               </p>
             </div>
 
@@ -153,8 +153,8 @@ export default function Terms() {
               </p>
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <p className="text-gray-700">
-                  Email: legal@secureshare.com<br />
-                  Address: 123 Tech Street, San Francisco, CA 94102, United States
+                  Email: legal@hexasend.com<br />
+                  Address: 78 Shankar Bagh, Indore, Madhya Pradesh, India
                 </p>
               </div>
             </div>

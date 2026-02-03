@@ -55,7 +55,9 @@ export default function About() {
                 <Shield className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Complete Privacy</h3>
-              <p className="text-gray-600">Files never stored on servers - direct device-to-device transfer</p>
+              <p className="text-gray-600">
+                Files are not permanently stored on our servers – transfers are temporary and privacy-focused
+              </p>
             </div>
 
             <div className="text-center">

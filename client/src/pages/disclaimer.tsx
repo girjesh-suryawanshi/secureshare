@@ -73,7 +73,7 @@ export default function Disclaimer() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Security Considerations</h2>
                   <p className="text-gray-600 leading-relaxed mb-4">
-                    While SecureShare implements security measures, users should understand these important points:
+                    While HexaSend implements security measures, users should understand these important points:
                   </p>
                   <ul className="space-y-2 text-gray-600">
                     <li>• Transfer codes should only be shared with intended recipients</li>
@@ -91,7 +91,7 @@ export default function Disclaimer() {
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">User Responsibility</h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                By using SecureShare, users acknowledge and accept responsibility for:
+                By using HexaSend, users acknowledge and accept responsibility for:
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li>• Verifying the appropriateness and legality of files being shared</li>
@@ -108,7 +108,7 @@ export default function Disclaimer() {
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Third-Party Dependencies</h2>
               <p className="text-gray-600 leading-relaxed">
-                SecureShare relies on various third-party services and technologies, including web browsers, 
+                HexaSend relies on various third-party services and technologies, including web browsers, 
                 internet service providers, and hosting infrastructure. We cannot control or guarantee the 
                 performance, availability, or security of these third-party components, and we disclaim 
                 any liability arising from their use or failure.
@@ -120,7 +120,7 @@ export default function Disclaimer() {
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Data Loss and Recovery</h2>
               <p className="text-gray-600 leading-relaxed">
-                SecureShare operates on a temporary storage model where files are automatically deleted after transfer completion or expiration. 
+                HexaSend operates on a temporary storage model where files are automatically deleted after transfer completion or expiration. 
                 We cannot recover files once they have been deleted from our systems. Users are strongly advised to maintain 
                 their own copies of important files and understand that file recovery is not possible once transfers are complete.
               </p>
@@ -131,7 +131,7 @@ export default function Disclaimer() {
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Legal Compliance</h2>
               <p className="text-gray-600 leading-relaxed">
-                Users are solely responsible for ensuring their use of SecureShare complies with all applicable laws, 
+                Users are solely responsible for ensuring their use of HexaSend complies with all applicable laws, 
                 regulations, and third-party rights. This includes but is not limited to copyright laws, 
                 privacy regulations, export controls, and data protection requirements. We disclaim any responsibility 
                 for users' legal compliance and reserve the right to terminate service for violations.
@@ -143,8 +143,8 @@ export default function Disclaimer() {
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Questions and Support</h2>
               <p className="text-gray-600 leading-relaxed">
-                If you have questions about this disclaimer or need support with SecureShare, please contact us at 
-                support@secureshare.com. We will make reasonable efforts to assist you, but cannot guarantee 
+                If you have questions about this disclaimer or need support with HexaSend, please contact us at 
+                support@hexasend.com. We will make reasonable efforts to assist you, but cannot guarantee 
                 specific response times or resolution of all issues.
               </p>
             </CardContent>

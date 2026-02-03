@@ -109,10 +109,28 @@ export default function Privacy() {
 
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Cookies and Tracking</h2>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                HexaSend uses cookies and similar technologies for essential service functionality, such as maintaining your
+                session connection, and may also use analytics and advertising cookies to understand how the service is used
+                and to display relevant content and ads.
+              </p>
               <p className="text-gray-600 leading-relaxed">
-                HexaSend uses minimal cookies and local storage only for essential service functionality, 
-                such as maintaining your session connection. We do not use tracking cookies, 
-                analytics cookies, or advertising cookies.
+                Where required by law, we will request your consent before setting non-essential cookies. You can control or
+                delete cookies through your browser settings at any time, but disabling certain cookies may impact how the
+                service functions.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Advertising and Analytics</h2>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                We may use third-party analytics and advertising partners, including Google, to help us understand usage
+                patterns and to show ads on HexaSend or other websites. These partners may use cookies or similar technologies
+                to collect information about your use of the service and other sites over time.
+              </p>
+              <p className="text-gray-600 leading-relaxed">
+                For more information about how Google uses data from partner sites and how you can manage your ad
+                personalisation settings, please review Google&apos;s privacy and advertising policies.
               </p>
             </div>
 
@@ -128,9 +146,10 @@ export default function Privacy() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">International Users</h2>
               <p className="text-gray-600 leading-relaxed">
-                HexaSend is operated from the United States. If you are accessing our service from outside 
-                the United States, please be aware that your information may be transferred to, 
-                stored, and processed in the United States.
+                HexaSend may process information on servers located in different regions. By using the service, you understand
+                and agree that your information may be transferred to, stored, and processed in countries where we or our
+                service providers operate, which may have data protection laws different from those in your country of
+                residence.
               </p>
             </div>
 
@@ -151,7 +170,7 @@ export default function Privacy() {
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <p className="text-gray-700">
                   Email: privacy@hexasend.com<br />
-                  Address: 123 Tech Street, San Francisco, CA 94102, United States
+                  Address: 78 Shankar Bagh, Indore, Madhya Pradesh, India
                 </p>
               </div>
             </div>

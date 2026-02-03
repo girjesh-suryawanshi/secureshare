@@ -296,15 +296,15 @@ const getBlogPost = (slug: string) => {
         <h3>Best Practices for Secure File Sharing</h3>
         <p>Follow these expert recommendations to ensure maximum security:</p>
         <ol>
-          <li>Use peer-to-peer file sharing platforms like SecureShare</li>
+          <li>Use reputable peer-to-peer file sharing platforms like HexaSend</li>
           <li>Verify the recipient before sharing sensitive documents</li>
           <li>Use strong, unique sharing codes or passwords</li>
-          <li>Enable automatic file deletion after download</li>
+          <li>Enable automatic file deletion after download where possible</li>
           <li>Avoid email attachments for confidential files</li>
         </ol>
         
-        <h3>SecureShare: The Secure File Sharing Solution</h3>
-        <p>SecureShare offers military-grade encryption with simple 6-digit codes. Files never touch our servers - they transfer directly between your devices for maximum privacy and security.</p>
+        <h3>HexaSend: Secure File Sharing Made Simple</h3>
+        <p>HexaSend offers privacy-focused transfers with simple 6-digit codes. Files are transferred through encrypted connections and are never stored permanently on our servers, helping you keep control of your sensitive data.</p>
       `
     },
     "peer-to-peer-vs-cloud-storage-comparison": {
