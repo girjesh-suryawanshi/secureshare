@@ -33,6 +33,8 @@ export function useLocalNetwork() {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       });
       
+      const candidates: string[] = [];
+
       pc.createDataChannel('');
       pc.createOffer().then(offer => pc.setLocalDescription(offer));
       
@@ -41,17 +43,41 @@ export function useLocalNetwork() {
           const candidate = event.candidate.candidate;
           const ipMatch = candidate.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
           if (ipMatch) {
-            pc.close();
-            resolve(ipMatch[0]);
+            candidates.push(ipMatch[0]);
           }
         }
       };
       
-      // Fallback to localhost after 3 seconds
+      // Wait a short time to gather candidates, then pick the best one
       setTimeout(() => {
         pc.close();
-        resolve('127.0.0.1');
-      }, 3000);
+        if (candidates.length === 0) {
+          resolve('127.0.0.1');
+          return;
+        }
+
+        // De-duplicate
+        const uniqueIps = Array.from(new Set(candidates));
+
+        // Prioritize common local subnet patterns
+        const priorityOrder = [
+          /^192\.168\./,
+          /^10\./,
+          /^172\.(1[6-9]|2[0-9]|3[0-1])\./
+        ];
+
+        uniqueIps.sort((a, b) => {
+          const aIndex = priorityOrder.findIndex(p => p.test(a));
+          const bIndex = priorityOrder.findIndex(p => p.test(b));
+          
+          const aWeight = aIndex === -1 ? 99 : aIndex;
+          const bWeight = bIndex === -1 ? 99 : bIndex;
+          
+          return aWeight - bWeight;
+        });
+
+        resolve(uniqueIps[0]);
+      }, 500); // 500ms gathering window
     });
   }, []);
 

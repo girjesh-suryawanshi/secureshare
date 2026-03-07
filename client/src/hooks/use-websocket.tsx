@@ -8,6 +8,7 @@ export interface WebSocketHook {
   onFileAvailable: (callback: (file: { code: string; fileName: string; fileSize: number; fileType: string; fileIndex?: number; totalFiles?: number; isReady?: boolean; downloadUrl?: string; receivedBytes?: number }) => void) => void;
   onFileReady: (callback: (file: { code: string; downloadUrl: string; fileName: string; fileType?: string; fileIndex?: number; totalFiles?: number }) => void) => void;
   onFileNotFound: (callback: (code: string) => void) => void;
+  onFileRegistered: (callback: (data: { code: string; fileIndex: number }) => void) => void;
   onDownloadAck: (callback: (data: { status: string; message: string; code: string }) => void) => void;
   onSenderDisconnected: (callback: (data: { code: string; message: string }) => void) => void;
 }
@@ -19,6 +20,7 @@ export function useWebSocket(): WebSocketHook {
   const fileAvailableCallbackRef = useRef<((file: any) => void) | null>(null);
   const fileReadyCallbackRef = useRef<((file: any) => void) | null>(null);
   const fileNotFoundCallbackRef = useRef<((code: string) => void) | null>(null);
+  const fileRegisteredCallbackRef = useRef<((data: any) => void) | null>(null);
   const downloadAckCallbackRef = useRef<((data: any) => void) | null>(null);
   const senderDisconnectedCallbackRef = useRef<((data: any) => void) | null>(null);
   const { toast } = useToast();
@@ -59,14 +61,14 @@ export function useWebSocket(): WebSocketHook {
   const connect = useCallback(() => {
     try {
       const wsUrl = resolveWebSocketUrl();
-      
+
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
         console.log('WebSocket connected');
         setIsConnected(true);
-        
+
         // Clear any existing reconnect timeout
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
@@ -84,13 +86,13 @@ export function useWebSocket(): WebSocketHook {
                 fileAvailableCallbackRef.current(message);
               }
               break;
-            
+
             case 'file-ready':
               if (fileReadyCallbackRef.current) {
                 fileReadyCallbackRef.current(message);
               }
               break;
-            
+
             case 'file-not-found':
               if (fileNotFoundCallbackRef.current) {
                 fileNotFoundCallbackRef.current(message.code);
@@ -98,7 +100,9 @@ export function useWebSocket(): WebSocketHook {
               break;
 
             case 'file-registered':
-              // File was successfully registered
+              if (fileRegisteredCallbackRef.current) {
+                fileRegisteredCallbackRef.current(message);
+              }
               break;
 
             case 'download-acknowledgment':
@@ -130,7 +134,7 @@ export function useWebSocket(): WebSocketHook {
         console.log('WebSocket disconnected');
         setIsConnected(false);
         wsRef.current = null;
-        
+
         // Attempt to reconnect after 3 seconds
         reconnectTimeoutRef.current = setTimeout(connect, 3000);
       };
@@ -166,6 +170,10 @@ export function useWebSocket(): WebSocketHook {
 
   const onFileNotFound = useCallback((callback: (code: string) => void) => {
     fileNotFoundCallbackRef.current = callback;
+  }, []);
+
+  const onFileRegistered = useCallback((callback: (data: any) => void) => {
+    fileRegisteredCallbackRef.current = callback;
   }, []);
 
   const onDownloadAck = useCallback((callback: (data: any) => void) => {
@@ -208,6 +216,7 @@ export function useWebSocket(): WebSocketHook {
     onFileAvailable,
     onFileReady,
     onFileNotFound,
+    onFileRegistered,
     onDownloadAck,
     onSenderDisconnected,
   };

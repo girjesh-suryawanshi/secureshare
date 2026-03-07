@@ -77,7 +77,7 @@ export default function Home() {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [receiveProgress, setReceiveProgress] = useState<number>(0);
   const [isReceiving, setIsReceiving] = useState<boolean>(false);
-  const [acknowledgments, setAcknowledgments] = useState<Array<{id: string, message: string, status: string, timestamp: Date}>>([]);
+  const [acknowledgments, setAcknowledgments] = useState<Array<{ id: string, message: string, status: string, timestamp: Date }>>([]);
   const [copyJustDone, setCopyJustDone] = useState(false);
   const [uploadingFileIndex, setUploadingFileIndex] = useState<number>(0);
   const [uploadingFileName, setUploadingFileName] = useState<string>("");
@@ -89,12 +89,13 @@ export default function Home() {
   const receiveCodeInputRef = useRef<HTMLInputElement>(null);
   const pendingRequestRef = useRef<Map<string, number>>(new Map()); // Track pending requests with timestamps
   const lastRequestTimeRef = useRef<number>(0); // Rate limiting for request-file
+  const pendingRegistrationsRef = useRef<Map<string, (value: unknown) => void>>(new Map());
 
-  const { isConnected, reconnect, sendMessage, onFileAvailable, onFileReady, onFileNotFound, onDownloadAck, onSenderDisconnected } = useWebSocket();
-  const { 
-    isScanning, 
-    availableDevices, 
-    isLocalServerRunning, 
+  const { isConnected, reconnect, sendMessage, onFileAvailable, onFileReady, onFileNotFound, onFileRegistered, onDownloadAck, onSenderDisconnected } = useWebSocket();
+  const {
+    isScanning,
+    availableDevices,
+    isLocalServerRunning,
     localServerInfo,
     startLocalServer,
     stopLocalServer,
@@ -105,7 +106,7 @@ export default function Home() {
   const { toast } = useToast();
   const { stats, addTransfer } = useTransferStats();
   const fileKey = (code: string, index: number) => `${code}-${index}`;
-  
+
   const normalizeCode = (code: string | undefined | null): string => {
     if (code == null || typeof code !== "string") return "";
     return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -182,7 +183,7 @@ export default function Home() {
         downloadedBytes = blob.size;
       }
 
-      const blob = new Blob(chunks, { type: job.fileType || 'application/octet-stream' });
+      const blob = new Blob(chunks as unknown as BlobPart[], { type: job.fileType || 'application/octet-stream' });
       const completedFile = {
         name: job.fileName,
         size: blob.size,
@@ -248,10 +249,10 @@ export default function Home() {
       setSelectedFiles(files);
       setIsUploading(true);
       setUploadProgress(0);
-      
+
       const code = generateCode();
       setTransferCode(code);
-      
+
       // Handle local network transfer
       if (transferType === 'local') {
         setIsPreparingLocal(true);
@@ -265,22 +266,22 @@ export default function Home() {
               });
             }
           });
-        
-        if (serverInfo) {
-          setUploadProgress(100);
-          setIsUploading(false);
-          setFilesReady(true);
-          toast({
-            title: "✅ Local Server Ready",
-            description: `${files.length} file(s) available on local network. Share code ${code}`,
-          });
-        }
+
+          if (serverInfo) {
+            setUploadProgress(100);
+            setIsUploading(false);
+            setFilesReady(true);
+            toast({
+              title: "✅ Local Server Ready",
+              description: `${files.length} file(s) available on local network. Share code ${code}`,
+            });
+          }
         } finally {
           setIsPreparingLocal(false);
         }
         return;
       }
-      
+
       const startTime = Date.now();
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
       let uploadedBytes = 0;
@@ -308,10 +309,19 @@ export default function Home() {
             transferType,
           });
 
-          // Wait a small delay to ensure registration completes before sending chunks
-          // This prevents "file metadata missing" errors due to race conditions
-          // Increased to 150ms to be safer for slower connections
-          await new Promise((resolve) => setTimeout(resolve, 150));
+          // Wait for the server to acknowledge registration to avoid race conditions
+          await new Promise((resolve, reject) => {
+            const registryKey = `${code}-${index}`;
+            pendingRegistrationsRef.current.set(registryKey, resolve);
+
+            // Timeout after 10 seconds to prevent hanging
+            setTimeout(() => {
+              if (pendingRegistrationsRef.current.has(registryKey)) {
+                pendingRegistrationsRef.current.delete(registryKey);
+                reject(new Error("Timeout waiting for server to register file"));
+              }
+            }, 10000);
+          });
 
           let offset = 0;
           let chunkIndex = 0;
@@ -361,10 +371,10 @@ export default function Home() {
           return;
         }
       }
-      
+
       setIsUploading(false);
       setFilesReady(true);
-      
+
       // Add to transfer stats
       files.forEach(file => {
         addTransfer({
@@ -393,7 +403,7 @@ export default function Home() {
     }
 
     const upperCode = normalized;
-    
+
     // Rate limiting: prevent rapid repeated requests
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTimeRef.current;
@@ -405,7 +415,7 @@ export default function Home() {
       });
       return;
     }
-    
+
     // Check if we already have a pending request for this code
     const pendingTime = pendingRequestRef.current.get(upperCode);
     if (pendingTime && (now - pendingTime) < 5000) { // 5 second cooldown per code
@@ -416,17 +426,17 @@ export default function Home() {
       });
       return;
     }
-    
+
     // Clear any existing retry timeout
     if (receiveRetryTimeoutRef.current) {
       clearTimeout(receiveRetryTimeoutRef.current);
       receiveRetryTimeoutRef.current = null;
     }
-    
+
     setIsReceiving(true);
     setReceiveProgress(10);
     resetReceiveState();
-    
+
     // Mark this request as pending
     pendingRequestRef.current.set(upperCode, now);
     lastRequestTimeRef.current = now;
@@ -436,7 +446,7 @@ export default function Home() {
       try {
         console.log(`Looking for files with code: ${upperCode}`);
         setReceiveProgress(30);
-        
+
         // Try to get files directly from current server (local network)
         const response = await fetch(`/files/${upperCode}`, {
           method: 'GET',
@@ -444,7 +454,7 @@ export default function Home() {
             'Accept': 'application/json',
           }
         });
-        
+
         if (response.ok) {
           const payload = await response.json();
           const files = Array.isArray(payload)
@@ -513,7 +523,7 @@ export default function Home() {
 
   const copyCode = async () => {
     if (!transferCode) return;
-    
+
     try {
       await navigator.clipboard.writeText(transferCode);
       setCopyJustDone(true);
@@ -534,7 +544,7 @@ export default function Home() {
   const downloadSingleFile = (file: any) => {
     setIsDownloading(true);
     setDownloadProgress(20);
-    
+
     // Simulate progressive download for user feedback
     const progressInterval = setInterval(() => {
       setDownloadProgress(prev => {
@@ -554,12 +564,12 @@ export default function Home() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     setTimeout(() => {
       setIsDownloading(false);
       setDownloadProgress(0);
     }, 1500);
-    
+
     toast({
       title: "Download Started",
       description: `Downloading ${file.name}`,
@@ -568,7 +578,7 @@ export default function Home() {
 
   const downloadFiles = async () => {
     if (receivedFiles.length === 0) return;
-    
+
     if (receivedFiles.length === 1) {
       // Single file - download directly
       downloadSingleFile(receivedFiles[0]);
@@ -576,34 +586,34 @@ export default function Home() {
       // Multiple files - create ZIP with progress
       setIsDownloading(true);
       setDownloadProgress(0);
-      
+
       const zip = new JSZip();
-      
+
       // Add all files to ZIP with progress updates
       receivedFiles.forEach((file, index) => {
         zip.file(file.name, file.blob);
         setDownloadProgress((index + 1) / receivedFiles.length * 30); // 30% for file processing
       });
-      
+
       try {
         toast({
           title: "Creating ZIP",
           description: "Preparing download...",
         });
-        
+
         setDownloadProgress(40);
-        
+
         // Generate ZIP file with progress callback
-        const zipBlob = await zip.generateAsync({ 
+        const zipBlob = await zip.generateAsync({
           type: "blob",
           streamFiles: true
         }, (metadata) => {
           const progress = 40 + (metadata.percent * 0.5); // 40-90% for ZIP creation
           setDownloadProgress(progress);
         });
-        
+
         setDownloadProgress(95);
-        
+
         // Download ZIP (filename = current date and time)
         const zipFileName = getZipFileName();
         const url = URL.createObjectURL(zipBlob);
@@ -614,14 +624,14 @@ export default function Home() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
+
         setDownloadProgress(100);
-        
+
         setTimeout(() => {
           setIsDownloading(false);
           setDownloadProgress(0);
         }, 1000);
-        
+
         toast({
           title: "ZIP Download Started",
           description: `Downloading ${receivedFiles.length} files as ZIP`,
@@ -629,7 +639,7 @@ export default function Home() {
       } catch (error) {
         setIsDownloading(false);
         setDownloadProgress(0);
-        
+
         toast({
           title: "ZIP Creation Failed",
           description: "Could not create ZIP file",
@@ -647,16 +657,16 @@ export default function Home() {
       const fileCode = normalizeCode(file.code || activeCode);
       receiveRequestCodeRef.current = null;
       receiveRetryCountRef.current = 0;
-      
+
       // Clear pending request since we got a response
       pendingRequestRef.current.delete(fileCode);
-      
+
       // Clear retry timeout
       if (receiveRetryTimeoutRef.current) {
         clearTimeout(receiveRetryTimeoutRef.current);
         receiveRetryTimeoutRef.current = null;
       }
-      
+
       setReceiveProgress(30);
       if (file.totalFiles && expectedFilesCount === 0) {
         setExpectedFilesCount(file.totalFiles);
@@ -684,16 +694,16 @@ export default function Home() {
       const fileCode = normalizeCode(data.code || activeCode);
       receiveRequestCodeRef.current = null;
       receiveRetryCountRef.current = 0;
-      
+
       // Clear pending request
       pendingRequestRef.current.delete(fileCode);
-      
+
       // Clear retry timeout
       if (receiveRetryTimeoutRef.current) {
         clearTimeout(receiveRetryTimeoutRef.current);
         receiveRetryTimeoutRef.current = null;
       }
-      
+
       if (data.downloadUrl) {
         downloadFileJob({
           code: fileCode,
@@ -721,12 +731,12 @@ export default function Home() {
         receiveRetryCountRef.current += 1;
         const attempt = receiveRetryCountRef.current;
         const delay = Math.min(2000 * attempt, 5000); // Exponential backoff: 2s, 4s, max 5s
-        
+
         toast({
           title: "Still looking...",
           description: `File not ready yet. Retrying (${attempt}/2)... Ask sender to finish uploading.`,
         });
-        
+
         receiveRetryTimeoutRef.current = setTimeout(() => {
           // Check if we're still in receive mode and code hasn't changed
           if (mode === 'receive' && receiveRequestCodeRef.current === normalizedCode) {
@@ -757,9 +767,9 @@ export default function Home() {
         status: data.status,
         timestamp: new Date()
       };
-      
+
       setAcknowledgments(prev => [newAck, ...prev.slice(0, 4)]); // Keep last 5 acknowledgments
-      
+
       toast({
         title: data.status === 'success' ? "✅ Files Downloaded!" : "❌ Download Failed",
         description: data.message,
@@ -780,12 +790,21 @@ export default function Home() {
       setReceivedFiles([]);
       setExpectedFilesCount(0);
       setReceivedFilesCount(0);
-      
+
       toast({
         title: "❌ Sender Disconnected",
         description: "The sender closed their browser. Files are no longer available. Please ask them to share again.",
         variant: "destructive",
       });
+    });
+
+    onFileRegistered((data: any) => {
+      const registryKey = `${data.code}-${data.fileIndex}`;
+      const resolver = pendingRegistrationsRef.current.get(registryKey);
+      if (resolver) {
+        resolver(true);
+        pendingRegistrationsRef.current.delete(registryKey);
+      }
     });
 
     return () => {
@@ -794,7 +813,7 @@ export default function Home() {
         receiveRetryTimeoutRef.current = null;
       }
     };
-  }, [downloadFileJob, expectedFilesCount, inputCode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onSenderDisconnected, sendMessage, toast]);
+  }, [downloadFileJob, expectedFilesCount, inputCode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onFileRegistered, onSenderDisconnected, sendMessage, toast]);
 
   // Auto-focus code input when entering receive mode
   useEffect(() => {
@@ -817,7 +836,7 @@ export default function Home() {
       setIsReceiving(false);
       setReceiveProgress(0);
     }
-    
+
     // Cleanup when leaving send mode
     if (mode !== 'send') {
       setIsUploading(false);
@@ -827,7 +846,7 @@ export default function Home() {
       setTransferSpeed('');
       setEstimatedTime('');
     }
-    
+
     // Cleanup when switching to select mode
     if (mode === 'select') {
       setSelectedFiles([]);
@@ -847,7 +866,7 @@ export default function Home() {
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center space-y-12">
-            
+
             {/* Clean Hero Section */}
             <div className="space-y-12">
               <div className="relative">
@@ -856,7 +875,7 @@ export default function Home() {
                   <Share className="h-16 w-16 text-white" />
                 </div>
               </div>
-              
+
               <div className="space-y-8">
                 <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight">
                   HexaSend
@@ -864,7 +883,7 @@ export default function Home() {
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-700 max-w-3xl mx-auto leading-relaxed">
                   Share Any File in Seconds with Just a 6-Digit Code
                 </h2>
-                
+
                 <div className="flex flex-wrap justify-center gap-3 text-sm md:text-base font-medium">
                   <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full">Zero Setup</span>
                   <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full">Secure</span>
@@ -880,14 +899,12 @@ export default function Home() {
 
             {/* Connection status pill – visible near transfer type */}
             <div className="flex justify-center mb-4">
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                transferType === 'local' ? 'bg-green-100 text-green-800' :
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${transferType === 'local' ? 'bg-green-100 text-green-800' :
                 isConnected ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-              }`}>
-                <span className={`w-2 h-2 rounded-full ${
-                  transferType === 'local' ? 'bg-green-500' :
+                }`}>
+                <span className={`w-2 h-2 rounded-full ${transferType === 'local' ? 'bg-green-500' :
                   isConnected ? 'bg-green-500' : 'bg-amber-500 animate-pulse'
-                }`} />
+                  }`} />
                 {transferType === 'local' ? 'Local mode – no server needed' : isConnected ? 'Connected' : 'Connecting…'}
               </div>
             </div>
@@ -903,11 +920,10 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setTransferType('internet')}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      transferType === 'internet'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                    }`}
+                    className={`p-4 rounded-xl border-2 transition-all ${transferType === 'internet'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                      }`}
                   >
                     <Globe className="h-8 w-8 mx-auto mb-2" />
                     <div className="font-medium">Internet – works anywhere</div>
@@ -916,14 +932,13 @@ export default function Home() {
                       {isConnected ? 'Ready' : 'Connecting...'}
                     </Badge>
                   </button>
-                  
+
                   <button
                     onClick={() => setTransferType('local')}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      transferType === 'local'
-                        ? 'border-green-500 bg-green-50 text-green-700'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                    }`}
+                    className={`p-4 rounded-xl border-2 transition-all ${transferType === 'local'
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                      }`}
                   >
                     <Wifi className="h-8 w-8 mx-auto mb-2" />
                     <div className="font-medium">Local WiFi – same network, faster</div>
@@ -939,7 +954,7 @@ export default function Home() {
             {/* Premium Action Cards */}
             <div className="max-w-2xl mx-auto">
               <div className="grid md:grid-cols-2 gap-6">
-                
+
                 {/* Send Files Card */}
                 <Card className="group hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -952,12 +967,12 @@ export default function Home() {
                         <h3 className="text-2xl font-bold mb-2">Send Files</h3>
                         <p className="text-blue-100">Share files instantly</p>
                       </div>
-                      <Button 
+                      <Button
                         onClick={(e) => {
                           e.preventDefault();
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => setMode('send'), 100);
-                        }} 
+                        }}
                         className="w-full h-12 text-base bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
                         disabled={transferType === 'internet' && !isConnected}
                         title={transferType === 'internet' && !isConnected ? 'Connect to the server first' : undefined}
@@ -980,12 +995,12 @@ export default function Home() {
                         <h3 className="text-2xl font-bold mb-2">Receive Files</h3>
                         <p className="text-purple-100">Enter code and download</p>
                       </div>
-                      <Button 
+                      <Button
                         onClick={(e) => {
                           e.preventDefault();
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => setMode('receive'), 100);
-                        }} 
+                        }}
                         className="w-full h-12 text-base bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
                         disabled={transferType === 'internet' && !isConnected}
                         title={transferType === 'internet' && !isConnected ? 'Connect to the server first' : undefined}
@@ -1049,7 +1064,7 @@ export default function Home() {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Send Files</h3>
                 <p className="text-gray-600">Select files and get a code</p>
               </div>
-              
+
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
                   <Share className="h-8 w-8 text-white" />
@@ -1057,7 +1072,7 @@ export default function Home() {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Share Code</h3>
                 <p className="text-gray-600">Give the 6-digit code to anyone</p>
               </div>
-              
+
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-full mb-4">
                   <Download className="h-8 w-8 text-white" />
@@ -1127,8 +1142,8 @@ export default function Home() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="mb-8">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={(e) => {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1145,7 +1160,7 @@ export default function Home() {
                     stopLocalServer();
                   }
                 }, 100);
-              }} 
+              }}
               className="mb-6 text-lg hover:bg-white/80 transition-all duration-200"
             >
               ← Back to Home
@@ -1162,8 +1177,8 @@ export default function Home() {
                 Send Your Files {transferType === 'local' ? '(Local Network)' : ''}
               </h2>
               <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
-                {transferType === 'local' 
-                  ? 'Share files at high speed on your local network. Perfect for large files!' 
+                {transferType === 'local'
+                  ? 'Share files at high speed on your local network. Perfect for large files!'
                   : 'Share files instantly with military-grade security. Your files, your control, your privacy.'
                 }
               </p>
@@ -1208,7 +1223,7 @@ export default function Home() {
                           </div>
                         </div>
                       </DragDropZone>
-                      
+
                       <div className="mt-8 p-4 md:p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
                         <h4 className="font-bold text-gray-900 mb-3 text-sm md:text-base">💡 Pro Tips</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm text-gray-700">
@@ -1231,7 +1246,7 @@ export default function Home() {
                       <p className="text-sm text-gray-600">
                         {selectedFiles.length} file(s), {(selectedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024)).toFixed(1)} MB total. Click the area below to add more or continue.
                       </p>
-                      
+
                       <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-6 border border-green-200">
                         <div className="grid gap-3 max-h-64 overflow-y-auto">
                           {selectedFiles.map((file, index) => (
@@ -1251,7 +1266,7 @@ export default function Home() {
                           ))}
                         </div>
                       </div>
-                      
+
                       {(isUploading || isPreparingLocal) && (
                         <div className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
                           {isPreparingLocal ? (
@@ -1269,7 +1284,7 @@ export default function Home() {
                           )}
                         </div>
                       )}
-                      
+
                       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                         <DragDropZone onFilesSelected={(newFiles) => {
                           setSelectedFiles(prev => [...prev, ...newFiles]);
@@ -1284,7 +1299,7 @@ export default function Home() {
                             <TooltipContent>Add more files to this transfer.</TooltipContent>
                           </Tooltip>
                         </DragDropZone>
-                        <Button 
+                        <Button
                           onClick={() => {
                             setSelectedFiles([]);
                             setUploadProgress(0);
@@ -1315,7 +1330,7 @@ export default function Home() {
                       {selectedFiles.length} file(s) uploaded and secured.
                     </p>
                     <p className="text-sm text-green-600 mb-6">Share the code below with the receiver.</p>
-                    
+
                     <div className="bg-white rounded-xl p-4 border border-green-300 mb-6">
                       <div className="grid gap-2 max-h-32 overflow-y-auto">
                         {selectedFiles.map((file, index) => (
@@ -1348,9 +1363,9 @@ export default function Home() {
                         >
                           {transferCode}
                         </div>
-                        <Button 
-                          variant="secondary" 
-                          size="lg" 
+                        <Button
+                          variant="secondary"
+                          size="lg"
                           onClick={copyCode}
                           className="bg-white/20 hover:bg-white/30 text-white border-white/30 w-full sm:w-auto min-h-[44px] focus-visible:ring-2"
                         >
@@ -1379,16 +1394,15 @@ export default function Home() {
                   {acknowledgments.length > 0 && (
                     <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
                       <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        📱 Download Status 
+                        📱 Download Status
                         <span className="text-sm font-normal text-gray-600">({acknowledgments.length} update{acknowledgments.length > 1 ? 's' : ''})</span>
                       </h4>
                       <div className="space-y-3">
                         {acknowledgments.slice(0, 3).map((ack) => (
-                          <div key={ack.id} className={`p-4 rounded-xl border-l-4 ${
-                            ack.status === 'success' 
-                              ? 'bg-green-50 border-l-green-500 text-green-800' 
-                              : 'bg-red-50 border-l-red-500 text-red-800'
-                          }`}>
+                          <div key={ack.id} className={`p-4 rounded-xl border-l-4 ${ack.status === 'success'
+                            ? 'bg-green-50 border-l-green-500 text-green-800'
+                            : 'bg-red-50 border-l-red-500 text-red-800'
+                            }`}>
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
                                 <span className="text-lg">{ack.status === 'success' ? '✅' : '❌'}</span>
@@ -1412,7 +1426,7 @@ export default function Home() {
                   )}
 
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                    <Button 
+                    <Button
                       onClick={(e) => {
                         e.preventDefault();
                         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1431,7 +1445,7 @@ export default function Home() {
                     >
                       Send More Files
                     </Button>
-                    <Button 
+                    <Button
                       onClick={(e) => {
                         e.preventDefault();
                         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1457,8 +1471,8 @@ export default function Home() {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="mb-8">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={(e) => {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1472,7 +1486,7 @@ export default function Home() {
                   setIsReceiving(false);
                   setReceiveProgress(0);
                 }, 100);
-              }} 
+              }}
               className="mb-6 text-lg hover:bg-white/80 transition-all duration-200"
             >
               ← Back to Home
@@ -1489,8 +1503,8 @@ export default function Home() {
                 Receive Files {transferType === 'local' ? '(Local Network)' : ''}
               </h2>
               <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
-                {transferType === 'local' 
-                  ? 'Enter code to receive files from devices on your local network.' 
+                {transferType === 'local'
+                  ? 'Enter code to receive files from devices on your local network.'
                   : 'Enter your 6-digit secure code to instantly download files shared with you.'
                 }
               </p>
@@ -1517,17 +1531,17 @@ export default function Home() {
                         <Download className="h-12 w-12 text-white" />
                       </div>
                     </div>
-                    
+
                     <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-4">
                       {transferType === 'local' ? 'Local Network Code' : 'Enter Your Code'}
                     </h3>
                     <p className="text-sm md:text-lg text-gray-600 mb-8">
-                      {transferType === 'local' 
-                        ? 'Enter the code from a device on your local network' 
+                      {transferType === 'local'
+                        ? 'Enter the code from a device on your local network'
                         : 'Type the 6-character code shared with you'
                       }
                     </p>
-                    
+
                     {transferType === 'local' && (
                       <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                         <div className="flex items-center justify-between mb-3">
@@ -1552,7 +1566,7 @@ export default function Home() {
                             )}
                           </Button>
                         </div>
-                        
+
                         {availableDevices.length > 0 ? (
                           <div className="space-y-2">
                             {availableDevices.map((device) => (
@@ -1573,7 +1587,7 @@ export default function Home() {
                         )}
                       </div>
                     )}
-                    
+
                     <div className="max-w-md mx-auto space-y-6">
                       <Input
                         ref={receiveCodeInputRef}
@@ -1591,9 +1605,9 @@ export default function Home() {
                         maxLength={8}
                         aria-label="Enter 6-digit share code"
                       />
-                      
-                      <Button 
-                        onClick={handleReceiveFile} 
+
+                      <Button
+                        onClick={handleReceiveFile}
                         className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
                         disabled={(transferType === 'internet' && !isConnected) || inputCode.length !== 6 || isReceiving}
                         title={inputCode.length !== 6 ? "Enter a 6-character code" : transferType === 'internet' && !isConnected ? "Connect to the server first" : undefined}
@@ -1623,7 +1637,7 @@ export default function Home() {
                           <p className="text-xs text-gray-500">If the sender just started, we&apos;ll retry automatically.</p>
                         </div>
                       )}
-                      
+
                       {transferType === 'internet' && !isConnected && (
                         <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
                           <p className="text-red-600 font-medium">🔄 Connecting to secure servers…</p>
@@ -1631,7 +1645,7 @@ export default function Home() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 md:p-6 border border-blue-200">
                     <h4 className="font-bold text-gray-900 mb-3 text-sm md:text-base">💡 Quick Tips</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm text-gray-700">
@@ -1650,20 +1664,20 @@ export default function Home() {
                         <CheckCircle className="h-12 w-12 text-white" />
                       </div>
                     </div>
-                    
+
                     <h3 className="text-lg md:text-2xl font-bold text-green-800 mb-4">
-                      {expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount 
+                      {expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount
                         ? `📥 Receiving Files... (${receivedFilesCount}/${expectedFilesCount})`
                         : `🎉 Files Ready to Download!`
                       }
                     </h3>
                     <p className="text-sm md:text-lg text-green-700 mb-6">
-                      {expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount 
+                      {expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount
                         ? `${receivedFilesCount} of ${expectedFilesCount} files received. Please wait for all files to complete.`
                         : `${receivedFiles.length} file(s) successfully received and verified.`
                       }
                     </p>
-                    
+
                     <div className="bg-white rounded-xl p-4 md:p-6 border border-green-300 mb-6">
                       <div className="grid gap-2 md:gap-3 max-h-48 overflow-y-auto">
                         {receivedFiles.map((file, index) => (
@@ -1697,18 +1711,18 @@ export default function Home() {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="mt-4 p-2 md:p-3 bg-blue-50 rounded-lg">
                         <p className="text-xs md:text-sm text-blue-700 font-medium">
                           Total: {(receivedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024)).toFixed(2)} MB
                         </p>
                       </div>
                     </div>
-                    
+
                     {receivedFiles.length > 1 ? (
                       <div className="space-y-3 mb-4">
-                        <Button 
-                          onClick={downloadFiles} 
+                        <Button
+                          onClick={downloadFiles}
                           className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] focus-visible:ring-2"
                           disabled={isDownloading || (expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount)}
                           aria-label={`Download all ${receivedFiles.length} files as ZIP`}
@@ -1757,8 +1771,8 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="space-y-3 mb-4">
-                        <Button 
-                          onClick={downloadFiles} 
+                        <Button
+                          onClick={downloadFiles}
                           className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] focus-visible:ring-2"
                           disabled={isDownloading || (expectedFilesCount > 1 && receivedFilesCount < expectedFilesCount)}
                           aria-label={receivedFiles[0] ? `Download ${receivedFiles[0].name}` : "Download file"}
@@ -1792,9 +1806,9 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={(e) => {
                         e.preventDefault();
@@ -1810,7 +1824,7 @@ export default function Home() {
                     >
                       Receive More Files
                     </Button>
-                    <Button 
+                    <Button
                       onClick={(e) => {
                         e.preventDefault();
                         window.scrollTo({ top: 0, behavior: 'smooth' });
