@@ -8,11 +8,14 @@ services:
       dockerfile: Dockerfile
     image: hexasend-app:latest
     container_name: hexasend-app
-    restart: unless-stopped
+    restart: always
     ports:
-      - "${APP_PORT:-3001}:5000"   # Host:Container. On VPS set APP_PORT=3001 (or 80 if no Nginx).
+      - "${APP_PORT:-3001}:5000"
+    volumes:
+      - ${UPLOAD_DIR:-./uploads}:/tmp/secureshare
     env_file:
-      - .env   # Optional: copy .env.example to .env on VPS
+      - .env
     environment:
       NODE_ENV: production
       PORT: 5000
+      UPLOAD_DIR: "/tmp/secureshare"
