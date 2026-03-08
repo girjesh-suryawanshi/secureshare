@@ -15,10 +15,11 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import JSZip from "jszip";
-import { Link } from "wouter";
+import { Link, useRoute } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { blogPosts } from "./blog";
 import type { TransferType } from "@shared/schema";
+import { QRCodeCanvas } from "qrcode.react";
 
 const FILE_CHUNK_SIZE = 256 * 1024; // 256KB
 
@@ -63,11 +64,12 @@ type DownloadJob = {
 };
 
 export default function Home() {
-  const [mode, setMode] = useState<'select' | 'send' | 'receive'>('select');
+  const [match, params] = useRoute("/share/:code");
+  const [mode, setMode] = useState<'select' | 'send' | 'receive'>(match ? 'receive' : 'select');
   const [transferType, setTransferType] = useState<TransferType>('internet');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [transferCode, setTransferCode] = useState<string>('');
-  const [inputCode, setInputCode] = useState<string>('');
+  const [inputCode, setInputCode] = useState<string>(match && params.code ? params.code.toUpperCase() : '');
   const [filesReady, setFilesReady] = useState<boolean>(false);
   const [receivedFiles, setReceivedFiles] = useState<{ name: string; size: number; blob: Blob }[]>([]);
   const [expectedFilesCount, setExpectedFilesCount] = useState<number>(0);
@@ -85,6 +87,7 @@ export default function Home() {
   const [uploadingFileIndex, setUploadingFileIndex] = useState<number>(0);
   const [uploadingFileName, setUploadingFileName] = useState<string>("");
   const [isPreparingLocal, setIsPreparingLocal] = useState(false);
+  const [resolvedLocalIP, setResolvedLocalIP] = useState<string>("");
   const downloadedFileKeys = useRef<Set<string>>(new Set());
   const receiveRequestCodeRef = useRef<string | null>(null);
   const receiveRetryCountRef = useRef<number>(0);
@@ -112,6 +115,23 @@ export default function Home() {
   const { toast } = useToast();
   const { stats, addTransfer } = useTransferStats();
   const fileKey = (code: string, index: number) => `${code}-${index}`;
+
+  // Resolve true local IP if running on localhost for QR generation
+  useEffect(() => {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      getLocalIP().then((ip) => setResolvedLocalIP(ip));
+    }
+  }, [getLocalIP]);
+
+  // Cleanup transfer state when all selected files are removed manually
+  useEffect(() => {
+    if (selectedFiles.length === 0 && (filesReady || transferCode)) {
+      setFilesReady(false);
+      setTransferCode('');
+      setUploadProgress(0);
+      setIsUploading(false);
+    }
+  }, [selectedFiles.length, filesReady, transferCode]);
 
   const normalizeCode = (code: string | undefined | null): string => {
     if (code == null || typeof code !== "string") return "";
@@ -776,10 +796,34 @@ export default function Home() {
 
   // Auto-focus code input when entering receive mode
   useEffect(() => {
-    if (mode === "receive" && receiveCodeInputRef.current) {
+    if (mode === "receive" && receiveCodeInputRef.current && !match) {
       receiveCodeInputRef.current.focus();
     }
-  }, [mode]);
+  }, [mode, match]);
+
+  // Handle incoming share links via QR code
+  useEffect(() => {
+    if (match && params?.code) {
+      setMode('receive');
+      // Update form state with the value from URL
+      setInputCode(params.code.toUpperCase());
+
+      // Look for transfer type parameter (e.g., ?mode=local)
+      const searchParams = new URLSearchParams(window.location.search);
+      const modeParam = searchParams.get('mode') as TransferType;
+      if (modeParam === 'local' || modeParam === 'internet') {
+        setTransferType(modeParam);
+      }
+
+      // Auto-submit the request slightly after setting state
+      setTimeout(() => {
+        if (receiveCodeInputRef.current) {
+          receiveCodeInputRef.current.focus();
+          // Optional: We could trigger the fetch automatically here if we wanted.
+        }
+      }, 100);
+    }
+  }, [match, params]);
 
   // Cleanup state when switching modes to prevent stuck state
   useEffect(() => {
@@ -1310,10 +1354,28 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-4 md:p-6 text-white">
-                      <p className="text-sm md:text-lg font-semibold mb-4">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-4 md:p-6 text-white text-center">
+                      <p className="text-sm md:text-lg font-semibold mb-6">
                         {transferType === 'local' ? '🏠 Local Network Share Code' : '🔐 Your Secure Share Code'}
                       </p>
+
+                      {transferCode && (
+                        <div className="flex flex-col items-center justify-center mb-8">
+                          <div className="bg-white p-3 rounded-2xl shadow-xl inline-block">
+                            <QRCodeCanvas
+                              value={`${resolvedLocalIP ? `http://${resolvedLocalIP}:${window.location.port}` : window.location.origin}/share/${transferCode}?mode=${transferType}`}
+                              size={180}
+                              bgColor="#ffffff"
+                              fgColor="#000000"
+                              level="Q"
+                              includeMargin={false}
+                              className="rounded-lg"
+                            />
+                          </div>
+                          <p className="text-white/80 text-sm mt-3 font-medium">Scan with camera to receive instantly</p>
+                        </div>
+                      )}
+
                       <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 mb-4">
                         <div
                           className="bg-white/20 backdrop-blur px-4 md:px-6 py-3 md:py-4 rounded-xl font-mono text-xl md:text-3xl font-bold tracking-wider"
@@ -1332,18 +1394,19 @@ export default function Home() {
                           {copyJustDone ? "Copied!" : "Copy"}
                         </Button>
                       </div>
+
                       {transferType === 'local' && localServerInfo ? (
                         <div className="mt-6 p-4 bg-white/10 rounded-xl">
                           <p className="text-white/90 text-sm mb-1">
                             <Wifi className="w-4 h-4 inline mr-2" />
                             Server: {localServerInfo.ip}:{localServerInfo.port}
                           </p>
-                          <p className="text-white/80 text-xs">
+                          <p className="text-white/80 text-xs mt-2">
                             Devices on the same WiFi/hotspot: open HexaSend, choose Receive, and enter the code above.
                           </p>
                         </div>
                       ) : (
-                        <p className="text-blue-100 text-sm md:text-base">
+                        <p className="text-blue-100 text-sm md:text-base mt-2">
                           Share this code with the receiver. Files expire in 1 hour for maximum security.
                         </p>
                       )}
