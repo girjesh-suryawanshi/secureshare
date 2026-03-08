@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, Share, Tag, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
+import { SEOHead } from "@/components/seo-head";
 
 // This would normally come from a CMS or API
 const getBlogPost = (slug: string) => {
@@ -842,139 +843,149 @@ const getBlogPost = (slug: string) => {
       `
     }
   };
-  
+
   return posts[slug] || null;
 };
 
 export default function BlogPost() {
   const [match, params] = useRoute("/blog/:slug");
-  
+
   if (!match || !params?.slug) {
     return <div>Post not found</div>;
   }
-  
+
   const post = getBlogPost(params.slug);
-  
+
   if (!post) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <Card className="max-w-md mx-4">
-          <CardContent className="p-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h1>
-            <p className="text-gray-600 mb-6">The blog post you're looking for doesn't exist or has been moved.</p>
-            <Link href="/blog">
-              <Button className="w-full">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Blog
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <SEOHead
+          title="Article Not Found | HexaSend Blog"
+          description="The requested blog post could not be found."
+        />
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full text-center">
+            <CardContent className="p-8">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h1>
+              <p className="text-gray-600 mb-6">The blog post you're looking for doesn't exist or has been moved.</p>
+              <Link href="/blog">
+                <Button className="w-full">Return to Blog</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        
-        {/* Back to Blog */}
-        <Link href="/blog">
-          <Button variant="ghost" className="mb-8 hover:bg-white/80">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Blog
-          </Button>
-        </Link>
+    <>
+      <SEOHead
+        title={post.title}
+        description={post.excerpt}
+        keywords={post.tags.join(', ')}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="max-w-4xl mx-auto px-4 py-12">
 
-        {/* Article Header */}
-        <Card className="mb-8 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-          <CardContent className="p-8">
-            <div className="flex items-center space-x-3 mb-4">
-              <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                {post.category}
-              </span>
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <div className="flex items-center space-x-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{post.date}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{post.readTime}</span>
-                </div>
-              </div>
-            </div>
-            
-            <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
-              {post.title}
-            </h1>
-            
-            <div className="flex flex-wrap gap-2 mb-6">
-              {post.tags.map((tag: string) => (
-                <span key={tag} className="flex items-center space-x-1 text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-                  <Tag className="h-3 w-3" />
-                  <span>{tag}</span>
+          {/* Back to Blog */}
+          <Link href="/blog">
+            <Button variant="ghost" className="mb-8 hover:bg-white/80">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Blog
+            </Button>
+          </Link>
+
+          {/* Article Header */}
+          <Card className="mb-8 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+            <CardContent className="p-8">
+              <div className="flex items-center space-x-3 mb-4">
+                <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                  {post.category}
                 </span>
-              ))}
-            </div>
-            
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Expert-reviewed content</span>
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>{post.date}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{post.readTime}</span>
+                  </div>
+                </div>
               </div>
-              <Button variant="outline" size="sm">
-                <Share className="h-4 w-4 mr-2" />
-                Share Article
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Article Content */}
-        <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-          <CardContent className="p-8">
-            <div 
-              className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700"
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
-            
-            {/* Call to Action */}
-            <div className="mt-12 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Try Instant Sharing Now</h3>
-              <p className="text-gray-600 mb-4">
-                Share files with a 6-digit code—no signup, no USB, no hassle. Works on any device.
-              </p>
-              <Link href="/">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg">
-                  Try Instant Sharing Now
+              <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                {post.title}
+              </h1>
+
+              <div className="flex flex-wrap gap-2 mb-6">
+                {post.tags.map((tag: string) => (
+                  <span key={tag} className="flex items-center space-x-1 text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                    <Tag className="h-3 w-3" />
+                    <span>{tag}</span>
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>Expert-reviewed content</span>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Share className="h-4 w-4 mr-2" />
+                  Share Article
                 </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Related Articles */}
-        <Card className="mt-8 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-          <CardContent className="p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Related Articles</h3>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Link href="/blog/best-free-file-sharing-no-registration-2026">
-                <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                  <h4 className="font-semibold text-gray-900 mb-2">Best Free File Transfer Services 2026</h4>
-                  <p className="text-sm text-gray-600">Top platforms that don't require sign-ups for instant file sharing in 2026.</p>
-                </div>
-              </Link>
-              <Link href="/blog/fastest-ways-to-transfer-large-files-2026">
-                <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                  <h4 className="font-semibold text-gray-900 mb-2">Fastest Ways to Transfer Large Files</h4>
-                  <p className="text-sm text-gray-600">Learn how to move multi-gigabyte files at lightning speed.</p>
-                </div>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Article Content */}
+          <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+            <CardContent className="p-8">
+              <div
+                className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
+
+              {/* Call to Action */}
+              <div className="mt-12 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Try Instant Sharing Now</h3>
+                <p className="text-gray-600 mb-4">
+                  Share files with a 6-digit code—no signup, no USB, no hassle. Works on any device.
+                </p>
+                <Link href="/">
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg">
+                    Try Instant Sharing Now
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Related Articles */}
+          <Card className="mt-8 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+            <CardContent className="p-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Related Articles</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Link href="/blog/best-free-file-sharing-no-registration-2026">
+                  <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
+                    <h4 className="font-semibold text-gray-900 mb-2">Best Free File Transfer Services 2026</h4>
+                    <p className="text-sm text-gray-600">Top platforms that don't require sign-ups for instant file sharing in 2026.</p>
+                  </div>
+                </Link>
+                <Link href="/blog/fastest-ways-to-transfer-large-files-2026">
+                  <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
+                    <h4 className="font-semibold text-gray-900 mb-2">Fastest Ways to Transfer Large Files</h4>
+                    <p className="text-sm text-gray-600">Learn how to move multi-gigabyte files at lightning speed.</p>
+                  </div>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
