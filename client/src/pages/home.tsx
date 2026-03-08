@@ -38,15 +38,18 @@ const getZipFileName = () => {
   return `HexaSend-${y}-${m}-${d}_${h}-${min}-${s}.zip`;
 };
 
-const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...Array.from(chunk));
-  }
-  return btoa(binary);
+const arrayBufferToBase64 = (buffer: ArrayBuffer): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([buffer]);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 };
 
 type DownloadJob = {
@@ -101,7 +104,10 @@ export default function Home() {
     stopLocalServer,
     scanForDevices,
     connectToDevice,
-    getLocalFiles
+    getLocalFiles,
+    getLocalIP,
+    uploadFileDirect,
+    uploadFileInChunks
   } = useLocalNetwork();
   const { toast } = useToast();
   const { stats, addTransfer } = useTransferStats();
@@ -250,7 +256,8 @@ export default function Home() {
       setIsUploading(true);
       setUploadProgress(0);
 
-      const code = generateCode();
+      // Preserve the active code if one is already displayed, otherwise generate a new one
+      const code = transferCode || generateCode();
       setTransferCode(code);
 
       // Handle local network transfer
@@ -282,98 +289,50 @@ export default function Home() {
         return;
       }
 
-      const startTime = Date.now();
-      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-      let uploadedBytes = 0;
+      try {
+        // Bind the WebSocket so we can receive real-time notifications (e.g., when a receiver downloads the file)
+        sendMessage({
+          type: 'bind-ws',
+          code,
+        });
 
-      for (let index = 0; index < files.length; index++) {
-        const file = files[index];
-        const fileSize = file.size ?? 0;
-        const fileName = (file.name && file.name.trim()) || `file-${index}`;
-        const fileType = file.type && file.type.trim() ? file.type : "application/octet-stream";
-        const totalChunks = Math.ceil(Math.max(fileSize, 1) / FILE_CHUNK_SIZE);
+        // Upload files using REST API which is much more reliable for large streams
+        // than WebSocket pushing
+        let completedFiles = 0;
 
-        setUploadingFileIndex(index);
-        setUploadingFileName(fileName);
+        for (const [index, file] of files.entries()) {
+          console.log(`Uploading file ${index + 1}/${files.length} via REST API (${transferType} mode)`);
 
-        try {
-          sendMessage({
-            type: 'register-file',
-            code,
-            fileName,
-            fileSize,
-            fileType,
-            fileIndex: index,
-            totalFiles: files.length,
-            totalChunks,
-            transferType,
-          });
-
-          // Wait for the server to acknowledge registration to avoid race conditions
-          await new Promise((resolve, reject) => {
-            const registryKey = `${code}-${index}`;
-            pendingRegistrationsRef.current.set(registryKey, resolve);
-
-            // Timeout after 10 seconds to prevent hanging
-            setTimeout(() => {
-              if (pendingRegistrationsRef.current.has(registryKey)) {
-                pendingRegistrationsRef.current.delete(registryKey);
-                reject(new Error("Timeout waiting for server to register file"));
-              }
-            }, 10000);
-          });
-
-          let offset = 0;
-          let chunkIndex = 0;
-          const size = file.size ?? 0;
-          while (offset < size) {
-            const slice = file.slice(offset, offset + FILE_CHUNK_SIZE);
-            const buffer = await slice.arrayBuffer();
-            const chunkData = arrayBufferToBase64(buffer);
-
-            sendMessage({
-              type: 'file-data',
-              code,
-              fileName,
-              data: chunkData,
-              fileIndex: index,
-              chunkIndex,
-              isLastChunk: offset + slice.size >= size,
-            });
-
-            offset += slice.size;
-            chunkIndex += 1;
-            uploadedBytes += slice.size;
-
-            const progress = (uploadedBytes / totalSize) * 100;
-            setUploadProgress(progress);
-
-            const elapsedSeconds = Math.max((Date.now() - startTime) / 1000, 1);
-            const speed = uploadedBytes / elapsedSeconds;
-            setTransferSpeed(formatSpeed(speed));
-
-            const remainingBytes = totalSize - uploadedBytes;
-            const etaSeconds = remainingBytes / Math.max(speed, 1);
-            setEstimatedTime(etaSeconds > 0 ? formatTime(etaSeconds) : '');
-
-            await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
+          if (file.size > 200 * 1024 * 1024) {
+            await uploadFileInChunks(file, code, index, files.length, transferType);
+          } else {
+            await uploadFileDirect(file, code, index, files.length, transferType);
           }
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : "Unknown error";
-          console.error(`Upload failed for ${fileName}:`, err);
-          toast({
-            title: "Upload failed",
-            description: `${fileName}: ${msg}. Try local network transfer for HEIC/large files.`,
-            variant: "destructive",
-          });
-          setIsUploading(false);
-          setUploadProgress(0);
-          return;
-        }
-      }
 
-      setIsUploading(false);
-      setFilesReady(true);
+          completedFiles++;
+          const progress = Math.round((completedFiles / files.length) * 100);
+
+          // Only internet mode tracks progress in this precise block (local mode has its own toast flow)
+          if (transferType === 'internet') {
+            setUploadProgress(progress); // Assuming setUploadProgress can handle a number for overall progress
+          }
+        }
+
+        toast({
+          title: "Ready to Share",
+          description: `Share code ${code} is ready. Waiting for receiver...`,
+        });
+      } catch (error: any) {
+        console.error("Error during REST file upload:", error);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload files: " + error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+        setFilesReady(true);
+      }
 
       // Add to transfer stats
       files.forEach(file => {
