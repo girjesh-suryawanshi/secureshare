@@ -19,23 +19,38 @@ export class FileDiskStore {
   }
 
   async ensureBaseDir() {
-    await fs.mkdir(this.baseDir, { recursive: true });
+    try {
+      await fs.mkdir(this.baseDir, { recursive: true });
+    } catch (error) {
+      console.error(`CRITICAL: Failed to create base directory ${this.baseDir}:`, error);
+      throw error;
+    }
   }
 
   async prepareFilePath(code: string, fileIndex: number, originalName: string) {
     await this.ensureBaseDir();
     const safeName = sanitize(originalName || "file");
     const codeDir = path.join(this.baseDir, code);
-    await fs.mkdir(codeDir, { recursive: true });
-    const filePath = path.join(codeDir, `${fileIndex}-${Date.now()}-${safeName}`);
-    await fs.writeFile(filePath, "");
-    return filePath;
+    try {
+      await fs.mkdir(codeDir, { recursive: true });
+      const filePath = path.join(codeDir, `${fileIndex}-${Date.now()}-${safeName}`);
+      await fs.writeFile(filePath, "");
+      return filePath;
+    } catch (error) {
+      console.error(`Failed to prepare file path in ${codeDir}:`, error);
+      throw error;
+    }
   }
 
   async appendBase64Chunk(filePath: string, base64Chunk: string) {
-    const buffer = Buffer.from(base64Chunk, "base64");
-    await fs.appendFile(filePath, buffer);
-    return buffer.length;
+    try {
+      const buffer = Buffer.from(base64Chunk, "base64");
+      await fs.appendFile(filePath, buffer);
+      return buffer.length;
+    } catch (error) {
+      console.error(`Failed to append chunk to ${filePath}:`, error);
+      throw error;
+    }
   }
 
   createReadStream(filePath: string): ReadStream {
@@ -43,12 +58,20 @@ export class FileDiskStore {
   }
 
   async deleteFile(filePath: string) {
-    await fs.rm(filePath, { force: true });
+    try {
+      await fs.rm(filePath, { force: true });
+    } catch (error) {
+      console.error(`Failed to delete file ${filePath}:`, error);
+    }
   }
 
   async deleteCodeFolder(code: string) {
     const codeDir = path.join(this.baseDir, code);
-    await fs.rm(codeDir, { recursive: true, force: true });
+    try {
+      await fs.rm(codeDir, { recursive: true, force: true });
+    } catch (error) {
+      console.error(`Failed to delete code folder ${codeDir}:`, error);
+    }
   }
 }
 

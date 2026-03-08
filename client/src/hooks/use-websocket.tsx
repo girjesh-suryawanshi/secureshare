@@ -51,9 +51,14 @@ export function useWebSocket(): WebSocketHook {
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const hostname = window.location.hostname || "localhost";
-    const fallbackPort = sanitizePort(import.meta.env.VITE_WS_PORT as string | undefined);
     const browserPort = sanitizePort(window.location.port);
+
+    // In production (e.g. hexasend.com), we usually don't want a port segment 
+    // because Nginx handles the proxying on 80/443.
+    // Only append port if explicitly provided in env or if on localhost:5000
+    const fallbackPort = sanitizePort(import.meta.env.VITE_WS_PORT as string | undefined);
     const inferredPort = browserPort || fallbackPort || (hostname === "localhost" ? "5000" : "");
+
     const portSegment = inferredPort ? `:${inferredPort}` : "";
     return `${protocol}//${hostname}${portSegment}/ws`;
   };

@@ -406,6 +406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
+    logger.info({ code, fileCount: files.length }, "Client requested file list");
     res.json({ code, files });
   });
 
@@ -446,6 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    logger.info({ code, fileName, fileSize, transferType }, "Direct file registration received");
     const registry = getOrCreateRegistry(code, totalFiles, transferType as TransferType);
     const safeFileType = normalizeFileType(fileType);
     const file = await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex });
@@ -454,6 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     file.completed = true;
     notifyRequestersFileReady(registry, file);
 
+    logger.info({ code, fileName, bytesWritten }, "Direct file registration complete");
     res.json({ success: true, downloadUrl: buildDownloadUrl(code, fileIndex) });
   });
 
@@ -465,6 +468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    logger.info({ code, fileName, fileSize, totalChunks }, "Chunked file metadata registered");
     const registry = getOrCreateRegistry(code, totalFiles, transferType as TransferType);
     const safeFileType = normalizeFileType(fileType);
     await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex, totalChunks });

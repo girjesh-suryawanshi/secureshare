@@ -16,14 +16,17 @@ Upload your code (via Git or SFTP) to `/var/www/hexasend`, then run:
 cd /var/www/hexasend
 cp .env.example .env
 # Edit .env if you need a different port
+mkdir -p uploads
+chown -R 1001:1001 uploads  # Important: Give container user (1001) write access
 docker compose up -d --build
 ```
 
 ## 3. Configure Nginx & SSL (HTTPS)
-This is critical for AdSense approval.
+This is critical for AdSense approval and real-time streaming.
 ```bash
 # Copy the config
 cp nginx-hexasend.conf /etc/nginx/sites-available/hexasend
+# Note: Ensure 'proxy_buffering off' is in the config to prevent transfer hangs
 ln -s /etc/nginx/sites-available/hexasend /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
 
