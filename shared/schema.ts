@@ -22,7 +22,9 @@ export const MessageSchema = z.object({
     'local-answer',
     'sender-disconnected',
     'bind-ws',
-    'error'
+    'error',
+    'ping',
+    'pong'
   ]),
   code: z.string().optional(),
   fileName: z.string().optional(),

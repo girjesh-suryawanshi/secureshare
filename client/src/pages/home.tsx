@@ -486,7 +486,20 @@ export default function Home() {
       }
     }
 
-    // Internet transfer - set refs so we can retry on file-not-found (cross-device race)
+    // Internet transfer - verify WebSocket connection first
+    if (!isConnected) {
+      setIsReceiving(false);
+      setReceiveProgress(0);
+      toast({
+        title: "Connection Lost",
+        description: "Reconnecting to server... Please wait a moment and try again.",
+        variant: "destructive",
+      });
+      reconnect(); // Force a reconnection attempt
+      return;
+    }
+
+    // Set refs so we can retry on file-not-found (cross-device race)
     receiveRequestCodeRef.current = upperCode;
     receiveRetryCountRef.current = 0;
     console.log('Requesting file with code:', upperCode);

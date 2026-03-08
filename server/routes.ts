@@ -101,6 +101,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const message = MessageSchema.parse(parsed);
 
           switch (message.type) {
+            case "ping":
+              ws.send(JSON.stringify({ type: "pong" }));
+              break;
             case "register-file":
               await handleRegisterFile(message, ws);
               break;

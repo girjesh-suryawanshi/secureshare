@@ -23,6 +23,10 @@ export function useWebSocket(): WebSocketHook {
   const fileRegisteredCallbackRef = useRef<((data: any) => void) | null>(null);
   const downloadAckCallbackRef = useRef<((data: any) => void) | null>(null);
   const senderDisconnectedCallbackRef = useRef<((data: any) => void) | null>(null);
+
+  // Heartbeat refs to keep Nginx from dropping idle connections
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPongRef = useRef<number>(Date.now());
   const { toast } = useToast();
 
   const sanitizePort = (value?: string | number | null) => {
@@ -73,19 +77,44 @@ export function useWebSocket(): WebSocketHook {
       ws.onopen = () => {
         console.log('WebSocket connected');
         setIsConnected(true);
+        lastPongRef.current = Date.now();
 
         // Clear any existing reconnect timeout
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = undefined;
         }
+
+        // Setup Ping Heartbeat (every 20s to beat Nginx 60s timeout)
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+        }
+        pingIntervalRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+
+            // Check if we missed a pong for too long (e.g., 40 seconds)
+            if (Date.now() - lastPongRef.current > 40000) {
+              console.warn('WebSocket pong timeout. Connection unresponsive.');
+              ws.close(); // Forcing close triggers reconnect
+            }
+          }
+        }, 20000);
       };
 
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          console.log('WebSocket received message:', message);
+
+          if (message.type !== 'pong') {
+            console.log('WebSocket received message:', message);
+          }
 
           switch (message.type) {
+            case 'pong':
+              lastPongRef.current = Date.now();
+              break;
+
             case 'file-available':
               if (fileAvailableCallbackRef.current) {
                 fileAvailableCallbackRef.current(message);
@@ -195,9 +224,15 @@ export function useWebSocket(): WebSocketHook {
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = undefined;
+      }
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current);
+        pingIntervalRef.current = null;
       }
       if (wsRef.current) {
         wsRef.current.close();
+        wsRef.current = null;
       }
     };
   }, [connect]);
