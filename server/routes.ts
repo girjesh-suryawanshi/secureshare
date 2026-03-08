@@ -142,8 +142,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const [code, registry] of fileRegistry.entries()) {
         if (registry.senderWs === ws) {
+          logger.info({ code }, "Sender WebSocket disconnected. Keeping files alive until TTL.");
+          registry.senderWs = null;
           notifySenderDisconnected(code, registry);
-          void cleanupRegistryEntry(code, registry, fileRegistry);
+          // CRITICAL FIX: Do NOT call cleanupRegistryEntry here.
+          // Nginx or mobile browsers dropping the WS connection should not instantly delete files that were successfully uploaded. 
+          // They will be cleaned up naturally by the TTL interval.
         }
         registry.requesters?.delete(ws);
       }

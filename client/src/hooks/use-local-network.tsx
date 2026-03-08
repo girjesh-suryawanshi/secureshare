@@ -225,46 +225,37 @@ export function useLocalNetwork() {
       throw new Error(`Failed to register file metadata: ${metaResponse.status} ${errorText}`);
     }
 
-    // Upload chunks in parallel for much faster speed
-    const chunkPromises = [];
+    // Upload chunks sequentially to avoid overwhelming the server, rate limits, and Nginx buffers
     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-      const chunkPromise = (async (idx: number) => {
-        const start = idx * chunkSize;
-        const end = Math.min(start + chunkSize, file.size);
-        const chunk = file.slice(start, end);
+      const start = chunkIndex * chunkSize;
+      const end = Math.min(start + chunkSize, file.size);
+      const chunk = file.slice(start, end);
 
-        const base64Chunk = await fileToBase64(chunk);
+      const base64Chunk = await fileToBase64(chunk);
 
-        const chunkResponse = await fetch('/api/upload-local-chunk', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            code,
-            fileIndex: index,
-            chunkIndex: idx,
-            data: base64Chunk,
-            isLastChunk: idx === totalChunks - 1,
-          }),
-        });
+      const chunkResponse = await fetch('/api/upload-local-chunk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          fileIndex: index,
+          chunkIndex,
+          data: base64Chunk,
+          isLastChunk: chunkIndex === totalChunks - 1,
+        }),
+      });
 
-        if (!chunkResponse.ok) {
-          const errorText = await chunkResponse.text();
-          throw new Error(`Failed to upload chunk ${idx}: ${chunkResponse.status} ${errorText}`);
-        }
+      if (!chunkResponse.ok) {
+        const errorText = await chunkResponse.text();
+        throw new Error(`Failed to upload chunk ${chunkIndex}: ${chunkResponse.status} ${errorText}`);
+      }
 
-        // Show progress
-        const progress = Math.round(((idx + 1) / totalChunks) * 100);
-        console.log(`${file.name}: ${progress}% complete (${idx + 1}/${totalChunks} chunks)`);
-        return idx;
-      })(chunkIndex);
-
-      chunkPromises.push(chunkPromise);
+      // Show progress
+      const progress = Math.round(((chunkIndex + 1) / totalChunks) * 100);
+      console.log(`${file.name}: ${progress}% complete (${chunkIndex + 1}/${totalChunks} chunks)`);
     }
-
-    // Upload all chunks in parallel
-    await Promise.all(chunkPromises);
 
     console.log(`Successfully uploaded ${file.name} in parallel chunks`);
     return { success: true };
