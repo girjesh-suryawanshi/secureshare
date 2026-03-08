@@ -45,24 +45,24 @@ const MAX_REQUESTS_PER_WINDOW = 5; // Max 5 requests per second per connection
 function checkRateLimit(ws: WebSocket): boolean {
   const now = Date.now();
   const record = requestRateLimit.get(ws);
-  
+
   if (!record) {
     requestRateLimit.set(ws, { lastRequest: now, count: 1 });
     return true;
   }
-  
+
   // Reset if window expired
   if (now - record.lastRequest > RATE_LIMIT_WINDOW_MS) {
     record.lastRequest = now;
     record.count = 1;
     return true;
   }
-  
+
   // Check if limit exceeded
   if (record.count >= MAX_REQUESTS_PER_WINDOW) {
     return false;
   }
-  
+
   record.count += 1;
   return true;
 }
@@ -116,6 +116,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             case "download-error":
               handleDownloadAck(message, "error");
               break;
+            case "bind-ws":
+              handleBindWs(message, ws);
+              break;
             default:
               logger.warn({ type: message.type }, "Unknown message type received");
           }
@@ -133,10 +136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     ws.on("close", () => {
       logger.info("Client disconnected");
-      
+
       // Clean up rate limit tracking
       requestRateLimit.delete(ws);
-      
+
       for (const [code, registry] of fileRegistry.entries()) {
         if (registry.senderWs === ws) {
           notifySenderDisconnected(code, registry);
@@ -293,12 +296,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let file = registry.files.find(
       (f) => f.fileIndex === fileIndex && (f.fileName === fileName || f.fileName.toLowerCase() === fileNameNorm)
     );
-    
+
     // If file metadata is missing, try to find by fileIndex only
     // This handles cases where fileName doesn't match exactly (e.g., special characters, encoding)
     if (!file) {
       file = registry.files.find((f) => f.fileIndex === fileIndex);
-      
+
       if (file) {
         // File exists but fileName doesn't match - update it to match what client sent
         logger.info({ code, oldFileName: file.fileName, newFileName: fileName, fileIndex }, "File name mismatch, updating from file-data");
@@ -358,6 +361,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     );
   }
 
+  function handleBindWs(message: any, ws: WebSocket) {
+    const code = normalizeCode(message.code);
+    if (!code) return;
+
+    // Use totalFiles = 1 as a placeholder; it will be overridden when register file REST endpoint hits
+    const registry = getOrCreateRegistry(code, 1, "internet", ws);
+    registry.senderWs = ws;
+    logger.info({ code }, "WebSocket bound to internet file transfer session");
+  }
+
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
     res.json({
@@ -387,6 +400,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       isReady: file.completed,
       downloadUrl: file.completed ? buildDownloadUrl(code, file.fileIndex) : undefined,
     }));
+
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
 
     res.json({ code, files });
   });
@@ -421,14 +439,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/register-local-file", async (req, res) => {
-    const { code: rawCode, fileName, fileSize, fileType, data, fileIndex = 0, totalFiles = 1 } = req.body;
+    const { code: rawCode, fileName, fileSize, fileType, data, fileIndex = 0, totalFiles = 1, transferType = "local" } = req.body;
     const code = normalizeCode(rawCode);
 
     if (!code || !fileName || typeof fileSize !== "number" || fileSize <= 0 || !data) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const registry = getOrCreateRegistry(code, totalFiles, "local");
+    const registry = getOrCreateRegistry(code, totalFiles, transferType as TransferType);
     const safeFileType = normalizeFileType(fileType);
     const file = await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex });
     const bytesWritten = await fileStore.appendBase64Chunk(file.filePath, data);
@@ -440,14 +458,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/register-local-file-meta", async (req, res) => {
-    const { code: rawCode, fileName, fileSize, fileType, fileIndex = 0, totalFiles = 1, totalChunks } = req.body;
+    const { code: rawCode, fileName, fileSize, fileType, fileIndex = 0, totalFiles = 1, totalChunks, transferType = "local" } = req.body;
     const code = normalizeCode(rawCode);
 
     if (!code || !fileName || typeof fileSize !== "number" || fileSize <= 0) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const registry = getOrCreateRegistry(code, totalFiles, "local");
+    const registry = getOrCreateRegistry(code, totalFiles, transferType as TransferType);
     const safeFileType = normalizeFileType(fileType);
     await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex, totalChunks });
 

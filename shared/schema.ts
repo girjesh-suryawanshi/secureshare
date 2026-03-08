@@ -21,6 +21,7 @@ export const MessageSchema = z.object({
     'local-offer',
     'local-answer',
     'sender-disconnected',
+    'bind-ws',
     'error'
   ]),
   code: z.string().optional(),

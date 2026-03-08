@@ -32,26 +32,52 @@ export function useLocalNetwork() {
       const pc = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       });
-      
+
+      const candidates: string[] = [];
+
       pc.createDataChannel('');
       pc.createOffer().then(offer => pc.setLocalDescription(offer));
-      
+
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           const candidate = event.candidate.candidate;
           const ipMatch = candidate.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
           if (ipMatch) {
-            pc.close();
-            resolve(ipMatch[0]);
+            candidates.push(ipMatch[0]);
           }
         }
       };
-      
-      // Fallback to localhost after 3 seconds
+
+      // Wait a short time to gather candidates, then pick the best one
       setTimeout(() => {
         pc.close();
-        resolve('127.0.0.1');
-      }, 3000);
+        if (candidates.length === 0) {
+          resolve('127.0.0.1');
+          return;
+        }
+
+        // De-duplicate
+        const uniqueIps = Array.from(new Set(candidates));
+
+        // Prioritize common local subnet patterns
+        const priorityOrder = [
+          /^192\.168\./,
+          /^10\./,
+          /^172\.(1[6-9]|2[0-9]|3[0-1])\./
+        ];
+
+        uniqueIps.sort((a, b) => {
+          const aIndex = priorityOrder.findIndex(p => p.test(a));
+          const bIndex = priorityOrder.findIndex(p => p.test(b));
+
+          const aWeight = aIndex === -1 ? 99 : aIndex;
+          const bWeight = bIndex === -1 ? 99 : bIndex;
+
+          return aWeight - bWeight;
+        });
+
+        resolve(uniqueIps[0]);
+      }, 500); // 500ms gathering window
     });
   }, []);
 
@@ -60,13 +86,13 @@ export function useLocalNetwork() {
     try {
       const localIP = await getLocalIP();
       const port = parseInt(window.location.port) || 5000;
-      
+
       // Register files with the main server with progress tracking
       let completedFiles = 0;
-      
+
       const filePromises = files.map(async (file, index) => {
         console.log(`Registering local file: ${file.name} (${index + 1}/${files.length}) - ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-        
+
         try {
           // Use direct upload for all files up to 200MB for better speed
           // Only use chunked upload for extremely large files
@@ -76,33 +102,33 @@ export function useLocalNetwork() {
             // Use direct upload for most files (much faster)
             await uploadFileDirect(file, code, index, files.length);
           }
-          
+
           // Update progress after each file completes
           completedFiles++;
           const progress = (completedFiles / files.length) * 100;
           if (onProgress) {
             onProgress(progress, file.name);
           }
-          
+
           return { success: true, fileName: file.name };
         } catch (error) {
           console.error(`Failed to upload file ${file.name}:`, error);
           throw error;
         }
       });
-      
+
       await Promise.all(filePromises);
-      
+
       console.log(`All ${files.length} files registered successfully for code ${code}`);
-      
+
       setLocalServerInfo({ ip: localIP, port });
       setIsLocalServerRunning(true);
-      
+
       toast({
         title: "Local Server Ready",
         description: `${files.length} file(s) available on local network with code ${code}`,
       });
-      
+
       return { ip: localIP, port };
     } catch (error) {
       console.error('Failed to start local server:', error);
@@ -121,21 +147,17 @@ export function useLocalNetwork() {
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const buffer = reader.result as ArrayBuffer;
-        const bytes = new Uint8Array(buffer);
-        let binary = "";
-        const chunkSize = 0x8000;
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          binary += String.fromCharCode(...Array.from(bytes.subarray(i, i + chunkSize)));
-        }
-        resolve(btoa(binary));
+        const dataUrl = reader.result as string;
+        // Extracts the Base64 section after the "data:image/jpeg;base64," prefix.
+        const base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
+        resolve(base64);
       };
       reader.onerror = () => reject(reader.error);
-      reader.readAsArrayBuffer(blob);
+      reader.readAsDataURL(blob);
     });
 
   // Upload small files directly (all file types supported, including HEIC)
-  const uploadFileDirect = async (file: File, code: string, index: number, totalFiles: number) => {
+  const uploadFileDirect = async (file: File, code: string, index: number, totalFiles: number, transferType: 'local' | 'internet' = 'local') => {
     const base64Data = await fileToBase64(file);
 
     const fileName = (file.name && file.name.trim()) || `file-${index}`;
@@ -155,26 +177,27 @@ export function useLocalNetwork() {
         data: base64Data,
         fileIndex: index,
         totalFiles,
+        transferType,
       }),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Failed to register file: ${response.status} ${errorText}`);
     }
-    
+
     const result = await response.json();
     console.log(`Successfully registered ${file.name}:`, result);
     return result;
   };
 
   // Upload large files in chunks for better performance (only for extremely large files >200MB)
-  const uploadFileInChunks = async (file: File, code: string, index: number, totalFiles: number) => {
+  const uploadFileInChunks = async (file: File, code: string, index: number, totalFiles: number, transferType: 'local' | 'internet' = 'local') => {
     const chunkSize = 5 * 1024 * 1024; // 5MB chunks for faster upload
     const totalChunks = Math.ceil(file.size / chunkSize);
-    
+
     console.log(`Uploading ${file.name} in ${totalChunks} chunks (5MB each)...`);
-    
+
     const fileName = (file.name && file.name.trim()) || `file-${index}`;
     const fileSize = file.size ?? 0;
     const fileType = (file.type && file.type.trim()) ? file.type : 'application/octet-stream';
@@ -193,14 +216,15 @@ export function useLocalNetwork() {
         fileIndex: index,
         totalFiles,
         totalChunks,
+        transferType,
       }),
     });
-    
+
     if (!metaResponse.ok) {
       const errorText = await metaResponse.text();
       throw new Error(`Failed to register file metadata: ${metaResponse.status} ${errorText}`);
     }
-    
+
     // Upload chunks in parallel for much faster speed
     const chunkPromises = [];
     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
@@ -224,24 +248,24 @@ export function useLocalNetwork() {
             isLastChunk: idx === totalChunks - 1,
           }),
         });
-        
+
         if (!chunkResponse.ok) {
           const errorText = await chunkResponse.text();
           throw new Error(`Failed to upload chunk ${idx}: ${chunkResponse.status} ${errorText}`);
         }
-        
+
         // Show progress
         const progress = Math.round(((idx + 1) / totalChunks) * 100);
         console.log(`${file.name}: ${progress}% complete (${idx + 1}/${totalChunks} chunks)`);
         return idx;
       })(chunkIndex);
-      
+
       chunkPromises.push(chunkPromise);
     }
-    
+
     // Upload all chunks in parallel
     await Promise.all(chunkPromises);
-    
+
     console.log(`Successfully uploaded ${file.name} in parallel chunks`);
     return { success: true };
   };
@@ -254,7 +278,7 @@ export function useLocalNetwork() {
     setIsLocalServerRunning(false);
     setLocalServerInfo(null);
     setLocalFiles(new Map());
-    
+
     toast({
       title: "Local Server Stopped",
       description: "File sharing server has been stopped",
@@ -265,11 +289,11 @@ export function useLocalNetwork() {
   const scanForDevices = useCallback(async () => {
     setIsScanning(true);
     const devices: LocalDevice[] = [];
-    
+
     try {
       const localIP = await getLocalIP();
       const currentPort = window.location.port || '5000';
-      
+
       // Check current server first (localhost)
       const currentDevice = await checkDeviceAtAddress('localhost', parseInt(currentPort));
       if (currentDevice) {
@@ -279,12 +303,12 @@ export function useLocalNetwork() {
           ip: localIP
         });
       }
-      
+
       // Only show actual detected devices - no demo devices
       // This will show real devices found on the network
-      
+
       setAvailableDevices(devices);
-      
+
       if (devices.length > 0) {
         toast({
           title: "Devices Found",
@@ -313,13 +337,13 @@ export function useLocalNetwork() {
     try {
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 500); // Quick timeout for network scan
-      
+
       const response = await fetch(`http://${ip}:${port}/ping`, {
         method: 'GET',
         signal: controller.signal,
         mode: 'cors'
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.status === 'SecureShare') {
@@ -342,15 +366,17 @@ export function useLocalNetwork() {
   const connectToDevice = useCallback(async (device: LocalDevice, code: string) => {
     try {
       console.log(`Connecting to device ${device.name} for code ${code}`);
-      
+
       // For local network transfers, try the current server first
       const response = await fetch(`/files/${code}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-        }
+          'Cache-Control': 'no-cache, no-store'
+        },
+        cache: 'no-store'
       });
-      
+
       if (response.ok) {
         const payload = await response.json();
         const files = Array.isArray(payload)
@@ -397,7 +423,7 @@ export function useLocalNetwork() {
     availableDevices,
     isLocalServerRunning,
     localServerInfo,
-    
+
     // Actions
     startLocalServer,
     stopLocalServer,
@@ -405,5 +431,7 @@ export function useLocalNetwork() {
     connectToDevice,
     getLocalFiles,
     getLocalIP,
+    uploadFileDirect,
+    uploadFileInChunks,
   };
 }
