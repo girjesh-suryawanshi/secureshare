@@ -324,7 +324,7 @@ export default function Home() {
         for (const [index, file] of files.entries()) {
           console.log(`Uploading file ${index + 1}/${files.length} via REST API (${transferType} mode)`);
 
-          if (file.size > 200 * 1024 * 1024) {
+          if (file.size > 5 * 1024 * 1024) {  // Changed from 200MB to 5MB for stable Docker uploading
             await uploadFileInChunks(file, code, index, files.length, transferType);
           } else {
             await uploadFileDirect(file, code, index, files.length, transferType);
