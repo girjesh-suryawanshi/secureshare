@@ -11,6 +11,7 @@ import BlogPost from "@/pages/blog-post";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Disclaimer from "@/pages/disclaimer";
+import ReportAbuse from "@/pages/report-abuse";
 import NotFound from "@/pages/not-found";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
@@ -30,6 +31,7 @@ function Router() {
           <Route path="/privacy" component={Privacy} />
           <Route path="/terms" component={Terms} />
           <Route path="/disclaimer" component={Disclaimer} />
+          <Route path="/report-abuse" component={ReportAbuse} />
           <Route component={NotFound} />
         </Switch>
       </main>

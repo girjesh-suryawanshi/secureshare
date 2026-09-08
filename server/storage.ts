@@ -2,12 +2,16 @@ import { promises as fs } from "fs";
 import { createReadStream } from "fs";
 import path from "path";
 import os from "os";
+import crypto from "crypto";
 import type { ReadStream } from "fs";
 import { config } from "./config";
 
-/** Sanitize filename for disk; preserves all extensions (e.g. .heic, .docx). */
-const sanitize = (fileName: string) =>
-  fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+/**
+ * Generate an opaque UUID for disk file names.
+ * This prevents file name leakage on the server filesystem —
+ * even if an attacker gains disk access, they cannot identify what was transferred.
+ */
+const generateOpaqueId = () => crypto.randomUUID();
 
 export class FileDiskStore {
   private baseDir: string;
@@ -27,13 +31,14 @@ export class FileDiskStore {
     }
   }
 
-  async prepareFilePath(code: string, fileIndex: number, originalName: string) {
+  async prepareFilePath(code: string, fileIndex: number, _originalName: string) {
     await this.ensureBaseDir();
-    const safeName = sanitize(originalName || "file");
     const codeDir = path.join(this.baseDir, code);
     try {
       await fs.mkdir(codeDir, { recursive: true });
-      const filePath = path.join(codeDir, `${fileIndex}-${Date.now()}-${safeName}`);
+      // Use opaque UUID instead of the original file name to prevent PII leakage on disk
+      const opaqueId = generateOpaqueId();
+      const filePath = path.join(codeDir, `${fileIndex}-${opaqueId}`);
       await fs.writeFile(filePath, "");
       return filePath;
     } catch (error) {

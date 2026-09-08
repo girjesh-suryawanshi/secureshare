@@ -423,204 +423,6 @@ const getBlogPost = (slug: string) => {
         </ul>
       `
     },
-    "file-sharing-teams-security-collaboration": {
-      title: "File Sharing for Teams: Collaborate Without Compromising Security",
-      date: "December 30, 2024",
-      readTime: "10 min read",
-      category: "Business",
-      tags: ["teams", "collaboration", "business", "security"],
-      content: `
-        <h2>Secure Collaboration in 2025</h2>
-        <p>Modern teams need to move fast, but security shouldn't be an afterthought. Using P2P tools for internal document exchange can prevent sensitive data from sitting on cloud servers indefinitely.</p>
-      `
-    },
-    "no-download-file-sharing-browser-based": {
-      title: "No Download File Sharing: Transfer Files Without Installing Apps",
-      date: "December 28, 2024",
-      readTime: "4 min read",
-      category: "Convenience",
-      tags: ["no download", "browser", "web-based", "convenience"],
-      content: `
-        <h2>The Convenience of Browser-Based Sharing</h2>
-        <p>Installation friction is a major barrier to productivity. Web-based tools that leverage modern browser capabilities like WebRTC allow for high-performance sharing without the need for desktop clients.</p>
-      `
-    },
-    "temporary-file-sharing-auto-delete": {
-      title: "Temporary File Sharing: Share Files That Auto-Delete",
-      date: "December 25, 2024",
-      readTime: "7 min read",
-      category: "Privacy",
-      tags: ["temporary", "auto-delete", "privacy", "security"],
-      content: `
-        <h2>Privacy Through Ephemerality</h2>
-        <p>Data that doesn't exist cannot be stolen. Temporary file sharing ensures that your documents are only online for the duration of the transfer, drastically reducing your attack surface.</p>
-      `
-    },
-    "cross-device-file-transfer-universal-guide": {
-      title: "Cross-Device File Transfer: PC to Phone to Tablet Guide",
-      date: "December 22, 2024",
-      readTime: "11 min read",
-      category: "Guide",
-      tags: ["cross-device", "universal", "pc", "mobile"],
-      content: `
-        <h2>Breaking Down Device Barriers</h2>
-        <p>In a multi-device world, getting a file from your Windows PC to your iPad or Android phone should be seamless. Using a web-based portal like HexaSend makes this a reality.</p>
-      `
-    },
-    "encrypted-file-sharing-military-grade-security": {
-      title: "Encrypted File Sharing: Military-Grade Security for Everyone",
-      date: "December 20, 2024",
-      readTime: "8 min read",
-      category: "Security",
-      tags: ["encryption", "military-grade", "security", "protection"],
-      content: `
-        <h2>Understanding True Encryption</h2>
-        <p>What does "military-grade" actually mean? We break down the AES-256 standard and how end-to-end encryption keeps your data safe from prying eyes.</p>
-      `
-    },
-    "quick-file-sharing-professionals-business": {
-      title: "Quick File Sharing for Professionals: Business Solutions",
-      date: "December 18, 2024",
-      readTime: "9 min read",
-      category: "Business",
-      tags: ["professional", "business", "quick", "secure"],
-      content: `
-        <h2>Tools for the Modern Professional</h2>
-        <p>Whether you're a freelancer or a corporate executive, speed and reliability are key. Discover how instant P2P sharing can save hours in your weekly workflow.</p>
-      `
-    },
-    "anonymous-file-sharing-no-identity": {
-      title: "Anonymous File Sharing: Transfer Files Without Identity",
-      date: "December 15, 2024",
-      readTime: "6 min read",
-      category: "Privacy",
-      tags: ["anonymous", "privacy", "no identity", "secure"],
-      content: `
-        <h2>The Importance of Anonymity</h2>
-        <p>Not every transfer needs to be linked to an identity. Learn how to share files without leaving a paper trail or exposing your personal information.</p>
-      `
-    },
-    "direct-file-transfer-skip-cloud": {
-      title: "Direct File Transfer: Skip the Cloud, Share Directly",
-      date: "December 12, 2024",
-      readTime: "7 min read",
-      category: "Technology",
-      tags: ["direct transfer", "skip cloud", "device-to-device", "fast"],
-      content: `
-        <h2>The Benefits of Skipping the Middleman</h2>
-        <p>Cloud storage is great for backups, but for transfers, it's an unnecessary extra step. Direct device-to-device transfer is faster and more private.</p>
-      `
-    },
-    "file-sharing-without-limits-any-size": {
-      title: "File Sharing Without Limits: Send Files of Any Size",
-      date: "December 10, 2024",
-      readTime: "5 min read",
-      category: "Tips",
-      tags: ["no limits", "any size", "large files", "unlimited"],
-      content: `
-        <h2>No More Size Constraints</h2>
-        <p>Stop worrying about "File too large" errors. Modern P2P tech allows you to move gigabytes of data as easily as a small text file.</p>
-      `
-    },
-    "instant-file-sharing-zero-wait-maximum-speed": {
-      title: "Instant File Sharing: Zero Wait Time, Maximum Speed",
-      date: "December 8, 2024",
-      readTime: "6 min read",
-      category: "Speed",
-      tags: ["instant", "zero wait", "maximum speed", "fast"],
-      content: `
-        <h2>Speed Is the New Standard</h2>
-        <p>Waiting for a 100% upload bar is frustrating. Direct sharing starts the transfer the moment the receiver enters the code.</p>
-      `
-    },
-    "drag-drop-file-sharing-simplest-way": {
-      title: "Drag and Drop File Sharing: Simplest Way to Send Files",
-      date: "December 5, 2024",
-      readTime: "4 min read",
-      category: "User Experience",
-      tags: ["drag and drop", "simple", "intuitive", "easy"],
-      content: `
-        <h2>Intuitive User Interfaces</h2>
-        <p>Good design should be invisible. Drag-and-drop interfaces make file selection as natural as moving a folder on your desktop.</p>
-      `
-    },
-    "mobile-file-sharing-apps-vs-browser": {
-      title: "Mobile File Sharing: Best Apps and Browser Solutions",
-      date: "December 3, 2024",
-      readTime: "8 min read",
-      category: "Mobile",
-      tags: ["mobile", "apps", "browser", "smartphone"],
-      content: `
-        <h2>Mobile Sharing Showdown</h2>
-        <p>We compare native apps against browser-based solutions for mobile file exchange. The results might surprise you.</p>
-      `
-    },
-    "file-transfer-codes-alphanumeric-secure": {
-      title: "File Transfer Codes: Why Alphanumeric is Most Secure",
-      date: "December 1, 2024",
-      readTime: "7 min read",
-      category: "Security",
-      tags: ["transfer codes", "alphanumeric", "secure", "analysis"],
-      content: `
-        <h2>The Math Behind the Code</h2>
-        <p>Why 6-digit alphanumeric codes provide more entropy than traditional passwords and how they prevent brute-force attacks.</p>
-      `
-    },
-    "share-documents-securely-professionals": {
-      title: "Share Documents Securely: Best Practices for Professionals",
-      date: "November 28, 2024",
-      readTime: "10 min read",
-      category: "Professional",
-      tags: ["documents", "professionals", "confidential", "safe"],
-      content: `
-        <h2>Professional Document Exchange</h2>
-        <p>Best practices for sharing legal, medical, and financial documents securely across digital platforms.</p>
-      `
-    },
-    "photo-sharing-without-social-media-private": {
-      title: "Photo Sharing Without Social Media: Private Image Transfer",
-      date: "November 25, 2024",
-      readTime: "5 min read",
-      category: "Personal",
-      tags: ["photo sharing", "private", "images", "personal"],
-      content: `
-        <h2>Private Photo Exchange</h2>
-        <p>Keep your memories between you and your friends. Share high-res photos without social media compression or privacy concerns.</p>
-      `
-    },
-    "file-sharing-alternatives-wetransfer-better": {
-      title: "File Sharing Alternatives to WeTransfer: Better Options",
-      date: "November 22, 2024",
-      readTime: "12 min read",
-      category: "Alternatives",
-      tags: ["alternatives", "wetransfer", "comparison", "better options"],
-      content: `
-        <h2>Looking Beyond the Giants</h2>
-        <p>WeTransfer is popular, but is it the best? We explore alternatives that offer more speed, better security, and no account requirements.</p>
-      `
-    },
-    "remote-work-file-sharing-distributed-teams": {
-      title: "Remote Work File Sharing: Tools for Distributed Teams",
-      date: "November 20, 2024",
-      readTime: "11 min read",
-      category: "Remote Work",
-      tags: ["remote work", "distributed teams", "collaboration", "productivity"],
-      content: `
-        <h2>Remote Team Productivity</h2>
-        <p>How distributed teams can use instant P2P sharing to keep projects moving without cloud bottlenecks.</p>
-      `
-    },
-    "future-file-sharing-trends-predictions-2025": {
-      title: "Future of File Sharing: Trends and Predictions for 2025",
-      date: "November 18, 2024",
-      readTime: "9 min read",
-      category: "Future",
-      tags: ["future", "trends", "predictions", "emerging tech"],
-      content: `
-        <h2>What's Next for 2025</h2>
-        <p>Our predictions for the future of digital exchange, including AI integration and decentralized networks.</p>
-      `
-    },
     "share-files-without-signup-instant-send": {
       title: "Share Files Without Signup: The Easiest Way to Send Files Instantly",
       date: "January 2, 2026",
@@ -949,8 +751,25 @@ export default function BlogPost() {
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
 
+              {/* Author E-E-A-T Bio Box */}
+              <div className="mt-10 p-6 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-2xl shrink-0 shadow-md">
+                  GS
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <h3 className="text-lg font-bold text-gray-900">Girjesh Suryawanshi</h3>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">Verified Author</span>
+                  </div>
+                  <p className="text-xs text-blue-600 font-medium mb-1">Senior Full-Stack Engineer & Cybersecurity Specialist</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    With over 15 years of professional software architecture experience, Girjesh specializes in real-time WebRTC peer-to-peer communication, network optimization, and privacy-focused data exchange protocols.
+                  </p>
+                </div>
+              </div>
+
               {/* Call to Action */}
-              <div className="mt-12 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+              <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Try Instant Sharing Now</h3>
                 <p className="text-gray-600 mb-4">
                   Share files with a 6-digit code—no signup, no USB, no hassle. Works on any device.

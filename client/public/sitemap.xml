@@ -4,241 +4,208 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- Homepage - Most Important -->
+  <!-- Homepage - Primary App -->
   <url>
     <loc>https://hexasend.com/</loc>
-    <lastmod>2025-01-04</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-02-01</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- About Page -->
+  <!-- Main Information & Legal Pages -->
   <url>
     <loc>https://hexasend.com/about</loc>
-    <lastmod>2025-01-04</lastmod>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- Contact Page -->
   <url>
     <loc>https://hexasend.com/contact</loc>
-    <lastmod>2025-01-04</lastmod>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <!-- Blog Main Page -->
   <url>
     <loc>https://hexasend.com/blog</loc>
-    <lastmod>2025-01-04</lastmod>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- Privacy Policy -->
   <url>
     <loc>https://hexasend.com/privacy</loc>
-    <lastmod>2025-01-04</lastmod>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
 
-  <!-- Terms and Conditions -->
   <url>
     <loc>https://hexasend.com/terms</loc>
-    <lastmod>2025-01-04</lastmod>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
 
-  <!-- Disclaimer -->
   <url>
     <loc>https://hexasend.com/disclaimer</loc>
-    <lastmod>2025-01-04</lastmod>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
 
-  <!-- Blog Articles - High Priority for SEO -->
   <url>
-    <loc>https://hexasend.com/blog/how-to-share-files-instantly</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/report-abuse</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <!-- Valid High-Quality Blog Articles (100% Matching Slugs) -->
+  <url>
+    <loc>https://hexasend.com/blog/how-to-transfer-files-from-pc-to-mobile-without-usb</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/secure-file-transfer-guide</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/share-large-files-online-without-registration</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/cross-device-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/fastest-way-to-send-files-between-two-laptops-on-same-wifi</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/6-digit-code-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/secure-file-sharing-with-6-digit-code</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/mobile-file-transfer</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/send-files-anonymously-without-email</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/free-file-sharing-tools</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/transfer-large-files-between-android-and-iphone-instantly</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/large-file-transfer-solutions</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/best-wetransfer-alternatives-for-small-files</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/peer-to-peer-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/how-to-send-files-to-another-computer-using-a-code</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/no-registration-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/temporary-file-sharing-for-one-time-use</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/drag-drop-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/browser-to-browser-file-transfer-no-setup</loc>
+    <lastmod>2026-02-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/instant-file-transfer</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/share-files-without-signup-instant-send</loc>
+    <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/zip-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/send-files-using-6-digit-code-secure-way</loc>
+    <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/file-sharing-security</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/ultimate-guide-to-p2p-file-sharing-2026</loc>
+    <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/browser-file-transfer</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/security-trends-file-sharing-2026</loc>
+    <lastmod>2026-01-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/file-sharing-alternatives</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/fastest-ways-to-transfer-large-files-2026</loc>
+    <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/fast-file-transfer</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/best-free-file-transfer-no-registration-2026</loc>
+    <lastmod>2026-01-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/business-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/how-to-share-files-securely-online-2025</loc>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/team-file-collaboration</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/peer-to-peer-vs-cloud-storage-comparison</loc>
+    <lastmod>2026-01-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/local-network-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/best-free-file-sharing-no-registration</loc>
+    <lastmod>2026-01-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/file-transfer-tips</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/send-large-files-instantly-methods</loc>
+    <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://hexasend.com/blog/cloud-vs-peer-to-peer</loc>
-    <lastmod>2025-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://hexasend.com/blog/file-sharing-best-practices</loc>
-    <lastmod>2025-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://hexasend.com/blog/hexasend-vs-competitors</loc>
-    <lastmod>2025-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://hexasend.com/blog/file-sharing-future</loc>
-    <lastmod>2025-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://hexasend.com/blog/hexasend-features-guide</loc>
-    <lastmod>2025-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://hexasend.com/blog/remote-work-file-sharing</loc>
-    <lastmod>2025-01-04</lastmod>
+    <loc>https://hexasend.com/blog/6-digit-code-file-sharing-future</loc>
+    <lastmod>2026-01-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

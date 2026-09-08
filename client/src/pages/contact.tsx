@@ -1,29 +1,77 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, MessageSquare, Phone, MapPin } from "lucide-react";
+import { Mail, MessageSquare, Phone, MapPin, Loader2 } from "lucide-react";
 import { SEOHead } from "@/components/seo-head";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Contact() {
-  const handleSubmit = (e: React.FormEvent) => {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    subject: "",
+    message: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would submit to a backend
-    alert("Thank you for your message! We'll get back to you soon.");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for contacting HexaSend. We will reply to your email shortly.",
+      });
+
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+    } catch (error: any) {
+      toast({
+        title: "Submission Error",
+        description: error.message || "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <>
       <SEOHead
-        title="Contact Us | HexaSend Support"
-        description="Have questions about sending large files or encountered a bug? Contact the HexaSend team. We are here to help you share your data securely and efficiently."
+        title="Contact Us | HexaSend Support & Inquiries"
+        description="Have questions about sending large files or encountered an issue? Contact the HexaSend team. We are here to help you share your data securely and efficiently."
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-4xl mx-auto py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Have questions about HexaSend? We'd love to hear from you.
+              Have questions or feedback about HexaSend? We'd love to hear from you.
             </p>
           </div>
 
@@ -42,6 +90,8 @@ export default function Contact() {
                         <Input
                           type="text"
                           required
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                           className="w-full"
                           placeholder="John"
                         />
@@ -53,6 +103,8 @@ export default function Contact() {
                         <Input
                           type="text"
                           required
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                           className="w-full"
                           placeholder="Doe"
                         />
@@ -66,6 +118,8 @@ export default function Contact() {
                       <Input
                         type="email"
                         required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full"
                         placeholder="john@example.com"
                       />
@@ -78,6 +132,8 @@ export default function Contact() {
                       <Input
                         type="text"
                         required
+                        value={formData.subject}
+                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                         className="w-full"
                         placeholder="How can we help you?"
                       />
@@ -90,13 +146,22 @@ export default function Contact() {
                       <Textarea
                         required
                         rows={6}
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         className="w-full"
                         placeholder="Tell us more about your inquiry..."
                       />
                     </div>
 
-                    <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                      Send Message
+                    <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700">
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Sending Message...
+                        </>
+                      ) : (
+                        "Send Message"
+                      )}
                     </Button>
                   </form>
                 </CardContent>
@@ -124,13 +189,13 @@ export default function Contact() {
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3 mb-4">
                     <MessageSquare className="h-6 w-6 text-green-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Live Chat</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Live Support</h3>
                   </div>
                   <p className="text-gray-600">
                     Available Monday - Friday
                   </p>
                   <p className="text-sm text-gray-500 mt-2">
-                    9:00 AM - 6:00 PM EST
+                    9:00 AM - 6:00 PM IST
                   </p>
                 </CardContent>
               </Card>
@@ -141,8 +206,8 @@ export default function Contact() {
                     <Phone className="h-6 w-6 text-purple-600" />
                     <h3 className="text-lg font-semibold text-gray-900">Phone Support</h3>
                   </div>
-                  <p className="text-gray-600">
-                    +918989997018
+                  <p className="text-gray-600 font-mono">
+                    +91 89899 97018
                   </p>
                   <p className="text-sm text-gray-500 mt-2">
                     Business hours only
@@ -154,10 +219,10 @@ export default function Contact() {
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3 mb-4">
                     <MapPin className="h-6 w-6 text-orange-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Office</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Headquarters</h3>
                   </div>
                   <p className="text-gray-600">
-                    office :78 shankar Bagh indore
+                    78 Shankar Bagh, Indore, Madhya Pradesh 452006, India
                   </p>
                 </CardContent>
               </Card>

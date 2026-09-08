@@ -11,6 +11,9 @@ export interface WebSocketHook {
   onFileRegistered: (callback: (data: { code: string; fileIndex: number }) => void) => void;
   onDownloadAck: (callback: (data: { status: string; message: string; code: string }) => void) => void;
   onSenderDisconnected: (callback: (data: { code: string; message: string }) => void) => void;
+  onTextAvailable: (callback: (data: { code: string; text: string; byteLength: number }) => void) => void;
+  onTextNotFound: (callback: (code: string) => void) => void;
+  onTextRegistered: (callback: (data: { code: string }) => void) => void;
 }
 
 export function useWebSocket(): WebSocketHook {
@@ -23,6 +26,9 @@ export function useWebSocket(): WebSocketHook {
   const fileRegisteredCallbackRef = useRef<((data: any) => void) | null>(null);
   const downloadAckCallbackRef = useRef<((data: any) => void) | null>(null);
   const senderDisconnectedCallbackRef = useRef<((data: any) => void) | null>(null);
+  const textAvailableCallbackRef = useRef<((data: any) => void) | null>(null);
+  const textNotFoundCallbackRef = useRef<((code: string) => void) | null>(null);
+  const textRegisteredCallbackRef = useRef<((data: any) => void) | null>(null);
 
   // Heartbeat refs to keep Nginx from dropping idle connections
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -151,6 +157,24 @@ export function useWebSocket(): WebSocketHook {
               }
               break;
 
+            case 'text-available':
+              if (textAvailableCallbackRef.current) {
+                textAvailableCallbackRef.current(message);
+              }
+              break;
+
+            case 'text-not-found':
+              if (textNotFoundCallbackRef.current) {
+                textNotFoundCallbackRef.current(message.code);
+              }
+              break;
+
+            case 'text-registered':
+              if (textRegisteredCallbackRef.current) {
+                textRegisteredCallbackRef.current(message);
+              }
+              break;
+
             case 'error':
               toast({
                 title: "Error",
@@ -218,6 +242,18 @@ export function useWebSocket(): WebSocketHook {
     senderDisconnectedCallbackRef.current = callback;
   }, []);
 
+  const onTextAvailable = useCallback((callback: (data: any) => void) => {
+    textAvailableCallbackRef.current = callback;
+  }, []);
+
+  const onTextNotFound = useCallback((callback: (code: string) => void) => {
+    textNotFoundCallbackRef.current = callback;
+  }, []);
+
+  const onTextRegistered = useCallback((callback: (data: any) => void) => {
+    textRegisteredCallbackRef.current = callback;
+  }, []);
+
   useEffect(() => {
     connect();
 
@@ -259,5 +295,8 @@ export function useWebSocket(): WebSocketHook {
     onFileRegistered,
     onDownloadAck,
     onSenderDisconnected,
+    onTextAvailable,
+    onTextNotFound,
+    onTextRegistered,
   };
 }

@@ -22,6 +22,12 @@ export const MessageSchema = z.object({
     'local-answer',
     'sender-disconnected',
     'bind-ws',
+    // Text share message types
+    'register-text',
+    'request-text',
+    'text-registered',
+    'text-available',
+    'text-not-found',
     'error',
     'ping',
     'pong'
@@ -31,6 +37,7 @@ export const MessageSchema = z.object({
   fileSize: z.number().optional(),
   fileType: z.string().optional(),
   data: z.string().optional(), // base64 encoded file data
+  text: z.string().optional(), // text share content
   message: z.string().optional(), // error messages
   fileIndex: z.number().optional(), // for multiple files
   totalFiles: z.number().optional(), // total number of files
@@ -48,6 +55,7 @@ export const MessageSchema = z.object({
   downloadUrl: z.string().optional(),
   isReady: z.boolean().optional(),
   receivedBytes: z.number().optional(),
+  byteLength: z.number().optional(), // text share byte length
 });
 
 export type Message = z.infer<typeof MessageSchema>;

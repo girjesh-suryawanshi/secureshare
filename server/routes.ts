@@ -1,6 +1,7 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import crypto from "crypto";
 import { MessageSchema, type FileRegistry, type TransferType } from "@shared/schema";
 import { fileStore } from "./storage";
 import { config } from "./config";
@@ -8,6 +9,11 @@ import { logger } from "./logger";
 
 const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
 const DEFAULT_FILE_TYPE = "application/octet-stream";
+const MAX_TEXT_SIZE_BYTES = 50 * 1024; // 50KB max text size
+
+/** Hash a file name for forensic traceability without storing actual PII */
+const hashFileName = (name: string): string =>
+  crypto.createHash("sha256").update(name).digest("hex").slice(0, 12);
 
 /** Normalize MIME type; accepts any file type (no blocklist). Empty/unknown → application/octet-stream. */
 const normalizeFileType = (fileType?: string | null) => {
@@ -37,10 +43,24 @@ type FileMeta = {
   totalChunks?: number;
 };
 
+// Text share registry entry
+type TextEntry = {
+  code: string;
+  text: string;
+  createdAt: Date;
+  textHash: string;
+  byteLength: number;
+};
+
 // Rate limiting: track request timestamps per WebSocket connection
 const requestRateLimit = new Map<WebSocket, { lastRequest: number; count: number }>();
 const RATE_LIMIT_WINDOW_MS = 1000; // 1 second window
 const MAX_REQUESTS_PER_WINDOW = 5; // Max 5 requests per second per connection
+
+// REST endpoint rate limiting
+const restRateLimit = new Map<string, { lastRequest: number; count: number }>();
+const REST_RATE_LIMIT_WINDOW_MS = 2000; // 2 second window
+const REST_MAX_REQUESTS_PER_WINDOW = 10;
 
 function checkRateLimit(ws: WebSocket): boolean {
   const now = Date.now();
@@ -67,6 +87,31 @@ function checkRateLimit(ws: WebSocket): boolean {
   return true;
 }
 
+/** REST rate limit middleware for upload endpoints */
+function restRateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
+  const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  const record = restRateLimit.get(clientIp);
+
+  if (!record) {
+    restRateLimit.set(clientIp, { lastRequest: now, count: 1 });
+    return next();
+  }
+
+  if (now - record.lastRequest > REST_RATE_LIMIT_WINDOW_MS) {
+    record.lastRequest = now;
+    record.count = 1;
+    return next();
+  }
+
+  if (record.count >= REST_MAX_REQUESTS_PER_WINDOW) {
+    return res.status(429).json({ error: "Too many requests. Please wait a moment." });
+  }
+
+  record.count += 1;
+  return next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   await fileStore.ensureBaseDir();
 
@@ -78,6 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     perMessageDeflate: false,
   });
   const fileRegistry: RegistryMap = new Map();
+  const textRegistry: Map<string, TextEntry> = new Map();
 
   const cleanupInterval = setInterval(() => {
     const now = Date.now();
@@ -85,6 +131,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (now - registry.createdAt.getTime() > config.fileTtlMs) {
         logger.info({ code }, "Cleaning up expired transfer");
         void cleanupRegistryEntry(code, registry, fileRegistry);
+      }
+    }
+    // Cleanup expired text entries with the same TTL
+    for (const [code, entry] of textRegistry.entries()) {
+      if (now - entry.createdAt.getTime() > config.fileTtlMs) {
+        logger.info({ code }, "Cleaning up expired text share");
+        textRegistry.delete(code);
+      }
+    }
+    // Cleanup old REST rate-limit records (prevent memory leak)
+    for (const [ip, record] of restRateLimit.entries()) {
+      if (now - record.lastRequest > 60_000) {
+        restRateLimit.delete(ip);
       }
     }
   }, CLEANUP_INTERVAL_MS);
@@ -121,6 +180,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               break;
             case "bind-ws":
               handleBindWs(message, ws);
+              break;
+            case "register-text":
+              handleRegisterText(message, ws);
+              break;
+            case "request-text":
+              handleRequestText(message, ws);
               break;
             default:
               logger.warn({ type: message.type }, "Unknown message type received");
@@ -160,6 +225,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       logger.error({ error }, "WebSocket error");
     });
   });
+
+  // ─── WebSocket Handlers ───────────────────────────────────────────────
 
   async function handleRegisterFile(message: any, ws: WebSocket) {
     // Rate limiting check
@@ -311,11 +378,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (file) {
         // File exists but fileName doesn't match - update it to match what client sent
-        logger.info({ code, oldFileName: file.fileName, newFileName: fileName, fileIndex }, "File name mismatch, updating from file-data");
+        // Log with hashed file names for forensic traceability without PII exposure
+        logger.info({ code, oldNameHash: hashFileName(file.fileName), newNameHash: hashFileName(fileName), fileIndex }, "File name mismatch, updating from file-data");
         file.fileName = fileName || file.fileName;
       } else {
         // File truly doesn't exist - this is a race condition or registration failure
-        logger.error({ code, fileName, fileIndex, registryFiles: registry.files.map(f => ({ index: f.fileIndex, name: f.fileName })) }, "File metadata missing - registration may not have completed");
+        logger.error({ code, fileNameHash: hashFileName(fileName), fileIndex, registryFileCount: registry.files.length }, "File metadata missing - registration may not have completed");
         ws.send(
           JSON.stringify({
             type: "error",
@@ -378,11 +446,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     logger.info({ code }, "WebSocket bound to internet file transfer session");
   }
 
+  // ─── Text Share WebSocket Handlers ────────────────────────────────────
+
+  function handleRegisterText(message: any, ws: WebSocket) {
+    if (!checkRateLimit(ws)) {
+      ws.send(JSON.stringify({ type: "error", message: "Too many requests. Please wait a moment." }));
+      return;
+    }
+
+    const code = normalizeCode(message.code);
+    const text = message.text;
+
+    if (!code || typeof text !== "string" || text.trim().length === 0) {
+      ws.send(JSON.stringify({ type: "error", message: "Code and text are required" }));
+      return;
+    }
+
+    const textBytes = Buffer.byteLength(text, "utf-8");
+    if (textBytes > MAX_TEXT_SIZE_BYTES) {
+      ws.send(JSON.stringify({ type: "error", message: `Text exceeds maximum size of ${MAX_TEXT_SIZE_BYTES / 1024}KB` }));
+      return;
+    }
+
+    const textHash = crypto.createHash("sha256").update(text).digest("hex").slice(0, 16);
+
+    textRegistry.set(code, {
+      code,
+      text,
+      createdAt: new Date(),
+      textHash,
+      byteLength: textBytes,
+    });
+
+    // Log only hash + size for abuse detection, never the actual text
+    logger.info({ code, textHash, byteLength: textBytes }, "Text share registered");
+
+    ws.send(JSON.stringify({ type: "text-registered", code }));
+  }
+
+  function handleRequestText(message: any, ws: WebSocket) {
+    if (!checkRateLimit(ws)) {
+      ws.send(JSON.stringify({ type: "error", message: "Too many requests. Please wait a moment." }));
+      return;
+    }
+
+    const code = normalizeCode(message.code);
+    if (!code) {
+      ws.send(JSON.stringify({ type: "error", message: "Code is required" }));
+      return;
+    }
+
+    const entry = textRegistry.get(code);
+    if (!entry) {
+      ws.send(JSON.stringify({ type: "text-not-found", code }));
+      return;
+    }
+
+    ws.send(JSON.stringify({
+      type: "text-available",
+      code,
+      text: entry.text,
+      byteLength: entry.byteLength,
+    }));
+  }
+
+  // ─── REST Endpoints ───────────────────────────────────────────────────
+
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
     res.json({
       status: "ok",
       activeFiles: fileRegistry.size,
+      activeTexts: textRegistry.size,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Contact form submission endpoint
+  app.post("/api/contact", (req, res) => {
+    const { firstName, lastName, email, subject, message } = req.body || {};
+
+    if (!firstName || !lastName || !email || !subject || !message) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email address format" });
+    }
+
+    // Log only that a contact was received — no PII in logs
+    logger.info({ subject, timestamp: new Date().toISOString() }, "New contact form message received");
+
+    // In production, this can connect to Nodemailer, Resend, SendGrid, or store in database
+    return res.json({
+      success: true,
+      message: "Thank you for reaching out! Your message has been received.",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // ─── Abuse Report Endpoint (DMCA / IT Act Section 79 Safe Harbour) ──
+
+  app.post("/api/report-abuse", (req, res) => {
+    const { transferCode, description, reporterEmail, legalBasis } = req.body || {};
+
+    if (!description || typeof description !== "string" || description.trim().length < 10) {
+      return res.status(400).json({ error: "Please provide a detailed description (at least 10 characters)" });
+    }
+
+    const normalizedTransferCode = transferCode ? normalizeCode(transferCode) : null;
+
+    // If a transfer code was provided, expedite cleanup
+    if (normalizedTransferCode) {
+      const registry = fileRegistry.get(normalizedTransferCode);
+      if (registry) {
+        logger.info({ code: normalizedTransferCode }, "Abuse report received — expediting transfer cleanup");
+        void cleanupRegistryEntry(normalizedTransferCode, registry, fileRegistry);
+      }
+
+      // Also check text registry
+      if (textRegistry.has(normalizedTransferCode)) {
+        logger.info({ code: normalizedTransferCode }, "Abuse report received — removing text share");
+        textRegistry.delete(normalizedTransferCode);
+      }
+    }
+
+    // Log abuse report for legal compliance (no PII from the reported content)
+    logger.info({
+      transferCode: normalizedTransferCode,
+      hasReporterEmail: !!reporterEmail,
+      legalBasis: legalBasis || "unspecified",
+      timestamp: new Date().toISOString(),
+    }, "Abuse / takedown report received");
+
+    return res.json({
+      success: true,
+      message: "Thank you for your report. We take abuse seriously and will review this promptly. Reported content (if still active) has been removed.",
+      referenceId: crypto.randomUUID().slice(0, 8).toUpperCase(),
       timestamp: new Date().toISOString(),
     });
   });
@@ -446,7 +647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     stream.pipe(res);
   });
 
-  app.post("/api/register-local-file", async (req, res) => {
+  // All upload REST endpoints now use rate limiting middleware
+  app.post("/api/register-local-file", restRateLimitMiddleware, async (req, res) => {
     const { code: rawCode, fileName, fileSize, fileType, data, fileIndex = 0, totalFiles = 1, transferType = "local" } = req.body;
     const code = normalizeCode(rawCode);
 
@@ -454,7 +656,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    logger.info({ code, fileName, fileSize, transferType }, "Direct file registration received");
+    // Log with hashed file name, not the actual name
+    logger.info({ code, fileNameHash: hashFileName(fileName), fileSize, transferType }, "Direct file registration received");
     const registry = getOrCreateRegistry(code, totalFiles, transferType as TransferType);
     const safeFileType = normalizeFileType(fileType);
     const file = await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex });
@@ -463,11 +666,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     file.completed = true;
     notifyRequestersFileReady(registry, file);
 
-    logger.info({ code, fileName, bytesWritten }, "Direct file registration complete");
+    logger.info({ code, fileNameHash: hashFileName(fileName), bytesWritten }, "Direct file registration complete");
     res.json({ success: true, downloadUrl: buildDownloadUrl(code, fileIndex) });
   });
 
-  app.post("/api/register-local-file-meta", async (req, res) => {
+  app.post("/api/register-local-file-meta", restRateLimitMiddleware, async (req, res) => {
     const { code: rawCode, fileName, fileSize, fileType, fileIndex = 0, totalFiles = 1, totalChunks, transferType = "local" } = req.body;
     const code = normalizeCode(rawCode);
 
@@ -475,7 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    logger.info({ code, fileName, fileSize, totalChunks }, "Chunked file metadata registered");
+    logger.info({ code, fileNameHash: hashFileName(fileName), fileSize, totalChunks }, "Chunked file metadata registered");
     const registry = getOrCreateRegistry(code, totalFiles, transferType as TransferType);
     const safeFileType = normalizeFileType(fileType);
     await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex, totalChunks });
@@ -483,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, message: "Metadata registered" });
   });
 
-  app.post("/api/upload-local-chunk", async (req, res) => {
+  app.post("/api/upload-local-chunk", restRateLimitMiddleware, async (req, res) => {
     const { code: rawCode, fileIndex = 0, data, isLastChunk } = req.body;
     const code = normalizeCode(rawCode);
 
@@ -512,6 +715,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const progress = Math.round((file.receivedBytes / file.fileSize) * 100);
     res.json({ success: true, progress });
   });
+
+  // ─── Text Share REST Endpoints ────────────────────────────────────────
+
+  app.post("/api/text", restRateLimitMiddleware, (req, res) => {
+    const { code: rawCode, text } = req.body || {};
+    const code = normalizeCode(rawCode);
+
+    if (!code || typeof text !== "string" || text.trim().length === 0) {
+      return res.status(400).json({ error: "Code and text are required" });
+    }
+
+    const textBytes = Buffer.byteLength(text, "utf-8");
+    if (textBytes > MAX_TEXT_SIZE_BYTES) {
+      return res.status(400).json({ error: `Text exceeds maximum size of ${MAX_TEXT_SIZE_BYTES / 1024}KB` });
+    }
+
+    const textHash = crypto.createHash("sha256").update(text).digest("hex").slice(0, 16);
+
+    textRegistry.set(code, {
+      code,
+      text,
+      createdAt: new Date(),
+      textHash,
+      byteLength: textBytes,
+    });
+
+    logger.info({ code, textHash, byteLength: textBytes }, "Text share registered via REST");
+    return res.json({ success: true, code });
+  });
+
+  app.get("/api/text/:code", (req, res) => {
+    const code = normalizeCode(req.params.code);
+    const entry = textRegistry.get(code);
+
+    if (!entry) {
+      return res.status(404).json({ error: "Text not found or expired" });
+    }
+
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+
+    return res.json({
+      code: entry.code,
+      text: entry.text,
+      byteLength: entry.byteLength,
+      createdAt: entry.createdAt.toISOString(),
+    });
+  });
+
+  // ─── Helpers ──────────────────────────────────────────────────────────
 
   async function cleanupRegistryEntry(code: string, registry: FileRegistry, registryMap: RegistryMap) {
     for (const file of registry.files) {

@@ -10,7 +10,7 @@ import { FilePreview } from "@/components/file-preview";
 import { DragDropZone } from "@/components/drag-drop-zone";
 import { TransferProgress } from "@/components/transfer-progress";
 import { TransferStats } from "@/components/transfer-stats";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2 } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2, Shield, Type, ClipboardCopy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -98,7 +98,17 @@ export default function Home() {
   const lastRequestTimeRef = useRef<number>(0); // Rate limiting for request-file
   const pendingRegistrationsRef = useRef<Map<string, (value: unknown) => void>>(new Map());
 
-  const { isConnected, reconnect, sendMessage, onFileAvailable, onFileReady, onFileNotFound, onFileRegistered, onDownloadAck, onSenderDisconnected } = useWebSocket();
+  // Text share state
+  const [shareMode, setShareMode] = useState<'file' | 'text'>('file');
+  const [textToShare, setTextToShare] = useState<string>('');
+  const [textShareCode, setTextShareCode] = useState<string>('');
+  const [isTextSharing, setIsTextSharing] = useState<boolean>(false);
+  const [receivedText, setReceivedText] = useState<string>('');
+  const [textCopied, setTextCopied] = useState(false);
+  const [isTextReceiving, setIsTextReceiving] = useState<boolean>(false);
+  const MAX_TEXT_LENGTH = 50000; // 50KB ~ 50,000 chars
+
+  const { isConnected, reconnect, sendMessage, onFileAvailable, onFileReady, onFileNotFound, onFileRegistered, onDownloadAck, onSenderDisconnected, onTextAvailable, onTextNotFound, onTextRegistered } = useWebSocket();
   const {
     isScanning,
     availableDevices,
@@ -800,13 +810,41 @@ export default function Home() {
       }
     });
 
+    // ─── Text Share WS Handlers ──────────────────────
+    onTextAvailable((data: any) => {
+      setReceivedText(data.text || '');
+      setIsTextReceiving(false);
+      toast({
+        title: '📋 Text Received!',
+        description: `${data.byteLength || 0} bytes received. Click Copy to clipboard.`,
+      });
+    });
+
+    onTextNotFound((code: string) => {
+      setIsTextReceiving(false);
+      toast({
+        title: 'Text Not Found',
+        description: code ? `No text found with code ${code}.` : 'No text found. Check the code and try again.',
+        variant: 'destructive',
+      });
+    });
+
+    onTextRegistered((data: any) => {
+      setTextShareCode(data.code || '');
+      setIsTextSharing(false);
+      toast({
+        title: '✅ Text Shared!',
+        description: `Share code ${data.code} with the receiver.`,
+      });
+    });
+
     return () => {
       if (receiveRetryTimeoutRef.current) {
         clearTimeout(receiveRetryTimeoutRef.current);
         receiveRetryTimeoutRef.current = null;
       }
     };
-  }, [downloadFileJob, expectedFilesCount, inputCode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onFileRegistered, onSenderDisconnected, sendMessage, toast]);
+  }, [downloadFileJob, expectedFilesCount, inputCode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onFileRegistered, onSenderDisconnected, onTextAvailable, onTextNotFound, onTextRegistered, sendMessage, toast]);
 
   // Auto-focus code input when entering receive mode
   useEffect(() => {
@@ -875,6 +913,13 @@ export default function Home() {
       setAcknowledgments([]);
       downloadedFileKeys.current.clear();
       pendingRequestRef.current.clear();
+      // Reset text share state
+      setTextToShare('');
+      setTextShareCode('');
+      setReceivedText('');
+      setIsTextSharing(false);
+      setIsTextReceiving(false);
+      setTextCopied(false);
     }
   }, [mode]);
 
@@ -912,6 +957,32 @@ export default function Home() {
                     <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full">Secure</span>
                     <span className="px-4 py-2 bg-purple-100 text-purple-800 rounded-full">Lightning Fast</span>
                   </div>
+                </div>
+
+                {/* Share Mode Toggle: File / Text */}
+                <div className="flex justify-center gap-2 mt-2">
+                  <button
+                    onClick={() => setShareMode('file')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                      shareMode === 'file'
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Files
+                  </button>
+                  <button
+                    onClick={() => setShareMode('text')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                      shareMode === 'text'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg scale-105'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Type className="h-4 w-4" />
+                    Text / Clipboard
+                  </button>
                 </div>
               </div>
 
@@ -971,6 +1042,14 @@ export default function Home() {
                       </Badge>
                     </button>
                   </div>
+                </div>
+
+                {/* Trust & Acceptable Use Banner */}
+                <div className="max-w-2xl mx-auto mb-6 p-3 bg-white/70 backdrop-blur-sm border border-slate-200 rounded-xl text-center shadow-sm">
+                  <p className="text-xs text-slate-600 flex items-center justify-center space-x-1.5 flex-wrap">
+                    <Shield className="h-4 w-4 text-emerald-600 inline shrink-0" />
+                    <span><strong>Encrypted & Temporary:</strong> Files stream directly between devices and auto-delete after download. Please adhere to our <Link href="/terms"><span className="text-blue-600 underline cursor-pointer">Terms of Service</span></Link> (do not share copyrighted or prohibited content).</span>
+                  </p>
                 </div>
               </div>
 
@@ -1280,7 +1359,147 @@ export default function Home() {
 
               {!filesReady ? (
                 <div className="space-y-8">
-                  {selectedFiles.length === 0 ? (
+                  {/* Text Share Mode - Sender */}
+                  {shareMode === 'text' ? (
+                    <div className="space-y-6">
+                      {!textShareCode ? (
+                        <>
+                          <div className="text-center">
+                            <div className="relative mb-4">
+                              <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-4 w-fit mx-auto">
+                                <Type className="h-10 w-10 text-white" />
+                              </div>
+                            </div>
+                            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Share Text Securely</h3>
+                            <p className="text-sm md:text-base text-gray-600 mb-6">
+                              Paste passwords, links, code snippets, or any text. Get a 6-digit code to share.
+                            </p>
+                          </div>
+
+                          <textarea
+                            value={textToShare}
+                            onChange={(e) => setTextToShare(e.target.value.slice(0, MAX_TEXT_LENGTH))}
+                            placeholder="Paste text, code, links, passwords, notes..."
+                            className="w-full h-48 md:h-64 p-4 border-2 border-emerald-200 rounded-xl focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 resize-none font-mono text-sm bg-white"
+                            aria-label="Text content to share"
+                          />
+
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <span>{textToShare.length.toLocaleString()} / {MAX_TEXT_LENGTH.toLocaleString()} characters</span>
+                            <span>{new Blob([textToShare]).size > 1024 ? `${(new Blob([textToShare]).size / 1024).toFixed(1)} KB` : `${new Blob([textToShare]).size} bytes`}</span>
+                          </div>
+
+                          <Button
+                            onClick={async () => {
+                              if (!textToShare.trim()) {
+                                toast({ title: 'Empty Text', description: 'Please enter some text to share.', variant: 'destructive' });
+                                return;
+                              }
+                              setIsTextSharing(true);
+                              const code = generateCode();
+                              try {
+                                // Use REST endpoint for text share
+                                const response = await fetch('/api/text', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ code, text: textToShare }),
+                                });
+                                if (!response.ok) {
+                                  const err = await response.json();
+                                  throw new Error(err.error || 'Failed to share text');
+                                }
+                                setTextShareCode(code);
+                                toast({ title: '✅ Text Shared!', description: `Share code ${code} with the receiver.` });
+                              } catch (error: any) {
+                                toast({ title: 'Share Failed', description: error.message, variant: 'destructive' });
+                              } finally {
+                                setIsTextSharing(false);
+                              }
+                            }}
+                            className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg font-semibold min-h-[44px]"
+                            disabled={!textToShare.trim() || isTextSharing || (transferType === 'internet' && !isConnected)}
+                          >
+                            {isTextSharing ? (
+                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sharing...</>
+                            ) : (
+                              <><Type className="mr-2 h-5 w-5" /> Share Text Securely</>
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        /* Text shared successfully - show code */
+                        <div className="text-center space-y-6">
+                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8">
+                            <div className="relative mb-6">
+                              <div className="relative bg-green-500 rounded-2xl p-4 w-fit mx-auto">
+                                <CheckCircle className="h-12 w-12 text-white" />
+                              </div>
+                            </div>
+                            <h3 className="text-xl md:text-2xl font-bold text-green-800 mb-2">🎉 Text Ready to Share!</h3>
+                            <p className="text-sm text-green-600 mb-6">{textToShare.length.toLocaleString()} characters secured. Share the code below.</p>
+
+                            <div className="bg-white rounded-xl p-4 border border-green-300 mb-6 text-left">
+                              <p className="text-sm text-gray-700 font-mono whitespace-pre-wrap break-words max-h-32 overflow-y-auto">{textToShare.slice(0, 500)}{textToShare.length > 500 ? '...' : ''}</p>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 text-white">
+                              <p className="text-sm font-semibold mb-4">🔐 Your Secure Text Code</p>
+
+                              {textShareCode && (
+                                <div className="flex flex-col items-center justify-center mb-6">
+                                  <div className="bg-white p-3 rounded-2xl shadow-xl inline-block">
+                                    <QRCodeSVG
+                                      value={`${resolvedLocalIP ? `http://${resolvedLocalIP}:${window.location.port}` : window.location.origin}/share/${textShareCode}?mode=${transferType}`}
+                                      size={140}
+                                      bgColor="#ffffff"
+                                      fgColor="#000000"
+                                      level="Q"
+                                      includeMargin={false}
+                                      className="rounded-lg"
+                                    />
+                                  </div>
+                                  <p className="text-white/80 text-xs mt-2">Scan to receive text</p>
+                                </div>
+                              )}
+
+                              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+                                <div className="bg-white/20 backdrop-blur px-6 py-3 rounded-xl font-mono text-2xl md:text-3xl font-bold tracking-wider">
+                                  {textShareCode}
+                                </div>
+                                <Button
+                                  variant="secondary"
+                                  size="lg"
+                                  onClick={async () => {
+                                    await navigator.clipboard.writeText(textShareCode);
+                                    setCopyJustDone(true);
+                                    setTimeout(() => setCopyJustDone(false), 2000);
+                                    toast({ title: 'Code Copied', description: 'Share this code with the receiver' });
+                                  }}
+                                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 min-h-[44px]"
+                                >
+                                  <Copy className="h-4 w-4 mr-2" />
+                                  {copyJustDone ? 'Copied!' : 'Copy'}
+                                </Button>
+                              </div>
+                              <p className="text-emerald-100 text-sm">Text expires in 1 hour for maximum security.</p>
+                            </div>
+                          </div>
+
+                          <Button
+                            onClick={() => {
+                              setTextShareCode('');
+                              setTextToShare('');
+                            }}
+                            className="w-full h-12 text-sm md:text-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                          >
+                            Share More Text
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                  /* File Share Mode - Original UI */
+                  selectedFiles.length === 0 ? (
                     <div className="text-center">
                       <DragDropZone onFilesSelected={handleFilesSelected} ariaLabel="Choose files to send. All file types supported.">
                         <div className="p-12 space-y-6">
@@ -1394,6 +1613,7 @@ export default function Home() {
                         </Button>
                       </div>
                     </div>
+                  )
                   )}
                 </div>
               ) : (
@@ -1623,7 +1843,48 @@ export default function Home() {
           <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8">
 
-              {receivedFiles.length === 0 ? (
+              {/* Text received - show it */}
+              {receivedText ? (
+                <div className="text-center space-y-8">
+                  <div className="space-y-6">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8">
+                      <div className="relative mb-6">
+                        <div className="relative bg-green-500 rounded-2xl p-4 w-fit mx-auto">
+                          <CheckCircle className="h-12 w-12 text-white" />
+                        </div>
+                      </div>
+                      <h3 className="text-xl md:text-2xl font-bold text-green-800 mb-4">📋 Text Received!</h3>
+                      <div className="bg-white rounded-xl p-4 md:p-6 border border-green-300 mb-6 text-left">
+                        <pre className="text-sm text-gray-800 font-mono whitespace-pre-wrap break-words max-h-64 overflow-y-auto">{receivedText}</pre>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(receivedText);
+                            setTextCopied(true);
+                            setTimeout(() => setTextCopied(false), 2000);
+                            toast({ title: '✅ Copied!', description: 'Text copied to clipboard.' });
+                          }}
+                          className="flex-1 h-12 text-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg font-semibold"
+                        >
+                          <ClipboardCopy className="mr-2 h-5 w-5" />
+                          {textCopied ? 'Copied! ✅' : 'Copy to Clipboard'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setReceivedText('');
+                            setInputCode('');
+                          }}
+                          className="flex-1 h-12 text-lg border-2"
+                        >
+                          Receive More
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : receivedFiles.length === 0 ? (
                 <div className="text-center space-y-8">
                   <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-8 border border-purple-200">
                     <div className="relative mb-6">
@@ -1708,17 +1969,44 @@ export default function Home() {
                       />
 
                       <Button
-                        onClick={handleReceiveFile}
+                        onClick={async () => {
+                          if (shareMode === 'text') {
+                            // Text receive via REST
+                            const normalized = inputCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+                            if (!normalized || normalized.length !== 6) {
+                              toast({ title: 'Invalid Code', description: 'Please enter a 6-character code', variant: 'destructive' });
+                              return;
+                            }
+                            setIsTextReceiving(true);
+                            try {
+                              const response = await fetch(`/api/text/${normalized}`);
+                              if (response.ok) {
+                                const data = await response.json();
+                                setReceivedText(data.text);
+                                toast({ title: '📋 Text Received!', description: `${data.byteLength || 0} bytes received.` });
+                              } else {
+                                const err = await response.json();
+                                toast({ title: 'Text Not Found', description: err.error || 'No text found with that code.', variant: 'destructive' });
+                              }
+                            } catch (error: any) {
+                              toast({ title: 'Error', description: error.message, variant: 'destructive' });
+                            } finally {
+                              setIsTextReceiving(false);
+                            }
+                          } else {
+                            handleReceiveFile();
+                          }
+                        }}
                         className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
-                        disabled={(transferType === 'internet' && !isConnected) || inputCode.length !== 6 || isReceiving}
+                        disabled={(transferType === 'internet' && !isConnected) || inputCode.length !== 6 || isReceiving || isTextReceiving}
                         title={inputCode.length !== 6 ? "Enter a 6-character code" : transferType === 'internet' && !isConnected ? "Connect to the server first" : undefined}
                       >
-                        {isReceiving ? (
+                        {isReceiving || isTextReceiving ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Receiving files…
+                            {shareMode === 'text' ? 'Retrieving text…' : 'Receiving files…'}
                           </>
-                        ) : inputCode.length === 6 ? 'Get My Files 🚀' : `Enter ${6 - inputCode.length} more characters`}
+                        ) : inputCode.length === 6 ? (shareMode === 'text' ? 'Get My Text 📋' : 'Get My Files 🚀') : `Enter ${6 - inputCode.length} more characters`}
                       </Button>
                       {inputCode.length === 6 && !isReceiving && (
                         <p className="text-xs text-gray-500 text-center">We&apos;ll look for files with this code.</p>

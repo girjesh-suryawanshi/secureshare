@@ -68,6 +68,12 @@ export default function Footer() {
                   Disclaimer
                 </Link>
               </li>
+              <li>
+                <Link href="/report-abuse" className="text-red-400 hover:text-red-300 text-sm transition-colors flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Report Abuse / Take-down
+                </Link>
+              </li>
             </ul>
           </div>
 
