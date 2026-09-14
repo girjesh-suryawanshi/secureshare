@@ -26,6 +26,9 @@ import {
   X,
   ImageIcon,
   QrCode,
+  Check,
+  User,
+  Zap,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -111,7 +114,7 @@ export default function RoomChat() {
   const roomCodeRef = useRef(roomCode);
   const senderNameRef = useRef(senderName);
   const senderIdRef = useRef(senderId);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingMsgRef = useRef<object[]>([]);
@@ -134,9 +137,15 @@ export default function RoomChat() {
     }
   }, [matchRoom, paramsRoom?.code, roomCode]);
 
-  // Auto-scroll to bottom on new messages or typing updates
+  // ─── CRITICAL FIX: Scroll ONLY the inner message list container ──────────────
+  // Never scroll the page window (window.scrollTo) to prevent the screen jumping up!
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [messages, typingUsers, attachedFile]);
 
   const addMessage = useCallback((msg: ChatMessage) => {
@@ -498,26 +507,33 @@ export default function RoomChat() {
 
   // ─── Render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col py-6 px-3 sm:px-6">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col py-3 sm:py-6 px-2 sm:px-6 select-none font-sans">
       <SEOHead
         title="6-Digit Instant Room Chat & File Share — HexaSend"
         description="Join an instant, zero-login 6-digit code room to chat, paste code snippets, share images, and transfer files securely."
         keywords="instant room chat, 6-digit chat, team chat, ephemeral chat, secure file share"
       />
 
-      <div className="max-w-4xl mx-auto w-full flex flex-col flex-1">
+      <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 h-[88vh] sm:h-[85vh] my-auto">
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-800">
+        <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-800/80 px-1">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={() => setLocation("/")}
-              className="border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-800">
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+              className="border-slate-700/80 bg-slate-900/80 text-slate-200 hover:bg-slate-800 text-xs h-8 px-2.5">
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Back
             </Button>
-            <div className="flex items-center gap-2">
-              <div className="bg-indigo-600 p-2 rounded-xl shadow-lg"><MessageSquare className="h-5 w-5" /></div>
+            <div className="flex items-center gap-2.5">
+              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
+                <MessageSquare className="h-4 w-4 text-white" />
+              </div>
               <div>
-                <h1 className="text-base font-bold leading-tight">Instant Room Chat</h1>
+                <h1 className="text-sm sm:text-base font-bold leading-tight flex items-center gap-2">
+                  Instant Room Chat
+                  <Badge variant="outline" className="hidden sm:inline-flex bg-indigo-950/50 text-indigo-300 border-indigo-800/60 text-[10px] px-1.5 py-0">
+                    <Zap className="h-2.5 w-2.5 mr-1 text-amber-400" /> End-to-End Ephemeral
+                  </Badge>
+                </h1>
                 <p className="text-[11px] text-slate-400">Zero-login · 6-digit room code</p>
               </div>
             </div>
@@ -527,21 +543,21 @@ export default function RoomChat() {
             <div className="flex items-center gap-2">
               <Badge variant="outline"
                 className={`text-xs px-2 py-1 ${wsReady
-                  ? "bg-emerald-950/50 text-emerald-400 border-emerald-800"
-                  : "bg-amber-950/50 text-amber-400 border-amber-800"}`}>
+                  ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/80"
+                  : "bg-amber-950/60 text-amber-400 border-amber-800/80"}`}>
                 {wsReady
-                  ? <><span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse mr-1" />{activeUsers} online</>
+                  ? <><span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse mr-1.5" />{activeUsers} online</>
                   : <><WifiOff className="h-3 w-3 mr-1 animate-pulse" />Connecting…</>}
               </Badge>
               <Button variant="outline" size="sm" onClick={() => setShowQrModal(true)}
-                className="bg-indigo-950/60 text-indigo-300 border-indigo-800 hover:bg-indigo-900 text-xs flex items-center gap-1">
+                className="bg-indigo-950/60 text-indigo-300 border-indigo-800/80 hover:bg-indigo-900/80 text-xs h-8 px-2.5 flex items-center gap-1">
                 <QrCode className="h-3.5 w-3.5" />
-                <span>QR Code</span>
+                <span className="hidden sm:inline">QR Code</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleCopyLink}
-                className="bg-indigo-950/60 text-indigo-300 border-indigo-800 hover:bg-indigo-900 text-xs flex items-center gap-1">
+                className="bg-indigo-950/60 text-indigo-300 border-indigo-800/80 hover:bg-indigo-900/80 text-xs h-8 px-2.5 flex items-center gap-1">
                 {linkCopied ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
-                <span>Share</span>
+                <span className="hidden sm:inline">Share</span>
               </Button>
             </div>
           )}
@@ -549,25 +565,28 @@ export default function RoomChat() {
 
         {/* ── Entry Screen ── */}
         {!inRoom ? (
-          <div className="my-auto max-w-md mx-auto w-full">
-            <Card className="bg-slate-900/90 border-slate-800 shadow-2xl backdrop-blur-xl">
+          <div className="my-auto max-w-md mx-auto w-full px-2">
+            <Card className="bg-slate-900/90 border-slate-800 shadow-2xl backdrop-blur-xl rounded-2xl">
               <CardContent className="p-6 space-y-5">
                 <div className="text-center">
-                  <div className="inline-flex p-3 rounded-2xl bg-indigo-600/20 text-indigo-400 mb-3">
+                  <div className="inline-flex p-3 rounded-2xl bg-indigo-600/20 text-indigo-400 mb-3 shadow-inner">
                     <Sparkles className="h-8 w-8" />
                   </div>
-                  <h2 className="text-xl font-bold">Join or Create Room</h2>
+                  <h2 className="text-xl font-bold text-white">Join or Create Room</h2>
                   <p className="text-xs text-slate-400 mt-1">Enter a 6-character code to join, or create a new room instantly.</p>
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">Your Nickname</label>
-                  <Input
-                    value={senderName}
-                    onChange={e => handleNameChange(e.target.value)}
-                    placeholder="e.g. Alex · Design Team"
-                    className="bg-slate-950 border-slate-800 text-white focus:border-indigo-500"
-                  />
+                  <div className="relative">
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                    <Input
+                      value={senderName}
+                      onChange={e => handleNameChange(e.target.value)}
+                      placeholder="e.g. Alex · Design Team"
+                      className="bg-slate-950 border-slate-800 text-white pl-9 focus:border-indigo-500"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -586,13 +605,13 @@ export default function RoomChat() {
                       id="join-room-btn"
                       onClick={() => handleJoin()}
                       disabled={entryCode.length !== 6}
-                      className="bg-indigo-600 hover:bg-indigo-700 px-5 font-semibold">
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-5 font-semibold shadow-lg shadow-indigo-600/20">
                       Join
                     </Button>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-slate-500 text-xs">
+                <div className="flex items-center gap-3 text-slate-600 text-xs">
                   <div className="flex-1 border-t border-slate-800" /><span>or</span><div className="flex-1 border-t border-slate-800" />
                 </div>
 
@@ -606,66 +625,73 @@ export default function RoomChat() {
 
                 <div className="flex items-start gap-2 bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-xs text-slate-400">
                   <Lock className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <p><strong className="text-slate-200">Ephemeral:</strong> Messages exist only during the active session. Nothing is stored.</p>
+                  <p><strong className="text-slate-200">Ephemeral:</strong> Messages exist only during active session. Nothing stored.</p>
                 </div>
               </CardContent>
             </Card>
           </div>
         ) : (
-          /* ── Active Chat Room ── */
+          /* ── Active Chat Room App ── */
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={`relative flex flex-col flex-1 bg-slate-900/90 border rounded-2xl overflow-hidden shadow-2xl transition-colors ${
-              isDragging ? "border-indigo-500 bg-indigo-950/20" : "border-slate-800"
-            }`}
-            style={{ minHeight: "500px", maxHeight: "75vh" }}>
+              isDragging ? "border-indigo-500 bg-indigo-950/30" : "border-slate-800/80"
+            }`}>
 
             {/* Drag drop overlay */}
             {isDragging && (
-              <div className="absolute inset-0 bg-indigo-950/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center border-2 border-dashed border-indigo-400 m-3 rounded-xl pointer-events-none">
+              <div className="absolute inset-0 bg-indigo-950/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center border-2 border-dashed border-indigo-400 m-3 rounded-xl pointer-events-none">
                 <Paperclip className="h-12 w-12 text-indigo-400 animate-bounce mb-2" />
                 <p className="text-base font-bold text-indigo-200">Drop file to attach to chat</p>
               </div>
             )}
 
-            {/* Room bar */}
-            <div className="bg-slate-950/80 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400">Room:</span>
-                <Badge className="bg-indigo-600 text-white font-mono tracking-widest text-sm px-2 py-0.5">
+            {/* Top Room bar */}
+            <div className="bg-slate-950/90 px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between text-xs backdrop-blur-md">
+              <div className="flex items-center gap-2.5">
+                <span className="text-slate-400 font-medium">Room:</span>
+                <Badge className="bg-indigo-600 text-white font-mono tracking-widest text-xs px-2 py-0.5 shadow">
                   {roomCode}
                 </Badge>
-                <span className="text-[11px] text-slate-400 hidden sm:inline ml-2">
-                  (You: <Input
+                <div className="flex items-center gap-1.5 text-slate-400 ml-1">
+                  <span className="text-slate-500">·</span>
+                  <span className="text-slate-400 font-medium">You:</span>
+                  <Input
                     value={senderName}
                     onChange={e => handleNameChange(e.target.value)}
-                    className="inline-block w-28 h-6 bg-slate-900 border-slate-700 text-xs text-indigo-300 font-semibold px-1.5 focus:border-indigo-500 rounded"
-                  />)
-                </span>
+                    className="w-24 sm:w-32 h-6 bg-slate-900/90 border-slate-700/80 text-xs text-indigo-300 font-semibold px-2 focus:border-indigo-500 rounded-md"
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center text-slate-400 gap-1">
+                <div className="hidden sm:flex items-center text-slate-400 gap-1 text-[11px]">
                   <Shield className="h-3.5 w-3.5 text-emerald-400" />
                   <span>Ephemeral</span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleExitRoom}
-                  className="text-red-400 hover:text-red-300 hover:bg-red-950/30 text-xs h-7 px-2">
+                  className="text-red-400 hover:text-red-300 hover:bg-red-950/30 text-xs h-7 px-2.5 rounded-lg">
                   <Trash2 className="h-3.5 w-3.5 mr-1" /> Exit
                 </Button>
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* ── Messages Scroll Container ───────────────────────────────────── */}
+            {/* Using ref={scrollContainerRef} for inner scroll ONLY (never scrolls window) */}
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3.5 scroll-smooth bg-slate-950/40">
+
               {messages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
-                  <MessageSquare className="h-10 w-10 text-slate-600" />
+                  <div className="p-4 rounded-full bg-slate-800/60 border border-slate-700/50">
+                    <MessageSquare className="h-8 w-8 text-slate-500" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-300">Room is ready!</p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Share code <span className="font-mono text-indigo-400 font-bold">{roomCode}</span> or scan QR code to start chatting across any device.
+                    <p className="text-sm font-bold text-slate-200">Room is Ready!</p>
+                    <p className="text-xs text-slate-400 mt-1 max-w-sm leading-relaxed">
+                      Share code <span className="font-mono text-indigo-400 font-bold">{roomCode}</span> or scan QR code to chat and share files instantly across devices.
                     </p>
                   </div>
                 </div>
@@ -674,8 +700,8 @@ export default function RoomChat() {
               {messages.map(msg => {
                 if (msg.isSystem) {
                   return (
-                    <div key={msg.id} className="flex justify-center">
-                      <span className="bg-slate-800/80 text-slate-400 text-xs px-3 py-1 rounded-full border border-slate-700/50">
+                    <div key={msg.id} className="flex justify-center my-2">
+                      <span className="bg-slate-800/60 text-slate-400 text-[11px] px-3 py-1 rounded-full border border-slate-700/40 backdrop-blur-sm shadow-sm">
                         {msg.text}
                       </span>
                     </div>
@@ -686,21 +712,24 @@ export default function RoomChat() {
                 return (
                   <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                     <div className="flex items-center gap-2 mb-1 px-1">
-                      <span className="text-xs font-medium text-slate-400">{isMe ? "You" : msg.senderName}</span>
+                      <span className="text-[11px] font-semibold text-slate-400">{isMe ? "You" : msg.senderName}</span>
                       <span className="text-[10px] text-slate-500">{msg.timestamp}</span>
                     </div>
-                    <div className={`relative group max-w-[85%] sm:max-w-[70%] rounded-2xl p-3 shadow ${
+
+                    <div className={`relative group max-w-[88%] sm:max-w-[75%] rounded-2xl p-3 shadow-md ${
                       isMe
-                        ? "bg-indigo-600 text-white rounded-br-none"
-                        : "bg-slate-800 border border-slate-700 text-slate-100 rounded-bl-none"
+                        ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-tr-xs"
+                        : "bg-slate-800/95 border border-slate-700/80 text-slate-100 rounded-tl-xs"
                     }`}>
+
+                      {/* Text content */}
                       {msg.text && (
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words select-text">{msg.text}</p>
                       )}
 
-                      {/* Image Message Rendering with Explicit Save/Download Button */}
+                      {/* Image Message Rendering with Save/Download Button */}
                       {msg.isImage && msg.mediaUrl && (
-                        <div className="mt-2 rounded-xl overflow-hidden border border-black/20 max-w-xs relative bg-slate-950">
+                        <div className="mt-2 rounded-xl overflow-hidden border border-black/20 max-w-xs relative bg-slate-950 shadow-inner">
                           <img
                             src={msg.mediaUrl}
                             alt={msg.fileName || "image"}
@@ -727,10 +756,12 @@ export default function RoomChat() {
                         </div>
                       )}
 
-                      {/* File Message Rendering */}
+                      {/* Document File Message Rendering */}
                       {!msg.isImage && msg.mediaUrl && (
-                        <div className="mt-2 flex items-center gap-2 p-2 bg-black/20 rounded-xl border border-white/10">
-                          <FileText className="h-5 w-5 text-indigo-300 flex-shrink-0" />
+                        <div className="mt-2 flex items-center gap-2.5 p-2.5 bg-black/25 rounded-xl border border-white/10">
+                          <div className="p-2 bg-indigo-600/30 rounded-lg text-indigo-300 shrink-0">
+                            <FileText className="h-5 w-5" />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold truncate">{msg.fileName}</p>
                             <p className="text-[10px] opacity-70">{((msg.fileSize || 0) / 1024).toFixed(1)} KB</p>
@@ -738,24 +769,28 @@ export default function RoomChat() {
                           <a
                             href={msg.mediaUrl}
                             download={msg.fileName}
-                            className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                            className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors shrink-0"
                             title="Download file">
-                            <Download className="h-3.5 w-3.5" />
+                            <Download className="h-4 w-4" />
                           </a>
                         </div>
                       )}
 
-                      {msg.text && (
-                        <button
-                          type="button"
-                          onClick={() => handleCopyMsg(msg.id, msg.text!)}
-                          className="absolute -top-2 -right-2 bg-slate-900 border border-slate-700 text-slate-400 hover:text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
-                          title="Copy text">
-                          {copiedMsgId === msg.id
-                            ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                            : <Copy className="h-3.5 w-3.5" />}
-                        </button>
-                      )}
+                      {/* Status indicator / Copy action */}
+                      <div className="flex items-center justify-end gap-1.5 mt-1">
+                        {msg.text && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMsg(msg.id, msg.text!)}
+                            className="text-slate-400 hover:text-white p-0.5 rounded transition-colors"
+                            title="Copy text">
+                            {copiedMsgId === msg.id
+                              ? <CheckCircle className="h-3 w-3 text-emerald-400 inline" />
+                              : <Copy className="h-3 w-3 inline opacity-60 hover:opacity-100" />}
+                          </button>
+                        )}
+                        {isMe && <Check className="h-3 w-3 text-indigo-200 inline opacity-70" />}
+                      </div>
                     </div>
                   </div>
                 );
@@ -763,7 +798,7 @@ export default function RoomChat() {
 
               {/* WhatsApp-Style Animated Typing Indicator */}
               {typingText && (
-                <div className="flex items-center gap-2 text-xs font-medium text-indigo-300 bg-indigo-950/80 px-3 py-1.5 rounded-full border border-indigo-800/60 w-fit shadow-md animate-fade-in">
+                <div className="flex items-center gap-2 text-xs font-medium text-indigo-300 bg-slate-900/90 px-3.5 py-2 rounded-2xl border border-slate-800 w-fit shadow-md animate-fade-in my-1">
                   <span>{typingText}</span>
                   <span className="flex space-x-1 items-center ml-1">
                     <span className="h-1.5 w-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -772,7 +807,6 @@ export default function RoomChat() {
                   </span>
                 </div>
               )}
-              <div ref={chatEndRef} />
             </div>
 
             {/* Attached file preview before sending */}
@@ -804,8 +838,8 @@ export default function RoomChat() {
               </div>
             )}
 
-            {/* Input bar */}
-            <div className="bg-slate-950 border-t border-slate-800 p-3 flex items-center gap-2">
+            {/* Bottom Input bar */}
+            <div className="bg-slate-950 border-t border-slate-800/80 p-2.5 sm:p-3 flex items-center gap-2">
               {/* Hidden file input */}
               <input
                 type="file"
@@ -821,7 +855,7 @@ export default function RoomChat() {
                 variant="ghost"
                 size="icon"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl h-9 w-9 flex-shrink-0"
+                className="text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-xl h-10 w-10 flex-shrink-0"
                 title="Attach file or image (max 20 MB)">
                 <Paperclip className="h-4 w-4" />
               </Button>
@@ -839,7 +873,7 @@ export default function RoomChat() {
                   }
                 }}
                 placeholder={wsReady ? "Type a message or paste image… (Enter to send)" : "Connecting to room…"}
-                className="flex-1 bg-slate-900 border-slate-800 text-white focus:border-indigo-500 rounded-xl text-sm h-9"
+                className="flex-1 bg-slate-900 border-slate-800 text-white focus:border-indigo-500 rounded-xl text-sm h-10 px-4"
               />
 
               {/* Send button */}
@@ -848,7 +882,7 @@ export default function RoomChat() {
                 type="button"
                 onClick={handleSend}
                 disabled={isSendDisabled}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-9 px-4 flex-shrink-0 disabled:opacity-40">
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl h-10 px-4 font-semibold shadow-lg shadow-indigo-600/30 flex-shrink-0 disabled:opacity-40 transition-transform active:scale-95">
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -865,7 +899,7 @@ export default function RoomChat() {
               Scan to Join Room
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-400 mt-1">
-              Scan this QR code with your phone or camera to join room <strong className="text-indigo-400 font-mono">{roomCode}</strong> instantly.
+              Scan this QR code with your phone camera to join room <strong className="text-indigo-400 font-mono">{roomCode}</strong> instantly.
             </DialogDescription>
           </DialogHeader>
 
