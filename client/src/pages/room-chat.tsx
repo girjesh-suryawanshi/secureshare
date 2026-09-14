@@ -57,6 +57,13 @@ function validateFile(file: File): string | null {
   return null;
 }
 
+function genUUID() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now().toString(36);
+}
+
 function genRoomCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
@@ -188,7 +195,7 @@ export default function RoomChat() {
             case "room-user-left":
               setActiveUsers(data.activeUsers ?? 1);
               addMessage({
-                id: crypto.randomUUID(),
+                id: genUUID(),
                 senderId: "system",
                 senderName: "System",
                 text: data.message || (data.type === "room-user-joined" ? "A user joined." : "A user left."),
@@ -199,7 +206,7 @@ export default function RoomChat() {
 
             case "room-chat-message":
               addMessage({
-                id: data.chatId || crypto.randomUUID(),
+                id: data.chatId || genUUID(),
                 senderId: data.senderId ?? "unknown",
                 senderName: data.senderName ?? "Unknown",
                 text: data.text,
@@ -368,7 +375,7 @@ export default function RoomChat() {
     const text = inputText.trim();
     if ((!text && !attachedFile) || !inRoom) return;
 
-    const chatId = crypto.randomUUID();
+    const chatId = genUUID();
     const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     const msgData: ChatMessage = {
