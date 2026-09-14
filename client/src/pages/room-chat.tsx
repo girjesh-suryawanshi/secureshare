@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { SEOHead } from "@/components/seo-head";
+import { QRCodeSVG } from "qrcode.react";
 import {
   MessageSquare,
   Send,
@@ -19,11 +21,11 @@ import {
   Sparkles,
   Download,
   FileText,
-  Clock,
   Lock,
   WifiOff,
   X,
   ImageIcon,
+  QrCode,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -100,9 +102,10 @@ export default function RoomChat() {
   const [inputText, setInputText] = useState("");
   const [attachedFile, setAttachedFile] = useState<PendingAttachment | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isPeerTyping, setIsPeerTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
   const [linkCopied, setLinkCopied] = useState(false);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const roomCodeRef = useRef(roomCode);
@@ -113,6 +116,7 @@ export default function RoomChat() {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingMsgRef = useRef<object[]>([]);
   const destroyedRef = useRef(false);
+  const lastTypingSentRef = useRef<number>(0);
 
   // Keep refs in sync
   useEffect(() => { roomCodeRef.current = roomCode; }, [roomCode]);
@@ -130,10 +134,10 @@ export default function RoomChat() {
     }
   }, [matchRoom, paramsRoom?.code, roomCode]);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom on new messages or typing updates
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isPeerTyping, attachedFile]);
+  }, [messages, typingUsers, attachedFile]);
 
   const addMessage = useCallback((msg: ChatMessage) => {
     setMessages(prev => [...prev, msg]);
@@ -221,8 +225,31 @@ export default function RoomChat() {
 
             case "room-typing":
               if (data.senderId !== senderIdRef.current) {
-                setIsPeerTyping(!!data.isTyping);
-                if (data.isTyping) setTimeout(() => setIsPeerTyping(false), 3000);
+                const sId = data.senderId;
+                const sName = data.senderName || "Someone";
+                if (data.isTyping) {
+                  setTypingUsers(prev => {
+                    const next = new Map(prev);
+                    next.set(sId, sName);
+                    return next;
+                  });
+                  // Expire typing after 3s if no continuation packet received
+                  setTimeout(() => {
+                    setTypingUsers(prev => {
+                      if (!prev.has(sId)) return prev;
+                      const next = new Map(prev);
+                      next.delete(sId);
+                      return next;
+                    });
+                  }, 3000);
+                } else {
+                  setTypingUsers(prev => {
+                    if (!prev.has(sId)) return prev;
+                    const next = new Map(prev);
+                    next.delete(sId);
+                    return next;
+                  });
+                }
               }
               break;
           }
@@ -280,6 +307,7 @@ export default function RoomChat() {
     setEntryCode(code);
     setInRoom(true);
     setMessages([]);
+    setTypingUsers(new Map());
     setLocation(`/room/${code}`, { replace: true });
   }, [entryCode, setLocation, toast]);
 
@@ -294,6 +322,7 @@ export default function RoomChat() {
     setRoomCode("");
     setEntryCode("");
     setAttachedFile(null);
+    setTypingUsers(new Map());
     setWsReady(false);
     setLocation("/chat");
   }, [sendRaw, setLocation]);
@@ -364,16 +393,34 @@ export default function RoomChat() {
   // ─── Messaging ────────────────────────────────────────────────────────
   const handleInputChange = (text: string) => {
     setInputText(text);
-    sendRaw({ type: "room-typing", code: roomCodeRef.current, senderId, senderName, isTyping: true });
+
+    const now = Date.now();
+    // Send typing status once every 1.5s max while typing
+    if (now - lastTypingSentRef.current > 1500) {
+      lastTypingSentRef.current = now;
+      sendRaw({ type: "room-typing", code: roomCodeRef.current, senderId, senderName, isTyping: true });
+    }
+
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-    typingTimerRef.current = setTimeout(() => {
+
+    if (!text.trim()) {
+      // Input cleared - immediately clear typing indicator
       sendRaw({ type: "room-typing", code: roomCodeRef.current, senderId, senderName, isTyping: false });
-    }, 2000);
+    } else {
+      // Inactivity timeout - clear typing after 2s of no keypresses
+      typingTimerRef.current = setTimeout(() => {
+        sendRaw({ type: "room-typing", code: roomCodeRef.current, senderId, senderName, isTyping: false });
+      }, 2000);
+    }
   };
 
   const handleSend = useCallback(() => {
     const text = inputText.trim();
     if ((!text && !attachedFile) || !inRoom) return;
+
+    // Immediately stop typing indicator for peers
+    sendRaw({ type: "room-typing", code: roomCodeRef.current, senderId, senderName, isTyping: false });
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 
     const chatId = genUUID();
     const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -429,7 +476,25 @@ export default function RoomChat() {
     setTimeout(() => setCopiedMsgId(null), 2000);
   };
 
+  const handleDownloadMedia = (mediaUrl: string, fileName: string) => {
+    const a = document.createElement("a");
+    a.href = mediaUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast({ title: "Downloading Image", description: fileName });
+  };
+
   const isSendDisabled = !inputText.trim() && !attachedFile;
+
+  // Format active typing users list
+  const typingArray = Array.from(typingUsers.values());
+  const typingText = typingArray.length === 1
+    ? `${typingArray[0]} is typing`
+    : typingArray.length > 1
+      ? `${typingArray.join(", ")} are typing`
+      : null;
 
   // ─── Render ───────────────────────────────────────────────────────────
   return (
@@ -468,10 +533,15 @@ export default function RoomChat() {
                   ? <><span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse mr-1" />{activeUsers} online</>
                   : <><WifiOff className="h-3 w-3 mr-1 animate-pulse" />Connecting…</>}
               </Badge>
+              <Button variant="outline" size="sm" onClick={() => setShowQrModal(true)}
+                className="bg-indigo-950/60 text-indigo-300 border-indigo-800 hover:bg-indigo-900 text-xs flex items-center gap-1">
+                <QrCode className="h-3.5 w-3.5" />
+                <span>QR Code</span>
+              </Button>
               <Button variant="outline" size="sm" onClick={handleCopyLink}
-                className="bg-indigo-950/60 text-indigo-300 border-indigo-800 hover:bg-indigo-900 text-xs">
-                {linkCopied ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400 mr-1" /> : <Share2 className="h-3.5 w-3.5 mr-1" />}
-                Share
+                className="bg-indigo-950/60 text-indigo-300 border-indigo-800 hover:bg-indigo-900 text-xs flex items-center gap-1">
+                {linkCopied ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
+                <span>Share</span>
               </Button>
             </div>
           )}
@@ -567,6 +637,13 @@ export default function RoomChat() {
                 <Badge className="bg-indigo-600 text-white font-mono tracking-widest text-sm px-2 py-0.5">
                   {roomCode}
                 </Badge>
+                <span className="text-[11px] text-slate-400 hidden sm:inline ml-2">
+                  (You: <Input
+                    value={senderName}
+                    onChange={e => handleNameChange(e.target.value)}
+                    className="inline-block w-28 h-6 bg-slate-900 border-slate-700 text-xs text-indigo-300 font-semibold px-1.5 focus:border-indigo-500 rounded"
+                  />)
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex items-center text-slate-400 gap-1">
@@ -588,7 +665,7 @@ export default function RoomChat() {
                   <div>
                     <p className="text-sm font-semibold text-slate-300">Room is ready!</p>
                     <p className="text-xs text-slate-500 mt-1">
-                      Share code <span className="font-mono text-indigo-400 font-bold">{roomCode}</span> with teammates to start chatting.
+                      Share code <span className="font-mono text-indigo-400 font-bold">{roomCode}</span> or scan QR code to start chatting across any device.
                     </p>
                   </div>
                 </div>
@@ -620,11 +697,37 @@ export default function RoomChat() {
                       {msg.text && (
                         <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
                       )}
+
+                      {/* Image Message Rendering with Explicit Save/Download Button */}
                       {msg.isImage && msg.mediaUrl && (
-                        <div className="mt-2 rounded-lg overflow-hidden border border-black/20 max-w-xs">
-                          <img src={msg.mediaUrl} alt={msg.fileName || "image"} className="w-full h-auto object-cover max-h-60" />
+                        <div className="mt-2 rounded-xl overflow-hidden border border-black/20 max-w-xs relative bg-slate-950">
+                          <img
+                            src={msg.mediaUrl}
+                            alt={msg.fileName || "image"}
+                            className="w-full h-auto object-cover max-h-64 cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => handleDownloadMedia(msg.mediaUrl!, msg.fileName || "image.png")}
+                          />
+                          <div className="flex items-center justify-between p-2 bg-slate-950/90 text-white border-t border-white/10">
+                            <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                              <ImageIcon className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                              <span className="text-[11px] font-medium truncate">{msg.fileName || "Image"}</span>
+                              {msg.fileSize && (
+                                <span className="text-[10px] text-slate-400 shrink-0">({(msg.fileSize / 1024).toFixed(1)} KB)</span>
+                              )}
+                            </div>
+                            <a
+                              href={msg.mediaUrl}
+                              download={msg.fileName || "image.png"}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold rounded-lg shadow transition-colors shrink-0">
+                              <Download className="h-3 w-3" />
+                              <span>Save</span>
+                            </a>
+                          </div>
                         </div>
                       )}
+
+                      {/* File Message Rendering */}
                       {!msg.isImage && msg.mediaUrl && (
                         <div className="mt-2 flex items-center gap-2 p-2 bg-black/20 rounded-xl border border-white/10">
                           <FileText className="h-5 w-5 text-indigo-300 flex-shrink-0" />
@@ -635,11 +738,13 @@ export default function RoomChat() {
                           <a
                             href={msg.mediaUrl}
                             download={msg.fileName}
-                            className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
+                            className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                            title="Download file">
                             <Download className="h-3.5 w-3.5" />
                           </a>
                         </div>
                       )}
+
                       {msg.text && (
                         <button
                           type="button"
@@ -656,10 +761,15 @@ export default function RoomChat() {
                 );
               })}
 
-              {isPeerTyping && (
-                <div className="flex items-center gap-2 text-xs text-indigo-400 bg-slate-800/40 w-fit px-3 py-1.5 rounded-full border border-slate-700/40 animate-pulse">
-                  <Clock className="h-3 w-3" />
-                  <span>Someone is typing…</span>
+              {/* WhatsApp-Style Animated Typing Indicator */}
+              {typingText && (
+                <div className="flex items-center gap-2 text-xs font-medium text-indigo-300 bg-indigo-950/80 px-3 py-1.5 rounded-full border border-indigo-800/60 w-fit shadow-md animate-fade-in">
+                  <span>{typingText}</span>
+                  <span className="flex space-x-1 items-center ml-1">
+                    <span className="h-1.5 w-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1.5 w-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1.5 w-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </span>
                 </div>
               )}
               <div ref={chatEndRef} />
@@ -745,6 +855,42 @@ export default function RoomChat() {
           </div>
         )}
       </div>
+
+      {/* ── Room QR Code Modal ── */}
+      <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
+        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-sm text-center p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-white flex items-center justify-center gap-2">
+              <QrCode className="h-5 w-5 text-indigo-400" />
+              Scan to Join Room
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-400 mt-1">
+              Scan this QR code with your phone or camera to join room <strong className="text-indigo-400 font-mono">{roomCode}</strong> instantly.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col items-center justify-center my-4 space-y-3">
+            <div className="p-4 bg-white rounded-2xl shadow-2xl inline-block">
+              <QRCodeSVG
+                value={`${window.location.origin}/room/${roomCode}`}
+                size={180}
+                bgColor="#ffffff"
+                fgColor="#000000"
+                level="Q"
+              />
+            </div>
+            <Badge className="bg-indigo-600 text-white font-mono tracking-widest text-base px-3 py-1">
+              {roomCode}
+            </Badge>
+          </div>
+
+          <Button
+            onClick={handleCopyLink}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold min-h-[44px]">
+            {linkCopied ? "Link Copied! ✅" : "Copy Room Link"}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
