@@ -10,7 +10,7 @@ import { FilePreview } from "@/components/file-preview";
 import { DragDropZone } from "@/components/drag-drop-zone";
 import { TransferProgress } from "@/components/transfer-progress";
 import { TransferStats } from "@/components/transfer-stats";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2, Shield, Type, ClipboardCopy } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2, Shield, Type, ClipboardCopy, MessageSquare } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -97,6 +97,7 @@ export default function Home() {
   const pendingRequestRef = useRef<Map<string, number>>(new Map()); // Track pending requests with timestamps
   const lastRequestTimeRef = useRef<number>(0); // Rate limiting for request-file
   const pendingRegistrationsRef = useRef<Map<string, (value: unknown) => void>>(new Map());
+  const receiveSafetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // Safety timeout to prevent stuck state
 
   // Text share state
   const [shareMode, setShareMode] = useState<'file' | 'text'>('file');
@@ -241,6 +242,10 @@ export default function Home() {
             setIsReceiving(false);
             setReceiveProgress(0);
           }, 800);
+          if (receiveSafetyTimerRef.current) {
+            clearTimeout(receiveSafetyTimerRef.current);
+            receiveSafetyTimerRef.current = null;
+          }
 
           if (!job.isLocal) {
             sendMessage({
@@ -264,6 +269,12 @@ export default function Home() {
     } catch (error) {
       downloadedFileKeys.current.delete(key);
       console.error('Failed to download file', error);
+      setIsReceiving(false);
+      setReceiveProgress(0);
+      if (receiveSafetyTimerRef.current) {
+        clearTimeout(receiveSafetyTimerRef.current);
+        receiveSafetyTimerRef.current = null;
+      }
       toast({
         title: 'Download Failed',
         description: job.fileName,
@@ -427,9 +438,64 @@ export default function Home() {
     setReceiveProgress(10);
     resetReceiveState();
 
+    // Safety valve: if stuck in receiving state for 30s, auto-reset to avoid deadlock
+    if (receiveSafetyTimerRef.current) clearTimeout(receiveSafetyTimerRef.current);
+    receiveSafetyTimerRef.current = setTimeout(() => {
+      setIsReceiving(false);
+      setReceiveProgress(0);
+      receiveSafetyTimerRef.current = null;
+      toast({
+        title: "Transfer Timeout",
+        description: "No response from server. Please check the code and try again.",
+        variant: "destructive",
+      });
+    }, 30000);
+
     // Mark this request as pending
     pendingRequestRef.current.set(upperCode, now);
     lastRequestTimeRef.current = now;
+
+    // Fast-path REST check: query /files/:code directly for instant response
+    try {
+      const restRes = await fetch(`/files/${upperCode}`, {
+        headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+      });
+      if (restRes.ok) {
+        const payload = await restRes.json();
+        const filesList = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.files)
+            ? payload.files
+            : [];
+        const readyFiles = filesList.filter((f: any) => f.downloadUrl && f.isReady);
+        if (readyFiles.length > 0) {
+          setExpectedFilesCount(readyFiles.length);
+          for (const file of readyFiles) {
+            await downloadFileJob({
+              code: upperCode,
+              downloadUrl: file.downloadUrl,
+              fileName: file.fileName,
+              fileType: file.fileType,
+              fileIndex: file.fileIndex ?? 0,
+              totalFiles: readyFiles.length,
+              isLocal: transferType === 'local',
+            });
+          }
+          if (receiveSafetyTimerRef.current) {
+            clearTimeout(receiveSafetyTimerRef.current);
+            receiveSafetyTimerRef.current = null;
+          }
+          setIsReceiving(false);
+          setReceiveProgress(0);
+          if (isConnected) {
+            sendMessage({ type: 'request-file', code: upperCode });
+          }
+          return;
+        }
+      }
+    } catch {
+      // Continue to WebSocket logic below if REST check fails
+    }
 
     // Handle local network transfer
     if (transferType === 'local') {
@@ -754,6 +820,7 @@ export default function Home() {
       receiveRequestCodeRef.current = null;
       receiveRetryCountRef.current = 0;
       pendingRequestRef.current.delete(normalizedCode);
+      if (receiveSafetyTimerRef.current) { clearTimeout(receiveSafetyTimerRef.current); receiveSafetyTimerRef.current = null; }
       setIsReceiving(false);
       setReceiveProgress(0);
       toast({
@@ -844,7 +911,7 @@ export default function Home() {
         receiveRetryTimeoutRef.current = null;
       }
     };
-  }, [downloadFileJob, expectedFilesCount, inputCode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onFileRegistered, onSenderDisconnected, onTextAvailable, onTextNotFound, onTextRegistered, sendMessage, toast]);
+  }, [downloadFileJob, expectedFilesCount, inputCode, mode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onFileRegistered, onSenderDisconnected, onTextAvailable, onTextNotFound, onTextRegistered, sendMessage, toast]);
 
   // Auto-focus code input when entering receive mode
   useEffect(() => {
@@ -853,12 +920,12 @@ export default function Home() {
     }
   }, [mode, match]);
 
-  // Handle incoming share links via QR code
+  // Handle incoming share links via QR code — auto-trigger receive on scan
   useEffect(() => {
     if (match && params?.code) {
       setMode('receive');
-      // Update form state with the value from URL
-      setInputCode(params.code.toUpperCase());
+      const scannedCode = params.code.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      setInputCode(scannedCode);
 
       // Look for transfer type parameter (e.g., ?mode=local)
       const searchParams = new URLSearchParams(window.location.search);
@@ -867,13 +934,20 @@ export default function Home() {
         setTransferType(modeParam);
       }
 
-      // Auto-submit the request slightly after setting state
-      setTimeout(() => {
+      // Auto-submit after a short delay to let WS connect and state settle
+      const autoSubmitTimer = setTimeout(() => {
         if (receiveCodeInputRef.current) {
           receiveCodeInputRef.current.focus();
-          // Optional: We could trigger the fetch automatically here if we wanted.
         }
-      }, 100);
+        // Programmatically click the receive button if code is valid
+        if (scannedCode.length === 6) {
+          const receiveBtn = document.getElementById('receive-file-btn');
+          if (receiveBtn && !(receiveBtn as HTMLButtonElement).disabled) {
+            receiveBtn.click();
+          }
+        }
+      }, 800);
+      return () => clearTimeout(autoSubmitTimer);
     }
   }, [match, params]);
 
@@ -1112,7 +1186,34 @@ export default function Home() {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
 
+                {/* Instant Room Chat Banner Card */}
+                <div className="mt-6">
+                  <Card className="group hover:scale-[1.02] transition-all duration-300 shadow-2xl border border-indigo-200/50 bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-950 text-white overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <CardContent className="p-6 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-indigo-600/30 border border-indigo-400/30 rounded-2xl p-3 text-indigo-300 shrink-0">
+                          <MessageSquare className="h-8 w-8" />
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="text-xl font-bold">6-Digit Instant Room Chat</h3>
+                            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">NEW FEATURE</Badge>
+                          </div>
+                          <p className="text-xs sm:text-sm text-slate-300">
+                            Create or join a 6-digit room to chat live, paste code snippets, share images & send team files in real-time.
+                          </p>
+                        </div>
+                      </div>
+                      <Link href="/chat">
+                        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg font-semibold px-6 py-5 whitespace-nowrap min-h-[44px]">
+                          Open Instant Chat 💬
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
                 </div>
 
                 {transferType === 'internet' && !isConnected && (
@@ -1997,6 +2098,7 @@ export default function Home() {
                             handleReceiveFile();
                           }
                         }}
+                      id="receive-file-btn"
                         className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
                         disabled={(transferType === 'internet' && !isConnected) || inputCode.length !== 6 || isReceiving || isTextReceiving}
                         title={inputCode.length !== 6 ? "Enter a 6-character code" : transferType === 'internet' && !isConnected ? "Connect to the server first" : undefined}

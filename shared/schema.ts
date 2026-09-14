@@ -28,6 +28,13 @@ export const MessageSchema = z.object({
     'text-registered',
     'text-available',
     'text-not-found',
+    // Room Chat message types
+    'join-room-chat',
+    'leave-room-chat',
+    'room-chat-message',
+    'room-user-joined',
+    'room-user-left',
+    'room-typing',
     'error',
     'ping',
     'pong'
@@ -56,6 +63,14 @@ export const MessageSchema = z.object({
   isReady: z.boolean().optional(),
   receivedBytes: z.number().optional(),
   byteLength: z.number().optional(), // text share byte length
+  // Room chat fields
+  senderName: z.string().optional(),
+  senderId: z.string().optional(),
+  chatId: z.string().optional(),
+  mediaUrl: z.string().optional(),
+  isImage: z.boolean().optional(),
+  isTyping: z.boolean().optional(),
+  activeUsers: z.number().optional(),
 });
 
 export type Message = z.infer<typeof MessageSchema>;

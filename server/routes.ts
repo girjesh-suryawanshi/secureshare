@@ -187,6 +187,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             case "request-text":
               handleRequestText(message, ws);
               break;
+            case "join-room-chat":
+              handleJoinRoomChat(message, ws);
+              break;
+            case "leave-room-chat":
+              handleLeaveRoomChat(message, ws);
+              break;
+            case "room-chat-message":
+              handleRoomChatMessage(message, ws);
+              break;
+            case "room-typing":
+              handleRoomTyping(message, ws);
+              break;
             default:
               logger.warn({ type: message.type }, "Unknown message type received");
           }
@@ -207,6 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Clean up rate limit tracking
       requestRateLimit.delete(ws);
+      cleanupRoomWs(ws);
 
       for (const [code, registry] of fileRegistry.entries()) {
         if (registry.senderWs === ws) {
@@ -872,6 +885,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
     file.completed = false;
     file.totalChunks = meta.totalChunks;
     return file;
+  }
+
+  // ─── Room Chat Handlers ─────────────────────────────────────────────
+  interface RoomMember {
+    ws: WebSocket;
+    senderId: string;
+    senderName: string;
+  }
+
+  const roomChatRegistry = new Map<string, Set<RoomMember>>();
+
+  function handleJoinRoomChat(message: any, ws: WebSocket) {
+    const code = normalizeCode(message.code);
+    const senderId = message.senderId || "anon-" + Math.random().toString(36).substring(2, 8);
+    const senderName = message.senderName || "Guest User";
+
+    if (!code) return;
+
+    if (!roomChatRegistry.has(code)) {
+      roomChatRegistry.set(code, new Set());
+    }
+
+    const members = roomChatRegistry.get(code)!;
+    for (const m of members) {
+      if (m.ws === ws) members.delete(m);
+    }
+
+    const newMember = { ws, senderId, senderName };
+    members.add(newMember);
+
+    const activeUsers = members.size;
+
+    const joinPayload = JSON.stringify({
+      type: "room-user-joined",
+      code,
+      senderId,
+      senderName,
+      activeUsers,
+      message: `${senderName} joined the room.`
+    });
+
+    members.forEach((m) => {
+      if (m.ws.readyState === WebSocket.OPEN) {
+        m.ws.send(joinPayload);
+      }
+    });
+
+    logger.info({ code, senderName, activeUsers }, "User joined room chat");
+  }
+
+  function handleLeaveRoomChat(message: any, ws: WebSocket) {
+    const code = normalizeCode(message.code);
+    if (!code || !roomChatRegistry.has(code)) return;
+
+    const members = roomChatRegistry.get(code)!;
+    let leftName = "Guest User";
+    let leftId = message.senderId;
+
+    for (const m of members) {
+      if (m.ws === ws) {
+        leftName = m.senderName;
+        leftId = m.senderId;
+        members.delete(m);
+        break;
+      }
+    }
+
+    if (members.size === 0) {
+      roomChatRegistry.delete(code);
+    } else {
+      const leavePayload = JSON.stringify({
+        type: "room-user-left",
+        code,
+        senderId: leftId,
+        senderName: leftName,
+        activeUsers: members.size,
+        message: `${leftName} left the room.`
+      });
+      members.forEach((m) => {
+        if (m.ws.readyState === WebSocket.OPEN) {
+          m.ws.send(leavePayload);
+        }
+      });
+    }
+  }
+
+  function handleRoomChatMessage(message: any, ws: WebSocket) {
+    const code = normalizeCode(message.code);
+    if (!code) return;
+
+    if (!roomChatRegistry.has(code)) {
+      roomChatRegistry.set(code, new Set());
+    }
+
+    const members = roomChatRegistry.get(code)!;
+    
+    // Auto-ensure sender is registered as room member
+    let senderMember = Array.from(members).find((m) => m.ws === ws);
+    if (!senderMember) {
+      senderMember = {
+        ws,
+        senderId: message.senderId || "anon",
+        senderName: message.senderName || "Guest User"
+      };
+      members.add(senderMember);
+    }
+
+    const payload = JSON.stringify({
+      type: "room-chat-message",
+      code,
+      senderId: message.senderId,
+      senderName: message.senderName,
+      chatId: message.chatId || crypto.randomUUID(),
+      text: message.text,
+      fileName: message.fileName,
+      fileSize: message.fileSize,
+      fileType: message.fileType,
+      mediaUrl: message.mediaUrl,
+      downloadUrl: message.downloadUrl,
+      isImage: message.isImage,
+      timestamp: new Date().toISOString()
+    });
+
+    members.forEach((m) => {
+      if (m.ws !== ws && m.ws.readyState === WebSocket.OPEN) {
+        m.ws.send(payload);
+      }
+    });
+
+    logger.info({ code, senderName: message.senderName, recipientsCount: members.size - 1 }, "Room chat message relayed");
+  }
+
+  function handleRoomTyping(message: any, ws: WebSocket) {
+    const code = normalizeCode(message.code);
+    if (!code || !roomChatRegistry.has(code)) return;
+
+    const members = roomChatRegistry.get(code)!;
+    const payload = JSON.stringify({
+      type: "room-typing",
+      code,
+      senderId: message.senderId,
+      senderName: message.senderName,
+      isTyping: message.isTyping
+    });
+
+    members.forEach((m) => {
+      if (m.ws !== ws && m.ws.readyState === WebSocket.OPEN) {
+        m.ws.send(payload);
+      }
+    });
+  }
+
+  function cleanupRoomWs(ws: WebSocket) {
+    for (const [code, members] of roomChatRegistry.entries()) {
+      // Convert to array first to safely mutate the Set while iterating
+      const memberList = Array.from(members);
+      for (const m of memberList) {
+        if (m.ws === ws) {
+          members.delete(m);
+          if (members.size === 0) {
+            roomChatRegistry.delete(code);
+          } else {
+            const leavePayload = JSON.stringify({
+              type: "room-user-left",
+              code,
+              senderId: m.senderId,
+              senderName: m.senderName,
+              activeUsers: members.size,
+              message: `${m.senderName} disconnected.`
+            });
+            members.forEach((mem) => {
+              if (mem.ws.readyState === WebSocket.OPEN) {
+                mem.ws.send(leavePayload);
+              }
+            });
+          }
+        }
+      }
+    }
   }
 
   return httpServer;

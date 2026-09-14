@@ -10,6 +10,7 @@ export default function Navbar() {
 
   const navItems = [
     { href: "/", label: "Home" },
+    { href: "/chat", label: "Instant Chat 💬" },
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact Us" },
     { href: "/blog", label: "Blog" },

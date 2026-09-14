@@ -12,6 +12,8 @@ import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Disclaimer from "@/pages/disclaimer";
 import ReportAbuse from "@/pages/report-abuse";
+import ContentPolicy from "@/pages/content-policy";
+import RoomChat from "@/pages/room-chat";
 import NotFound from "@/pages/not-found";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
@@ -24,6 +26,8 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/share/:code" component={Home} />
+          <Route path="/chat" component={RoomChat} />
+          <Route path="/room/:code" component={RoomChat} />
           <Route path="/about" component={About} />
           <Route path="/contact" component={Contact} />
           <Route path="/blog" component={Blog} />
@@ -32,6 +36,7 @@ function Router() {
           <Route path="/terms" component={Terms} />
           <Route path="/disclaimer" component={Disclaimer} />
           <Route path="/report-abuse" component={ReportAbuse} />
+          <Route path="/content-policy" component={ContentPolicy} />
           <Route component={NotFound} />
         </Switch>
       </main>
