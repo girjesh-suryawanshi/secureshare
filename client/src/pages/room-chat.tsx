@@ -76,6 +76,38 @@ function buildWsUrl() {
   return `${protocol}//${window.location.host}/ws`;
 }
 
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {}
+
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand("copy");
+    document.body.removeChild(textArea);
+    return successful;
+  } catch {
+    return false;
+  }
+}
+
 export default function RoomChat() {
   const [matchRoom, paramsRoom] = useRoute("/room/:code");
   const [, setLocation] = useLocation();
@@ -104,6 +136,7 @@ export default function RoomChat() {
   const [isDragging, setIsDragging] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
   const [linkCopied, setLinkCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
 
@@ -138,10 +171,7 @@ export default function RoomChat() {
   // Never scroll the page window (window.scrollTo) to prevent the screen jumping up!
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: "smooth",
-      });
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   }, [messages, typingUsers, attachedFile]);
 
@@ -481,19 +511,53 @@ export default function RoomChat() {
     });
   }, [inputText, attachedFile, inRoom, senderId, senderName, addMessage, sendRaw]);
 
-  const handleCopyLink = () => {
+  const handleCopyCode = async () => {
+    if (!roomCode) return;
+    const ok = await copyTextToClipboard(roomCode);
+    if (ok) {
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+      toast({ title: "Room Code Copied!", description: `Room Code: ${roomCode}` });
+    } else {
+      toast({ title: "Copy Failed", description: "Code: " + roomCode, variant: "destructive" });
+    }
+  };
+
+  const handleCopyLink = async () => {
     const link = `${window.location.origin}/room/${roomCode}`;
-    navigator.clipboard.writeText(link).then(() => {
+
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `Join Room ${roomCode} on HexaSend`,
+          text: `Join instant room chat ${roomCode}:`,
+          url: link,
+        });
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+        toast({ title: "Shared Successfully!", description: link });
+        return;
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
+      }
+    }
+
+    const ok = await copyTextToClipboard(link);
+    if (ok) {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
       toast({ title: "Link Copied!", description: link });
-    });
+    } else {
+      toast({ title: "Copy Link Failed", description: link, variant: "destructive" });
+    }
   };
 
-  const handleCopyMsg = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedMsgId(id);
-    setTimeout(() => setCopiedMsgId(null), 2000);
+  const handleCopyMsg = async (id: string, text: string) => {
+    const ok = await copyTextToClipboard(text);
+    if (ok) {
+      setCopiedMsgId(id);
+      setTimeout(() => setCopiedMsgId(null), 2000);
+    }
   };
 
   const handleDownloadMedia = (mediaUrl: string, fileName: string) => {
@@ -518,14 +582,14 @@ export default function RoomChat() {
 
   // ─── Render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col py-3 sm:py-6 px-2 sm:px-6 select-none font-sans">
+    <div className="h-screen max-h-screen overflow-hidden bg-slate-950 text-white flex flex-col py-2 sm:py-3 px-2 sm:px-4 select-none font-sans">
       <SEOHead
         title="6-Digit Instant Room Chat & File Share — HexaSend"
         description="Join an instant, zero-login 6-digit code room to chat, paste code snippets, share images, and transfer files securely."
         keywords="instant room chat, 6-digit chat, team chat, ephemeral chat, secure file share"
       />
 
-      <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 h-[88vh] sm:h-[85vh] my-auto">
+      <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 overflow-hidden my-auto">
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-800/80 px-1">
@@ -647,7 +711,7 @@ export default function RoomChat() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`relative flex flex-col flex-1 bg-slate-900/90 border rounded-2xl overflow-hidden shadow-2xl transition-colors ${
+            className={`relative flex flex-col flex-1 min-h-0 bg-slate-900/90 border rounded-2xl overflow-hidden shadow-2xl transition-colors ${
               isDragging ? "border-indigo-500 bg-indigo-950/30" : "border-slate-800/80"
             }`}>
 
@@ -660,7 +724,7 @@ export default function RoomChat() {
             )}
 
             {/* Top Room bar */}
-            <div className="bg-slate-950/90 px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between text-xs backdrop-blur-md">
+            <div className="bg-slate-950/90 px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between text-xs backdrop-blur-md shrink-0">
               <div className="flex items-center gap-2.5">
                 <span className="text-slate-400 font-medium">Room:</span>
                 <Badge className="bg-indigo-600 text-white font-mono tracking-widest text-xs px-2 py-0.5 shadow">
@@ -688,11 +752,44 @@ export default function RoomChat() {
               </div>
             </div>
 
+            {/* Highlighted Room Code Banner with Instant Copy & Share Options */}
+            <div className="bg-gradient-to-r from-indigo-950/90 via-purple-950/80 to-slate-950/90 border-b border-indigo-800/40 p-2.5 sm:p-3 flex flex-wrap items-center justify-between gap-2.5 backdrop-blur-md shrink-0">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="flex items-center gap-2 bg-slate-950/90 border border-indigo-500/50 rounded-xl px-3 py-1.5 shadow-md">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-indigo-300 uppercase tracking-wider">Room Code:</span>
+                  <span className="font-mono text-base sm:text-lg font-extrabold tracking-widest text-amber-300 select-all">{roomCode}</span>
+                </div>
+                <p className="hidden md:inline text-xs text-slate-300 font-medium">
+                  Share code or link with peers to chat and transfer files.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyCode}
+                  className="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border-indigo-500/60 text-xs h-8 px-2.5 sm:px-3 rounded-lg flex items-center gap-1.5 shadow-sm font-semibold transition-all">
+                  {codeCopied ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-indigo-400" />}
+                  <span>{codeCopied ? "Code Copied!" : "Copy Code"}</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border-purple-500/60 text-xs h-8 px-2.5 sm:px-3 rounded-lg flex items-center gap-1.5 shadow-sm font-semibold transition-all">
+                  {linkCopied ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5 text-purple-400" />}
+                  <span>{linkCopied ? "Link Copied!" : "Share Link"}</span>
+                </Button>
+              </div>
+            </div>
+
             {/* ── Messages Scroll Container ───────────────────────────────────── */}
             {/* Using ref={scrollContainerRef} for inner scroll ONLY (never scrolls window) */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3.5 scroll-smooth bg-slate-950/40">
+              className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-3.5 bg-slate-950/40">
 
               {messages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
