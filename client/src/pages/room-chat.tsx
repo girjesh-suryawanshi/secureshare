@@ -149,7 +149,12 @@ export default function RoomChat() {
   }, [messages, typingUsers, attachedFile]);
 
   const addMessage = useCallback((msg: ChatMessage) => {
-    setMessages(prev => [...prev, msg]);
+    setMessages(prev => {
+      if (msg.id && prev.some(m => m.id === msg.id)) {
+        return prev; // Ignore duplicate message with same ID
+      }
+      return [...prev, msg];
+    });
   }, []);
 
   // ─── WebSocket lifecycle ─────────────────────────────────────────────
@@ -170,6 +175,10 @@ export default function RoomChat() {
 
     const connect = () => {
       if (destroyedRef.current) return;
+      if (wsRef.current) {
+        try { wsRef.current.close(); } catch {}
+        wsRef.current = null;
+      }
       const ws = new WebSocket(buildWsUrl());
       wsRef.current = ws;
 
@@ -208,7 +217,7 @@ export default function RoomChat() {
             case "room-user-left":
               setActiveUsers(data.activeUsers ?? 1);
               addMessage({
-                id: genUUID(),
+                id: data.type + "-" + (data.senderId || "sys") + "-" + (data.activeUsers || 0),
                 senderId: "system",
                 senderName: "System",
                 text: data.message || (data.type === "room-user-joined" ? "A user joined." : "A user left."),
@@ -218,6 +227,10 @@ export default function RoomChat() {
               break;
 
             case "room-chat-message":
+              if (data.senderId === senderIdRef.current) {
+                // Ignore reflected copy of own message since sender already rendered it optimistically
+                return;
+              }
               addMessage({
                 id: data.chatId || genUUID(),
                 senderId: data.senderId ?? "unknown",
@@ -231,6 +244,7 @@ export default function RoomChat() {
                 timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
               });
               break;
+
 
             case "room-typing":
               if (data.senderId !== senderIdRef.current) {

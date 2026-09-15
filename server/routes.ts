@@ -1030,8 +1030,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const members = roomChatRegistry.get(code)!;
-    for (const m of members) {
-      if (m.ws === ws) members.delete(m);
+    // Remove any existing member matching same socket OR same senderId to prevent duplicate connections
+    const existingList = Array.from(members);
+    for (const m of existingList) {
+      if (m.ws === ws || (senderId && m.senderId === senderId)) {
+        members.delete(m);
+      }
     }
 
     const newMember = { ws, senderId, senderName };
@@ -1048,8 +1052,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       message: `${senderName} joined the room.`
     });
 
+    const sentWs = new Set<WebSocket>();
     members.forEach((m) => {
-      if (m.ws.readyState === WebSocket.OPEN) {
+      if (m.ws.readyState === WebSocket.OPEN && !sentWs.has(m.ws)) {
+        sentWs.add(m.ws);
         m.ws.send(joinPayload);
       }
     });
@@ -1071,12 +1077,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let leftName = "Guest User";
     let leftId = message.senderId;
 
-    for (const m of members) {
-      if (m.ws === ws) {
+    for (const m of Array.from(members)) {
+      if (m.ws === ws || (leftId && m.senderId === leftId)) {
         leftName = m.senderName;
         leftId = m.senderId;
         members.delete(m);
-        break;
       }
     }
 
@@ -1091,8 +1096,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activeUsers: members.size,
         message: `${leftName} left the room.`
       });
+      const sentWs = new Set<WebSocket>();
       members.forEach((m) => {
-        if (m.ws.readyState === WebSocket.OPEN) {
+        if (m.ws.readyState === WebSocket.OPEN && !sentWs.has(m.ws)) {
+          sentWs.add(m.ws);
           m.ws.send(leavePayload);
         }
       });
@@ -1109,8 +1116,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const members = roomChatRegistry.get(code)!;
     
-    // Auto-ensure sender is registered as room member
-    let senderMember = Array.from(members).find((m) => m.ws === ws);
+    // Ensure sender is in room registry
+    let senderMember = Array.from(members).find((m) => m.ws === ws || (message.senderId && m.senderId === message.senderId));
     if (!senderMember) {
       senderMember = {
         ws,
@@ -1118,6 +1125,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderName: message.senderName || "Guest User"
       };
       members.add(senderMember);
+    } else {
+      senderMember.ws = ws; // Update socket reference
     }
 
     const payload = JSON.stringify({
@@ -1136,8 +1145,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       timestamp: new Date().toISOString()
     });
 
+    const sentWs = new Set<WebSocket>();
     members.forEach((m) => {
-      if (m.ws !== ws && m.ws.readyState === WebSocket.OPEN) {
+      if (m.ws !== ws && m.ws.readyState === WebSocket.OPEN && !sentWs.has(m.ws)) {
+        sentWs.add(m.ws);
         m.ws.send(payload);
       }
     });
@@ -1146,7 +1157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       event: "room-chat-message",
       code,
       senderName: message.senderName,
-      recipientsCount: members.size - 1,
+      recipientsCount: sentWs.size,
       hasText: !!message.text,
       hasFile: !!message.fileName,
       fileNameHash: message.fileName ? hashFileName(message.fileName) : undefined,
@@ -1158,7 +1169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     logger.info({
       code,
       senderName: message.senderName,
-      recipientsCount: members.size - 1,
+      recipientsCount: sentWs.size,
       hasText: !!message.text,
       hasFile: !!message.fileName,
       fileNameHash: message.fileName ? hashFileName(message.fileName) : undefined,

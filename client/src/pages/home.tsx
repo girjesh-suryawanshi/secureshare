@@ -101,15 +101,8 @@ export default function Home() {
   const receivePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const notFoundCountRef = useRef<number>(0);
 
-  // Text share state
-  const [shareMode, setShareMode] = useState<'file' | 'text'>('file');
-  const [textToShare, setTextToShare] = useState<string>('');
-  const [textShareCode, setTextShareCode] = useState<string>('');
-  const [isTextSharing, setIsTextSharing] = useState<boolean>(false);
-  const [receivedText, setReceivedText] = useState<string>('');
-  const [textCopied, setTextCopied] = useState(false);
-  const [isTextReceiving, setIsTextReceiving] = useState<boolean>(false);
-  const MAX_TEXT_LENGTH = 50000; // 50KB ~ 50,000 chars
+  // Instant Chat room state for home page
+  const [homeChatCode, setHomeChatCode] = useState<string>('');
 
   const { isConnected, reconnect, sendMessage, onFileAvailable, onFileReady, onFileNotFound, onFileRegistered, onDownloadAck, onSenderDisconnected, onTextAvailable, onTextNotFound, onTextRegistered } = useWebSocket();
   const {
@@ -452,32 +445,9 @@ export default function Home() {
           return { done: false, waiting: true };
         }
       } else if (restRes.status === 404) {
-        // Check if code was shared as text share instead of file share
-        try {
-          const textRes = await fetch(`/api/text/${code}`);
-          if (textRes.ok) {
-            const data = await textRes.json();
-            if (data && data.text) {
-              setReceivedText(data.text);
-              if (receiveSafetyTimerRef.current) {
-                clearTimeout(receiveSafetyTimerRef.current);
-                receiveSafetyTimerRef.current = null;
-              }
-              if (receivePollIntervalRef.current) {
-                clearInterval(receivePollIntervalRef.current);
-                receivePollIntervalRef.current = null;
-              }
-              setIsReceiving(false);
-              setReceiveProgress(0);
-              toast({ title: '📋 Text Received!', description: `${data.byteLength || 0} bytes received.` });
-              return { done: true, textFound: true };
-            }
-          }
-        } catch {
-          // Ignore error
-        }
         return { done: false, notFound: true };
       }
+
     } catch (err) {
       console.error("Error checking files:", err);
     }
@@ -926,41 +896,13 @@ export default function Home() {
       }
     });
 
-    // ─── Text Share WS Handlers ──────────────────────
-    onTextAvailable((data: any) => {
-      setReceivedText(data.text || '');
-      setIsTextReceiving(false);
-      toast({
-        title: '📋 Text Received!',
-        description: `${data.byteLength || 0} bytes received. Click Copy to clipboard.`,
-      });
-    });
-
-    onTextNotFound((code: string) => {
-      setIsTextReceiving(false);
-      toast({
-        title: 'Text Not Found',
-        description: code ? `No text found with code ${code}.` : 'No text found. Check the code and try again.',
-        variant: 'destructive',
-      });
-    });
-
-    onTextRegistered((data: any) => {
-      setTextShareCode(data.code || '');
-      setIsTextSharing(false);
-      toast({
-        title: '✅ Text Shared!',
-        description: `Share code ${data.code} with the receiver.`,
-      });
-    });
-
     return () => {
       if (receiveRetryTimeoutRef.current) {
         clearTimeout(receiveRetryTimeoutRef.current);
         receiveRetryTimeoutRef.current = null;
       }
     };
-  }, [downloadFileJob, expectedFilesCount, inputCode, mode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onFileRegistered, onSenderDisconnected, onTextAvailable, onTextNotFound, onTextRegistered, sendMessage, toast]);
+  }, [downloadFileJob, expectedFilesCount, inputCode, mode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onFileRegistered, onSenderDisconnected, sendMessage, toast]);
 
   // Auto-focus code input when entering receive mode
   useEffect(() => {
@@ -1036,13 +978,6 @@ export default function Home() {
       setAcknowledgments([]);
       downloadedFileKeys.current.clear();
       pendingRequestRef.current.clear();
-      // Reset text share state
-      setTextToShare('');
-      setTextShareCode('');
-      setReceivedText('');
-      setIsTextSharing(false);
-      setIsTextReceiving(false);
-      setTextCopied(false);
     }
   }, [mode]);
 
@@ -1082,30 +1017,20 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Share Mode Toggle: File / Text */}
-                <div className="flex justify-center gap-2 mt-2">
-                  <button
-                    onClick={() => setShareMode('file')}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
-                      shareMode === 'file'
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
+                {/* Core Feature Badges */}
+                <div className="flex justify-center gap-3 mt-4">
+                  <div className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md">
                     <Upload className="h-4 w-4" />
-                    Files
-                  </button>
-                  <button
-                    onClick={() => setShareMode('text')}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
-                      shareMode === 'text'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg scale-105'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <Type className="h-4 w-4" />
-                    Text / Clipboard
-                  </button>
+                    📁 File Transfer
+                  </div>
+                  <Link href="/chat">
+                    <button
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md transition-all hover:scale-105"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      💬 Instant Chat
+                    </button>
+                  </Link>
                 </div>
               </div>
 
@@ -1237,30 +1162,60 @@ export default function Home() {
                   </Card>
                 </div>
 
-                {/* Instant Room Chat Banner Card */}
+                {/* Instant Room Chat Interactive Card */}
                 <div className="mt-6">
-                  <Card className="group hover:scale-[1.02] transition-all duration-300 shadow-2xl border border-indigo-200/50 bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-950 text-white overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <CardContent className="p-6 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
-                      <div className="flex items-center space-x-4">
+                  <Card className="shadow-2xl border border-indigo-200/50 bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-950 text-white overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/10 pointer-events-none"></div>
+                    <CardContent className="p-6 md:p-8 relative z-10 text-left">
+                      <div className="flex items-center space-x-4 mb-6">
                         <div className="bg-indigo-600/30 border border-indigo-400/30 rounded-2xl p-3 text-indigo-300 shrink-0">
                           <MessageSquare className="h-8 w-8" />
                         </div>
                         <div>
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="text-xl font-bold">6-Digit Instant Room Chat</h3>
-                            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">NEW FEATURE</Badge>
+                            <h3 className="text-xl md:text-2xl font-bold">💬 Instant Anonymous Room Chat</h3>
+                            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">LIVE CHAT</Badge>
                           </div>
                           <p className="text-xs sm:text-sm text-slate-300">
-                            Create or join a 6-digit room to chat live, paste code snippets, share images & send team files in real-time.
+                            Create or join a temporary chat room with a 6-digit code. Exchange messages, live typing indicators, photos & files in real-time.
                           </p>
                         </div>
                       </div>
-                      <Link href="/chat">
-                        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg font-semibold px-6 py-5 whitespace-nowrap min-h-[44px]">
-                          Open Instant Chat 💬
-                        </Button>
-                      </Link>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/10 backdrop-blur-md p-4 md:p-6 rounded-2xl border border-white/10">
+                        {/* Join Chat Room */}
+                        <div className="space-y-3">
+                          <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Join Existing Room</label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="text"
+                              placeholder="e.g. ROOM12"
+                              value={homeChatCode}
+                              onChange={(e) => setHomeChatCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
+                              className="font-mono text-center tracking-widest bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 focus:border-indigo-400 min-h-[44px]"
+                              maxLength={6}
+                            />
+                            <Link href={homeChatCode.length === 6 ? `/room/${homeChatCode}` : `/chat`}>
+                              <Button
+                                disabled={homeChatCode.length !== 6}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold whitespace-nowrap min-h-[44px]"
+                              >
+                                Join 💬
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+
+                        {/* Create Chat Room */}
+                        <div className="space-y-3 flex flex-col justify-between">
+                          <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Start Fresh Room</label>
+                          <Link href="/chat">
+                            <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg font-semibold min-h-[44px]">
+                              ➕ Create New Chat Room
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -1509,148 +1464,9 @@ export default function Home() {
 
               {!filesReady ? (
                 <div className="space-y-8">
-                  {/* Text Share Mode - Sender */}
-                  {shareMode === 'text' ? (
-                    <div className="space-y-6">
-                      {!textShareCode ? (
-                        <>
-                          <div className="text-center">
-                            <div className="relative mb-4">
-                              <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-4 w-fit mx-auto">
-                                <Type className="h-10 w-10 text-white" />
-                              </div>
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Share Text Securely</h3>
-                            <p className="text-sm md:text-base text-gray-600 mb-6">
-                              Paste passwords, links, code snippets, or any text. Get a 6-digit code to share.
-                            </p>
-                          </div>
-
-                          <textarea
-                            value={textToShare}
-                            onChange={(e) => setTextToShare(e.target.value.slice(0, MAX_TEXT_LENGTH))}
-                            placeholder="Paste text, code, links, passwords, notes..."
-                            className="w-full h-48 md:h-64 p-4 border-2 border-emerald-200 rounded-xl focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 resize-none font-mono text-sm bg-white"
-                            aria-label="Text content to share"
-                          />
-
-                          <div className="flex items-center justify-between text-sm text-gray-500">
-                            <span>{textToShare.length.toLocaleString()} / {MAX_TEXT_LENGTH.toLocaleString()} characters</span>
-                            <span>{new Blob([textToShare]).size > 1024 ? `${(new Blob([textToShare]).size / 1024).toFixed(1)} KB` : `${new Blob([textToShare]).size} bytes`}</span>
-                          </div>
-
-                          <Button
-                            onClick={async () => {
-                              if (!textToShare.trim()) {
-                                toast({ title: 'Empty Text', description: 'Please enter some text to share.', variant: 'destructive' });
-                                return;
-                              }
-                              setIsTextSharing(true);
-                              const code = generateCode();
-                              try {
-                                // Use REST endpoint for text share
-                                const response = await fetch('/api/text', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ code, text: textToShare }),
-                                });
-                                if (!response.ok) {
-                                  const err = await response.json();
-                                  throw new Error(err.error || 'Failed to share text');
-                                }
-                                setTextShareCode(code);
-                                toast({ title: '✅ Text Shared!', description: `Share code ${code} with the receiver.` });
-                              } catch (error: any) {
-                                toast({ title: 'Share Failed', description: error.message, variant: 'destructive' });
-                              } finally {
-                                setIsTextSharing(false);
-                              }
-                            }}
-                            className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg font-semibold min-h-[44px]"
-                            disabled={!textToShare.trim() || isTextSharing || (transferType === 'internet' && !isConnected)}
-                          >
-                            {isTextSharing ? (
-                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sharing...</>
-                            ) : (
-                              <><Type className="mr-2 h-5 w-5" /> Share Text Securely</>
-                            )}
-                          </Button>
-                        </>
-                      ) : (
-                        /* Text shared successfully - show code */
-                        <div className="text-center space-y-6">
-                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8">
-                            <div className="relative mb-6">
-                              <div className="relative bg-green-500 rounded-2xl p-4 w-fit mx-auto">
-                                <CheckCircle className="h-12 w-12 text-white" />
-                              </div>
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-green-800 mb-2">🎉 Text Ready to Share!</h3>
-                            <p className="text-sm text-green-600 mb-6">{textToShare.length.toLocaleString()} characters secured. Share the code below.</p>
-
-                            <div className="bg-white rounded-xl p-4 border border-green-300 mb-6 text-left">
-                              <p className="text-sm text-gray-700 font-mono whitespace-pre-wrap break-words max-h-32 overflow-y-auto">{textToShare.slice(0, 500)}{textToShare.length > 500 ? '...' : ''}</p>
-                            </div>
-
-                            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 text-white">
-                              <p className="text-sm font-semibold mb-4">🔐 Your Secure Text Code</p>
-
-                              {textShareCode && (
-                                <div className="flex flex-col items-center justify-center mb-6">
-                                  <div className="bg-white p-3 rounded-2xl shadow-xl inline-block">
-                                    <QRCodeSVG
-                                      value={`${resolvedLocalIP ? `http://${resolvedLocalIP}:${window.location.port}` : window.location.origin}/share/${textShareCode}?mode=${transferType}`}
-                                      size={140}
-                                      bgColor="#ffffff"
-                                      fgColor="#000000"
-                                      level="Q"
-                                      includeMargin={false}
-                                      className="rounded-lg"
-                                    />
-                                  </div>
-                                  <p className="text-white/80 text-xs mt-2">Scan to receive text</p>
-                                </div>
-                              )}
-
-                              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
-                                <div className="bg-white/20 backdrop-blur px-6 py-3 rounded-xl font-mono text-2xl md:text-3xl font-bold tracking-wider">
-                                  {textShareCode}
-                                </div>
-                                <Button
-                                  variant="secondary"
-                                  size="lg"
-                                  onClick={async () => {
-                                    await navigator.clipboard.writeText(textShareCode);
-                                    setCopyJustDone(true);
-                                    setTimeout(() => setCopyJustDone(false), 2000);
-                                    toast({ title: 'Code Copied', description: 'Share this code with the receiver' });
-                                  }}
-                                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 min-h-[44px]"
-                                >
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  {copyJustDone ? 'Copied!' : 'Copy'}
-                                </Button>
-                              </div>
-                              <p className="text-emerald-100 text-sm">Text expires in 1 hour for maximum security.</p>
-                            </div>
-                          </div>
-
-                          <Button
-                            onClick={() => {
-                              setTextShareCode('');
-                              setTextToShare('');
-                            }}
-                            className="w-full h-12 text-sm md:text-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-                          >
-                            Share More Text
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                  /* File Share Mode - Original UI */
-                  selectedFiles.length === 0 ? (
+                  {selectedFiles.length === 0 ? (
                     <div className="text-center">
+
                       <DragDropZone onFilesSelected={handleFilesSelected} ariaLabel="Choose files to send. All file types supported.">
                         <div className="p-12 space-y-6">
                           <div className="relative">
@@ -1763,10 +1579,10 @@ export default function Home() {
                         </Button>
                       </div>
                     </div>
-                  )
                   )}
                 </div>
               ) : (
+
                 <div className="text-center space-y-8">
                   <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl p-8">
                     <div className="relative mb-6">
@@ -1993,48 +1809,7 @@ export default function Home() {
           <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8">
 
-              {/* Text received - show it */}
-              {receivedText ? (
-                <div className="text-center space-y-8">
-                  <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8">
-                      <div className="relative mb-6">
-                        <div className="relative bg-green-500 rounded-2xl p-4 w-fit mx-auto">
-                          <CheckCircle className="h-12 w-12 text-white" />
-                        </div>
-                      </div>
-                      <h3 className="text-xl md:text-2xl font-bold text-green-800 mb-4">📋 Text Received!</h3>
-                      <div className="bg-white rounded-xl p-4 md:p-6 border border-green-300 mb-6 text-left">
-                        <pre className="text-sm text-gray-800 font-mono whitespace-pre-wrap break-words max-h-64 overflow-y-auto">{receivedText}</pre>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <Button
-                          onClick={async () => {
-                            await navigator.clipboard.writeText(receivedText);
-                            setTextCopied(true);
-                            setTimeout(() => setTextCopied(false), 2000);
-                            toast({ title: '✅ Copied!', description: 'Text copied to clipboard.' });
-                          }}
-                          className="flex-1 h-12 text-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg font-semibold"
-                        >
-                          <ClipboardCopy className="mr-2 h-5 w-5" />
-                          {textCopied ? 'Copied! ✅' : 'Copy to Clipboard'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setReceivedText('');
-                            setInputCode('');
-                          }}
-                          className="flex-1 h-12 text-lg border-2"
-                        >
-                          Receive More
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : receivedFiles.length === 0 ? (
+              {receivedFiles.length === 0 ? (
                 <div className="text-center space-y-8">
                   <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-8 border border-purple-200">
                     <div className="relative mb-6">
@@ -2119,46 +1894,20 @@ export default function Home() {
                       />
 
                       <Button
-                        onClick={async () => {
-                          if (shareMode === 'text') {
-                            // Text receive via REST
-                            const normalized = inputCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-                            if (!normalized || normalized.length !== 6) {
-                              toast({ title: 'Invalid Code', description: 'Please enter a 6-character code', variant: 'destructive' });
-                              return;
-                            }
-                            setIsTextReceiving(true);
-                            try {
-                              const response = await fetch(`/api/text/${normalized}`);
-                              if (response.ok) {
-                                const data = await response.json();
-                                setReceivedText(data.text);
-                                toast({ title: '📋 Text Received!', description: `${data.byteLength || 0} bytes received.` });
-                              } else {
-                                const err = await response.json();
-                                toast({ title: 'Text Not Found', description: err.error || 'No text found with that code.', variant: 'destructive' });
-                              }
-                            } catch (error: any) {
-                              toast({ title: 'Error', description: error.message, variant: 'destructive' });
-                            } finally {
-                              setIsTextReceiving(false);
-                            }
-                          } else {
-                            handleReceiveFile();
-                          }
-                        }}
-                      id="receive-file-btn"
+                        onClick={() => handleReceiveFile()}
+                        id="receive-file-btn"
                         className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
-                        disabled={(transferType === 'internet' && !isConnected) || inputCode.length !== 6 || isReceiving || isTextReceiving}
+                        disabled={(transferType === 'internet' && !isConnected) || inputCode.length !== 6 || isReceiving}
                         title={inputCode.length !== 6 ? "Enter a 6-character code" : transferType === 'internet' && !isConnected ? "Connect to the server first" : undefined}
                       >
-                        {isReceiving || isTextReceiving ? (
+                        {isReceiving ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {shareMode === 'text' ? 'Retrieving text…' : 'Receiving files…'}
+                            Receiving files…
                           </>
-                        ) : inputCode.length === 6 ? (shareMode === 'text' ? 'Get My Text 📋' : 'Get My Files 🚀') : `Enter ${6 - inputCode.length} more characters`}
+                        ) : inputCode.length === 6 ? 'Get My Files 🚀' : `Enter ${6 - inputCode.length} more characters`}
                       </Button>
+
                       {inputCode.length === 6 && !isReceiving && (
                         <p className="text-xs text-gray-500 text-center">We&apos;ll look for files with this code.</p>
                       )}
