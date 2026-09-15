@@ -25,9 +25,11 @@ FROM node:20-alpine AS production
 # Create app directory
 WORKDIR /app
 
-# Create a non-root user
+# Create non-root user and logs directory with ownership
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S appuser -u 1001
+    adduser -S appuser -u 1001 && \
+    mkdir -p /app/logs /tmp/secureshare && \
+    chown -R appuser:nodejs /app /tmp/secureshare
 
 # Copy package files
 COPY --chown=appuser:nodejs package*.json ./
@@ -37,6 +39,9 @@ RUN npm ci && npm cache clean --force
 
 # Copy built application from builder stage (dist/public = frontend, dist/index.js = server)
 COPY --from=builder --chown=appuser:nodejs /app/dist ./dist
+
+# Ensure appuser owns working directory and logs
+RUN chown -R appuser:nodejs /app
 
 # Switch to non-root user
 USER appuser

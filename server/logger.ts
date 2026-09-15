@@ -5,8 +5,12 @@ import { config } from "./config";
 
 // Ensure logs directory exists at project root
 const logsDir = path.resolve(process.cwd(), "logs");
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+try {
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn("Could not create logs directory:", err);
 }
 
 import { createRotatingLogStream } from "./services/logRotator";
