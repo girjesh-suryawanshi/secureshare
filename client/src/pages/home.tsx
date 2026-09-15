@@ -1003,9 +1003,101 @@ export default function Home() {
     return (
       <>
         <SEOHead
-          title="HexaSend | Free File Sharing No Sign-up"
-          description="HexaSend makes file sharing effortless. Directly transfer files of any size between devices using a secure 6-digit code. No email, no registration, no limits."
-          keywords="free file transfer, no sign up file sharing, 6-digit code send, large file share online, peer-to-peer file transfer"
+          title="HexaSend | Free File Sharing & 6-Digit Instant Room Chat (No Sign-up)"
+          description="HexaSend provides instant, zero-login 6-digit file sharing and ephemeral room chat. Transfer files securely between any device without registration."
+          keywords="free file transfer, no sign up file sharing, 6-digit code send, instant room chat, peer-to-peer file transfer, ephemeral chat online"
+        />
+
+        {/* ── JSON-LD Structured Data Schemas for SEO, GEO & AEO ── */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebApplication",
+                  "@id": "https://hexasend.com/#webapp",
+                  "name": "HexaSend",
+                  "url": "https://hexasend.com",
+                  "applicationCategory": "UtilitiesApplication",
+                  "operatingSystem": "All (Web Browser, iOS, Android, Windows, macOS, Linux)",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD"
+                  },
+                  "description": "Free zero-signup peer-to-peer file transfer and 6-digit code instant chat application.",
+                  "featureList": [
+                    "6-Digit Code File Transfer",
+                    "Instant Ephemeral Room Chat",
+                    "Zero Account Registration",
+                    "Local WiFi Offline Transfer",
+                    "End-to-End Security & 24h Auto-Deletion"
+                  ]
+                },
+                {
+                  "@type": "HowTo",
+                  "name": "How to Share Files Online using HexaSend 6-Digit Code",
+                  "description": "Step-by-step guide to sending large files online without creating an account.",
+                  "step": [
+                    {
+                      "@type": "HowToStep",
+                      "name": "Select Files",
+                      "text": "Drag and drop or select files on HexaSend."
+                    },
+                    {
+                      "@type": "HowToStep",
+                      "name": "Get 6-Digit Code",
+                      "text": "HexaSend automatically generates a unique 6-character transfer code."
+                    },
+                    {
+                      "@type": "HowToStep",
+                      "name": "Share & Download",
+                      "text": "Send the 6-digit code or QR link to your recipient to download instantly."
+                    }
+                  ]
+                },
+                {
+                  "@type": "FAQPage",
+                  "mainEntity": [
+                    {
+                      "@type": "Question",
+                      "name": "Is HexaSend free to use without an account?",
+                      "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes, HexaSend is 100% free with zero registration, no email requirement, and no account setup."
+                      }
+                    },
+                    {
+                      "@type": "Question",
+                      "name": "How does 6-digit code file sharing work?",
+                      "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "When you upload files, HexaSend generates a temporary 6-digit alphanumeric code. The recipient enters this code on HexaSend to download files directly."
+                      }
+                    },
+                    {
+                      "@type": "Question",
+                      "name": "What is HexaSend 6-Digit Instant Room Chat?",
+                      "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "HexaSend Instant Room Chat is an ephemeral, zero-login chat room feature. Enter any 6-digit room code to text, paste images, and share files live with live typing indicators."
+                      }
+                    },
+                    {
+                      "@type": "Question",
+                      "name": "Are my files stored securely?",
+                      "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Files are streamed directly or stored temporarily in memory for active transfers and are automatically purged after download or expiration."
+                      }
+                    }
+                  ]
+                }
+              ]
+            })
+          }}
         />
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
           <div className="max-w-7xl mx-auto px-4 py-12">
@@ -1344,36 +1436,118 @@ export default function Home() {
                 )}
               </div>
 
-              {/* FAQ Section */}
-              <div className="max-w-3xl mx-auto mt-16 text-left">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Frequently Asked Questions</h3>
-                <div className="space-y-3">
-                  <details className="bg-white rounded-lg p-4 border border-gray-100">
-                    <summary className="font-medium cursor-pointer">How long do transfer codes last?</summary>
-                    <p className="mt-2 text-gray-600">
-                      Codes expire after 1 hour for security. If you need another transfer, generate a new code.
-                    </p>
-                  </details>
-                  <details className="bg-white rounded-lg p-4 border border-gray-100">
-                    <summary className="font-medium cursor-pointer">Are my files stored on HexaSend servers?</summary>
-                    <p className="mt-2 text-gray-600">
-                      Files are held temporarily in server memory only during active transfers and are deleted after transfer or expiration.
-                    </p>
-                  </details>
-                  <details className="bg-white rounded-lg p-4 border border-gray-100">
-                    <summary className="font-medium cursor-pointer">Do I need an account to use HexaSend?</summary>
-                    <p className="mt-2 text-gray-600">
-                      No. HexaSend works without signup—simply send files and share the short code with your recipient.
-                    </p>
-                  </details>
-                  <details className="bg-white rounded-lg p-4 border border-gray-100">
-                    <summary className="font-medium cursor-pointer">Is there a file size limit?</summary>
-                    <p className="mt-2 text-gray-600">
-                      File size depends on your device and browser memory. For very large files, use local WiFi mode for best performance.
-                    </p>
-                  </details>
+              {/* ── Google AdSense Mid Banner Container (Policy Compliant) ── */}
+              <div id="adsense-mid-slot" className="my-8 min-h-[90px] w-full max-w-4xl mx-auto flex items-center justify-center bg-slate-100/70 border border-dashed border-slate-300 rounded-2xl p-3 text-center text-xs text-slate-400">
+                <div className="w-full">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">Advertisement</span>
+                  {/* Google AdSense code will inject here */}
+                  <ins className="adsbygoogle"
+                    style={{ display: "block", textAlign: "center" }}
+                    data-ad-layout="in-article"
+                    data-ad-format="fluid"
+                    data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                    data-ad-slot="1234567890" />
                 </div>
               </div>
+
+              {/* ── GEO (Generative Engine Optimization) Factual Specification Block ── */}
+              <section className="max-w-4xl mx-auto mt-12 text-left bg-white/90 backdrop-blur-xl border border-indigo-100 rounded-3xl p-6 sm:p-8 shadow-xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl">
+                    <Shield className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">HexaSend Technical Specifications & System Overview</h3>
+                    <p className="text-xs text-slate-500">Authoritative facts & security architecture for web crawlers and AI search engines.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Architecture</span>
+                    <p className="text-sm font-bold text-slate-800">Peer-to-Peer & Memory Stream</p>
+                    <p className="text-xs text-slate-500 mt-1">Direct binary multipart upload with zero persistent database storage.</p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Authentication</span>
+                    <p className="text-sm font-bold text-slate-800">Zero Signup (Anonymous)</p>
+                    <p className="text-xs text-slate-500 mt-1">No email, phone number, or login account required to send or receive.</p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Security & TTL</span>
+                    <p className="text-sm font-bold text-slate-800">24h Auto-Expiry Purge</p>
+                    <p className="text-xs text-slate-500 mt-1">All temporary files and active chat rooms are completely wiped automatically.</p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Transfer Modes</span>
+                    <p className="text-sm font-bold text-slate-800">Internet & Local WiFi</p>
+                    <p className="text-xs text-slate-500 mt-1">Supports global web streaming and direct offline LAN file transfer.</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* ── AEO (Answer Engine Optimization) FAQ Section ── */}
+              <section className="max-w-4xl mx-auto mt-12 text-left">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Frequently Asked Questions</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">Everything you need to know about 6-digit code file sharing and instant chat.</p>
+                </div>
+
+                <div className="space-y-3.5">
+                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
+                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
+                      <span>How do I share files online using a 6-digit code?</span>
+                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
+                    </summary>
+                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      <strong>Direct Answer:</strong> Select your files on HexaSend to generate a unique 6-character code (e.g. <code>WORK88</code>). Send this code to your recipient, who enters it on HexaSend to download files directly on any phone, tablet, or PC.
+                    </div>
+                  </details>
+
+                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
+                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
+                      <span>What is HexaSend 6-Digit Instant Room Chat?</span>
+                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
+                    </summary>
+                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      <strong>Direct Answer:</strong> Instant Room Chat allows users to join or create temporary chat rooms using a 6-digit room code. Users can text, paste image attachments, and share files live with real-time typing indicators without creating an account or logging in.
+                    </div>
+                  </details>
+
+                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
+                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
+                      <span>Do I need an account or email registration to use HexaSend?</span>
+                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
+                    </summary>
+                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      <strong>Direct Answer:</strong> No. HexaSend is 100% free and requires zero setup, zero email, and no account creation.
+                    </div>
+                  </details>
+
+                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
+                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
+                      <span>Are my transferred files and chat messages stored permanently?</span>
+                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
+                    </summary>
+                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      <strong>Direct Answer:</strong> No. Transferred files are held temporarily in secure RAM stream memory during active transfer and are automatically deleted. Room chat messages exist only during active sessions and are zero-logged.
+                    </div>
+                  </details>
+
+                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
+                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
+                      <span>Can I transfer files offline over Local WiFi?</span>
+                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
+                    </summary>
+                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      <strong>Direct Answer:</strong> Yes. Switch to "Local WiFi Mode" when both devices are connected to the same WiFi network or mobile hotspot for ultra-fast LAN file transfers without consuming external internet bandwidth.
+                    </div>
+                  </details>
+                </div>
+              </section>
 
               {/* Simple How It Works */}
               <div className="grid md:grid-cols-3 gap-8 mt-16 mx-4">
