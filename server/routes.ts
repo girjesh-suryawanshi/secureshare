@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import crypto from "crypto";
 import multer from "multer";
 import { MessageSchema, type FileRegistry, type TransferType } from "@shared/schema";
+import { isAllowedFile } from "@shared/file-validation";
 import { fileStore } from "./storage";
 import { config } from "./config";
 import { logger, auditLogger } from "./logger";
@@ -280,6 +281,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         JSON.stringify({
           type: "error",
           message: "Missing required fields",
+        }),
+      );
+      return;
+    }
+
+    const fileVal = isAllowedFile(fileName, fileType);
+    if (!fileVal.allowed) {
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: fileVal.reason || "File type not allowed.",
         }),
       );
       return;
@@ -734,6 +746,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!code || !req.file) {
         return res.status(400).json({ error: "Missing required fields: code and file are required" });
+      }
+
+      const checkNames = [req.body?.fileName, req.file?.originalname].filter(Boolean) as string[];
+      for (const nameToCheck of checkNames) {
+        const fileVal = isAllowedFile(nameToCheck, fileType);
+        if (!fileVal.allowed) {
+          if (tmpPath) {
+            const { promises: fsPromises } = await import("fs");
+            await fsPromises.unlink(tmpPath).catch(() => {});
+          }
+          return res.status(400).json({ error: fileVal.reason || "File extension not allowed." });
+        }
       }
 
       const fileSize = req.file.size;

@@ -72,7 +72,7 @@ export function DragDropZone({
           multiple={multiple}
           onChange={handleFileSelect}
           className="hidden"
-          aria-label={ariaLabel ?? "Choose files. All file types supported."}
+          aria-label={ariaLabel ?? "Choose files to share."}
         />
         {children}
       </div>
@@ -97,7 +97,7 @@ export function DragDropZone({
         multiple={multiple}
         onChange={handleFileSelect}
         className="hidden"
-        aria-label={ariaLabel ?? "Choose files. All file types supported."}
+        aria-label={ariaLabel ?? "Choose files to share."}
       />
       
       <div className="space-y-4">

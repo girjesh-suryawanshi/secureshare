@@ -21,6 +21,7 @@ import { blogPosts } from "./blog";
 import type { TransferType } from "@shared/schema";
 import { QRCodeSVG } from "qrcode.react";
 import { SEOHead } from "@/components/seo-head";
+import { isAllowedFile } from "@shared/file-validation";
 
 const FILE_CHUNK_SIZE = 256 * 1024; // 256KB
 
@@ -289,6 +290,23 @@ export default function Home() {
 
   const handleFilesSelected = async (files: File[]) => {
     if (files.length > 0) {
+      const validFiles: File[] = [];
+      for (const file of files) {
+        const val = isAllowedFile(file.name, file.type);
+        if (!val.allowed) {
+          toast({
+            title: "File Blocked",
+            description: `"${file.name}": ${val.reason}`,
+            variant: "destructive",
+          });
+        } else {
+          validFiles.push(file);
+        }
+      }
+
+      if (validFiles.length === 0) return;
+      files = validFiles;
+
       setSelectedFiles(files);
       setIsUploading(true);
       setUploadProgress(0);

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { SEOHead } from "@/components/seo-head";
+import { isAllowedFile } from "@shared/file-validation";
 import { QRCodeSVG } from "qrcode.react";
 import {
   MessageSquare,
@@ -51,13 +52,9 @@ interface PendingAttachment {
   isImage: boolean;
 }
 
-const BLOCKED_EXTS = new Set([
-  "exe", "bat", "cmd", "sh", "vbs", "ps1", "msi", "dll", "scr", "jar", "apk", "iso", "dmg"
-]);
-
 function validateFile(file: File): string | null {
-  const ext = (file.name.split(".").pop() || "").toLowerCase();
-  if (BLOCKED_EXTS.has(ext)) return `File type .${ext} is not allowed for safety reasons.`;
+  const val = isAllowedFile(file.name, file.type);
+  if (!val.allowed) return val.reason || "File extension not allowed.";
   if (file.size > 20 * 1024 * 1024) return "File too large. Maximum size is 20 MB.";
   return null;
 }

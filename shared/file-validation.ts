@@ -1,21 +1,20 @@
 /**
- * Allowed and blocked file extension validation for Google AdSense & platform safety.
+ * Allowed and blocked file extension validation for HexaSend platform safety.
  */
 
 export const ALLOWED_EXTENSIONS = new Set([
   // Documents
-  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "csv", "odt", "ods", "odp",
+  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "csv", "odt",
   // Images
-  "jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff", "ico",
+  "jpg", "jpeg", "png", "gif", "webp", "svg", "bmp",
   // Archives
-  "zip", "rar", "7z", "tar", "gz", "bz2", "xz",
+  "zip", "rar", "7z", "tar", "gz",
   // Media / Audio / Video
-  "mp3", "wav", "ogg", "m4a", "flac", "mp4", "webm", "mkv", "avi", "mov"
+  "mp3", "wav", "mp4", "webm"
 ]);
 
 export const PROHIBITED_EXTENSIONS = new Set([
-  "exe", "bat", "cmd", "sh", "vbs", "ps1", "msi", "dll", "scr", "jar",
-  "apk", "iso", "dmg", "com", "gadget", "pif", "vb", "vbe", "ws", "wsf"
+  "exe", "bat", "cmd", "sh", "vbs", "ps1", "msi", "dll", "scr", "jar", "apk", "iso", "dmg"
 ]);
 
 export interface FileValidationResult {
@@ -31,7 +30,7 @@ export function isAllowedFile(fileName: string, _fileType?: string): FileValidat
 
   const parts = fileName.trim().split(".");
   if (parts.length < 2) {
-    return { allowed: true, category: "Other" };
+    return { allowed: false, reason: "File must have an extension.", category: "Other" };
   }
 
   const ext = parts.pop()!.toLowerCase();
@@ -39,7 +38,15 @@ export function isAllowedFile(fileName: string, _fileType?: string): FileValidat
   if (PROHIBITED_EXTENSIONS.has(ext)) {
     return {
       allowed: false,
-      reason: `Executable or script format (.${ext}) is prohibited for safety reasons.`,
+      reason: `Blocked file type .${ext} is prohibited for security reasons.`,
+      category: "Other",
+    };
+  }
+
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
+    return {
+      allowed: false,
+      reason: `File extension .${ext} is not allowed. Only supported documents, images, archives, audio, and video formats are permitted.`,
       category: "Other",
     };
   }
@@ -51,7 +58,7 @@ export function isAllowedFile(fileName: string, _fileType?: string): FileValidat
     category = "Image";
   } else if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) {
     category = "Archive";
-  } else if (["mp3", "wav", "ogg", "mp4", "webm", "mkv", "avi"].includes(ext)) {
+  } else if (["mp3", "wav", "mp4", "webm"].includes(ext)) {
     category = "Media";
   }
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { formatFileSize, getFileIcon, getFileIconColor } from "@/lib/file-utils";
 import { Upload, FolderOpen, Send, X, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { isAllowedFile } from "@shared/file-validation";
 import type { SelectedFile, FileTransfer, PeerConnection } from "@shared/schema";
 
 interface FileTransferPanelProps {
@@ -27,7 +28,23 @@ export function FileTransferPanel({
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const newFiles: SelectedFile[] = Array.from(files).map(file => ({
+    const validFiles: File[] = [];
+    for (const file of Array.from(files)) {
+      const val = isAllowedFile(file.name, file.type);
+      if (!val.allowed) {
+        toast({
+          title: "File Blocked",
+          description: `"${file.name}": ${val.reason}`,
+          variant: "destructive",
+        });
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    if (validFiles.length === 0) return;
+
+    const newFiles: SelectedFile[] = validFiles.map(file => ({
       id: `${file.name}-${Date.now()}-${Math.random()}`,
       file,
       name: file.name,
@@ -116,7 +133,7 @@ export function FileTransferPanel({
               Drop files here or click to select
             </h3>
             <p className="text-gray-600 mb-4">
-              Support for all file types up to browser limits
+              Supported formats: Documents, Images, Archives, Audio & Video (.pdf, .doc, .zip, .mp4, etc.)
             </p>
             <Button className="bg-material-blue hover:bg-blue-600">
               <FolderOpen className="mr-2 h-4 w-4" />
