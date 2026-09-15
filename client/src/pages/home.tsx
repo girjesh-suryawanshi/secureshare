@@ -1035,20 +1035,115 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Core Feature Badges */}
-                <div className="flex justify-center gap-3 mt-4">
-                  <div className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md">
-                    <Upload className="h-4 w-4" />
-                    📁 File Transfer
+                {/* 🚀 STUNNING CORE FEATURES SHOWCASE SECTION */}
+                <div className="max-w-4xl mx-auto mt-8 pt-4">
+                  <div className="text-center mb-6">
+                    <span className="px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-xs inline-flex items-center gap-1.5">
+                      <Zap className="h-3.5 w-3.5 text-indigo-600 animate-pulse" /> Core Capabilities
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-2">
+                      Two Powerful Features, Zero Sign-up Needed
+                    </h3>
                   </div>
-                  <Link href="/chat">
-                    <button
-                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md transition-all hover:scale-105"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      💬 Instant Chat
-                    </button>
-                  </Link>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+
+                    {/* FEATURE 1: FILE TRANSFER */}
+                    <div className="group relative rounded-3xl p-6 bg-gradient-to-b from-white via-slate-50/80 to-blue-50/50 border border-blue-200/80 shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col justify-between">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all pointer-events-none"></div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform">
+                            <Upload className="h-7 w-7" />
+                          </div>
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-semibold px-2.5 py-0.5 text-[11px]">
+                            📁 FILE TRANSFER
+                          </Badge>
+                        </div>
+
+                        <h4 className="text-xl font-bold text-slate-900 mb-1.5 flex items-center gap-2">
+                          Instant File Transfer
+                        </h4>
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
+                          Share large files, photos, videos & documents directly between any device using a simple 6-digit code.
+                        </p>
+
+                        <div className="space-y-2 mb-6">
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                            <span>No file size limits & fast P2P streaming</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                            <span>Internet & Local WiFi offline transfer modes</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                            <span>Auto-deleting 24h ephemeral storage</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const el = document.getElementById("transfer-type-selector") || document.body;
+                          el.scrollIntoView({ behavior: "smooth" });
+                          setTimeout(() => setMode("send"), 100);
+                        }}
+                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-blue-600/25 group-hover:shadow-blue-600/40 transition-all flex items-center justify-center gap-2">
+                        <span>Start File Transfer</span>
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </div>
+
+                    {/* FEATURE 2: INSTANT ROOM CHAT */}
+                    <div className="group relative rounded-3xl p-6 bg-gradient-to-b from-white via-slate-50/80 to-purple-50/50 border border-purple-200/80 shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col justify-between">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all pointer-events-none"></div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform">
+                            <MessageSquare className="h-7 w-7" />
+                          </div>
+                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 font-semibold px-2.5 py-0.5 text-[11px]">
+                            💬 INSTANT CHAT
+                          </Badge>
+                        </div>
+
+                        <h4 className="text-xl font-bold text-slate-900 mb-1.5 flex items-center gap-2">
+                          6-Digit Room Chat
+                        </h4>
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
+                          Create temporary, zero-login chat rooms to text, drop code snippets, paste photos & exchange files live.
+                        </p>
+
+                        <div className="space-y-2 mb-6">
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                            <span>WhatsApp-style live typing indicators</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                            <span>Instant QR code & 1-tap room link sharing</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                            <span>100% ephemeral — zero database logs saved</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Link href="/chat" className="w-full block">
+                        <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-purple-600/25 group-hover:shadow-purple-600/40 transition-all flex items-center justify-center gap-2">
+                          <span>Launch Instant Chat</span>
+                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    </div>
+
+                  </div>
                 </div>
               </div>
 
@@ -1070,7 +1165,7 @@ export default function Home() {
               </div>
 
               {/* Transfer Type Selection */}
-              <div className="max-w-xl mx-auto mb-8">
+              <div id="transfer-type-selector" className="max-w-xl mx-auto mb-8">
                 <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
                   <h3 className="text-lg font-semibold text-gray-800 mb-1 text-center">Choose Transfer Method</h3>
                   <p className="text-sm text-gray-500 text-center mb-4">Internet works everywhere; Local is faster on the same WiFi.</p>
