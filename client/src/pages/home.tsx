@@ -10,7 +10,7 @@ import { FilePreview } from "@/components/file-preview";
 import { DragDropZone } from "@/components/drag-drop-zone";
 import { TransferProgress } from "@/components/transfer-progress";
 import { TransferStats } from "@/components/transfer-stats";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2, Shield, Type, ClipboardCopy, MessageSquare, RefreshCw } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2, Shield, Type, ClipboardCopy, MessageSquare, RefreshCw, BookOpen } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -1312,7 +1312,8 @@ export default function Home() {
                 <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">Latest from Our Blog</h3>
                 <div className="grid md:grid-cols-3 gap-8">
                   {getLatestBlogPosts().map((post) => {
-                    const IconComponent = post.icon;
+                    const iconMap: Record<string, any> = { Zap, Globe, Shield, FileText, Share, Archive, BookOpen };
+                    const IconComponent = iconMap[post.iconName] || Zap;
                     return (
                       <Card
                         key={post.id}
