@@ -9,8 +9,14 @@ if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }
 
+import { createRotatingLogStream } from "./services/logRotator";
+
 const auditFilePath = path.join(logsDir, "audit.log");
-const auditStream = fs.createWriteStream(auditFilePath, { flags: "a" });
+const auditStream = createRotatingLogStream(auditFilePath, {
+  maxSizeBytes: 5 * 1024 * 1024, // 5 MB per file
+  maxFiles: 5,                   // Max 5 rotated files (~25 MB total cap)
+  compressOld: true,             // Gzip old logs automatically
+});
 
 // Remove old heavy debug log file if it exists to keep workspace clean
 const oldLogPath = path.join(logsDir, "secureshare.log");
