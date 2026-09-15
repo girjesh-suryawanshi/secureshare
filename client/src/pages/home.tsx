@@ -1539,11 +1539,31 @@ export default function Home() {
 
                   <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
                     <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
+                      <span>Can I send files from an iPhone or Android phone to a Windows or Mac PC?</span>
+                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
+                    </summary>
+                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      <strong>Direct Answer:</strong> Yes! HexaSend is 100% web-based and platform agnostic. Open Safari on an iPhone or Chrome on Android/Windows/Mac, upload the file, and type the 6-digit code on the destination device to bridge cross-platform transfers instantly.
+                    </div>
+                  </details>
+
+                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
+                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
                       <span>Can I transfer files offline over Local WiFi?</span>
                       <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
                     </summary>
                     <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
                       <strong>Direct Answer:</strong> Yes. Switch to "Local WiFi Mode" when both devices are connected to the same WiFi network or mobile hotspot for ultra-fast LAN file transfers without consuming external internet bandwidth.
+                    </div>
+                  </details>
+
+                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
+                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
+                      <span>What happens if I close my browser before the recipient finishes downloading?</span>
+                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
+                    </summary>
+                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      <strong>Direct Answer:</strong> For active peer-to-peer transfers, the sender browser tab must remain open until the receiver reaches 100%. If you close your browser tab or laptop lid mid-transfer, the stream connection is severed to protect your privacy.
                     </div>
                   </details>
                 </div>
@@ -1630,63 +1650,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 
-        ------------------------------------------------------------------------------------------------
-        SEO AND CONTENT BLOCK (Google AdSense Fix)
-        This block exists to provide a thick, keyword-dense text footprint for Google indexers 
-        and AdSense approval. Web crawlers require 500-1000 words to determine the 'Value' of the page.
-        ------------------------------------------------------------------------------------------------
-      */}
-        <div className="bg-white px-4 py-16 pb-24 border-t border-gray-100">
-          <div className="prose prose-lg prose-blue mx-auto max-w-4xl text-gray-600">
-
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">The Only Tool You Need to Send Large Files Online</h2>
-              <p className="text-xl">Discover exactly why millions of users trust HexaSend to bypass email limitations, avoid account creation, and share massive documents across platforms instantly.</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-12 mb-16">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">How Do You Transfer Files with a 6-Digit Code?</h3>
-                <p className="mb-4">Most modern cloud services force users to upload their sensitive files onto a massive server farm, wait for the upload to complete, generate a complex 50-character URL link, and then text that URL to a friend. <strong>HexaSend completely eliminates the cloud middle-man.</strong></p>
-                <p>When you drag your file into our tool above, our engine instantly assigns a secure, random, alphanumeric 6-digit passcode. All you share with your colleague or friend is that brief code (for example: "AB1234"). When they visit this website and type in the code, the platforms handshake.</p>
-                <p>Because the connection is peer-to-peer (or relayed instantly), the file begins streaming from your laptop directly onto their hard drive in real-time. It's the absolute fastest method to move data across an office, or across the world.</p>
-              </div>
-              <div className="bg-blue-50 rounded-2xl p-8 border border-blue-100">
-                <h3 className="text-xl font-bold text-blue-900 mb-4">The P2P Privacy Guarantee</h3>
-                <p className="text-blue-800 mb-4">We believe that your data is yours. Traditional services require you to create an account so they can track what you send and sell ads against your habits. Our architecture is different.</p>
-                <ul className="space-y-2 text-blue-800 list-disc pl-4">
-                  <li><strong>No Database Storage:</strong> Your private images or PDF documents are never stored permanently in a database.</li>
-                  <li><strong>No Accounts:</strong> You never type in an email address or a password to begin a transfer.</li>
-                  <li><strong>No Size Throttling:</strong> Want to send a 5-gigabyte 4K video? You can. We don't cap your personal bandwidth.</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
-              <div className="space-y-6">
-                <div className="bg-white p-6 rounded-xl border shadow-sm">
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">Can I send files from my iPhone to a Windows PC?</h4>
-                  <p>Yes! Because HexaSend runs entirely in the web browser, it is 100% platform agnostic. You can have an iPhone 15 open touching Safari, and a 10-year-old Windows Desktop running Chrome. Upload the photo on the iPhone, type the code on the Windows machine, and the file bridges the gap across the two distinct operating systems instantly.</p>
-                </div>
-                <div className="bg-white p-6 rounded-xl border shadow-sm">
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">Why does it say "Local Network Mode"?</h4>
-                  <p>When our tool detects that both the sender and the receiver are sitting on the exact same Wi-Fi connection (like in an office or coffee shop), we activate Local Mode. Instead of bouncing your files off a server on the internet, the data travels directly through your wireless router. This allows files to transfer at up to 1000 Mbps—virtually instantly!</p>
-                </div>
-                <div className="bg-white p-6 rounded-xl border shadow-sm">
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">Are my transfer codes secure from hackers?</h4>
-                  <p>Absolutely. A 6-digit alphanumeric code offers millions of possible combinations. Because the code is only valid while your browser tab remains open, the window of opportunity for an attacker to guess your PIN is non-existent. Furthermore, all connections between the clients are encrypted using modern web standard TLS protocols.</p>
-                </div>
-                <div className="bg-white p-6 rounded-xl border shadow-sm">
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">What happens if I close my browser before they finish downloading?</h4>
-                  <p>The transfer must be active to work. Because HexaSend does not permanently upload your file to an Amazon or Google cloud drive, the file is sourced directly from your active browser memory. If you close your laptop lid or shut down Chrome before the receiver hits 100%, the transfer is severed to protect your machine. Always leave the tab open until they confirm receipt!</p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
       </>
     );
   }
