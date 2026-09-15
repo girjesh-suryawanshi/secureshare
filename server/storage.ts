@@ -31,6 +31,10 @@ export class FileDiskStore {
     }
   }
 
+  getBaseDir(): string {
+    return this.baseDir;
+  }
+
   async prepareFilePath(code: string, fileIndex: number, _originalName: string) {
     await this.ensureBaseDir();
     const codeDir = path.join(this.baseDir, code);

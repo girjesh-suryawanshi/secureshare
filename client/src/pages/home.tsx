@@ -10,7 +10,7 @@ import { FilePreview } from "@/components/file-preview";
 import { DragDropZone } from "@/components/drag-drop-zone";
 import { TransferProgress } from "@/components/transfer-progress";
 import { TransferStats } from "@/components/transfer-stats";
-import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2, Shield, Type, ClipboardCopy, MessageSquare } from "lucide-react";
+import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2, Shield, Type, ClipboardCopy, MessageSquare, RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -98,6 +98,8 @@ export default function Home() {
   const lastRequestTimeRef = useRef<number>(0); // Rate limiting for request-file
   const pendingRegistrationsRef = useRef<Map<string, (value: unknown) => void>>(new Map());
   const receiveSafetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // Safety timeout to prevent stuck state
+  const receivePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const notFoundCountRef = useRef<number>(0);
 
   // Text share state
   const [shareMode, setShareMode] = useState<'file' | 'text'>('file');
@@ -229,10 +231,10 @@ export default function Home() {
       };
 
       setReceivedFiles((prev) => [...prev, completedFile]);
-      setExpectedFilesCount((prev) => (prev === 0 && job.totalFiles ? job.totalFiles : prev));
+      setExpectedFilesCount((prev) => (job.totalFiles && job.totalFiles > prev ? job.totalFiles : prev));
       setReceivedFilesCount((prev) => {
         const nextCount = prev + 1;
-        const totalExpected = job.totalFiles || expectedFilesCount || nextCount;
+        const totalExpected = (job.totalFiles && job.totalFiles > 0) ? job.totalFiles : (expectedFilesCount > 0 ? expectedFilesCount : nextCount);
         const progressBase = totalExpected > 0 ? 50 + (nextCount / totalExpected) * 40 : 90;
         setReceiveProgress(Math.min(95, progressBase));
 
@@ -336,19 +338,28 @@ export default function Home() {
         sendMessage({
           type: 'bind-ws',
           code,
+          totalFiles: files.length,
         });
 
-        // Upload files using REST API which is much more reliable for large streams
-        // than WebSocket pushing
+        // Upload files sequentially using binary multipart (fast — no base64, no timeout risk)
         let completedFiles = 0;
 
         for (const [index, file] of files.entries()) {
-          console.log(`Uploading file ${index + 1}/${files.length} via REST API (${transferType} mode)`);
+          console.log(`Uploading file ${index + 1}/${files.length} via binary upload (${transferType} mode)`);
 
-          if (file.size > 5 * 1024 * 1024) {  // Changed from 200MB to 5MB for stable Docker uploading
-            await uploadFileInChunks(file, code, index, files.length, transferType);
-          } else {
-            await uploadFileDirect(file, code, index, files.length, transferType);
+          let attempts = 0;
+          let uploaded = false;
+          while (attempts < 3 && !uploaded) {
+            try {
+              attempts++;
+              // Always use binary direct upload (FormData) — it's fast enough for any file size
+              await uploadFileDirect(file, code, index, files.length, transferType);
+              uploaded = true;
+            } catch (err) {
+              console.warn(`Upload attempt ${attempts} failed for ${file.name}:`, err);
+              if (attempts >= 3) throw err;
+              await new Promise(r => setTimeout(r, 1000 * attempts));
+            }
           }
 
           completedFiles++;
@@ -356,7 +367,7 @@ export default function Home() {
 
           // Only internet mode tracks progress in this precise block (local mode has its own toast flow)
           if (transferType === 'internet') {
-            setUploadProgress(progress); // Assuming setUploadProgress can handle a number for overall progress
+            setUploadProgress(progress);
           }
         }
 
@@ -391,6 +402,87 @@ export default function Home() {
       });
     }
   };
+
+  const fetchAndReceiveFiles = useCallback(async (codeToFetch?: string): Promise<{ done: boolean; notFound?: boolean; waiting?: boolean; textFound?: boolean }> => {
+    const code = (codeToFetch || inputCode || transferCode || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!code) return { done: false, notFound: true };
+
+    try {
+      const restRes = await fetch(`/files/${code}`, {
+        headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+      });
+      if (restRes.ok) {
+        const payload = await restRes.json();
+        const filesList = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.files)
+            ? payload.files
+            : [];
+        const totalExpectedFiles = Math.max(payload.totalFiles || 0, filesList.length);
+        const readyFiles = filesList.filter((f: any) => f.downloadUrl && (f.isReady ?? true));
+
+        if (readyFiles.length > 0) {
+          setExpectedFilesCount(totalExpectedFiles);
+          for (const file of readyFiles) {
+            await downloadFileJob({
+              code: code,
+              downloadUrl: file.downloadUrl,
+              fileName: file.fileName,
+              fileType: file.fileType,
+              fileIndex: file.fileIndex ?? 0,
+              totalFiles: totalExpectedFiles,
+              isLocal: transferType === 'local',
+            });
+          }
+          if (totalExpectedFiles > 0 && downloadedFileKeys.current.size >= totalExpectedFiles) {
+            if (receiveSafetyTimerRef.current) {
+              clearTimeout(receiveSafetyTimerRef.current);
+              receiveSafetyTimerRef.current = null;
+            }
+            if (receivePollIntervalRef.current) {
+              clearInterval(receivePollIntervalRef.current);
+              receivePollIntervalRef.current = null;
+            }
+            setIsReceiving(false);
+            setReceiveProgress(0);
+            return { done: true };
+          }
+          return { done: false, waiting: true };
+        } else {
+          return { done: false, waiting: true };
+        }
+      } else if (restRes.status === 404) {
+        // Check if code was shared as text share instead of file share
+        try {
+          const textRes = await fetch(`/api/text/${code}`);
+          if (textRes.ok) {
+            const data = await textRes.json();
+            if (data && data.text) {
+              setReceivedText(data.text);
+              if (receiveSafetyTimerRef.current) {
+                clearTimeout(receiveSafetyTimerRef.current);
+                receiveSafetyTimerRef.current = null;
+              }
+              if (receivePollIntervalRef.current) {
+                clearInterval(receivePollIntervalRef.current);
+                receivePollIntervalRef.current = null;
+              }
+              setIsReceiving(false);
+              setReceiveProgress(0);
+              toast({ title: '📋 Text Received!', description: `${data.byteLength || 0} bytes received.` });
+              return { done: true, textFound: true };
+            }
+          }
+        } catch {
+          // Ignore error
+        }
+        return { done: false, notFound: true };
+      }
+    } catch (err) {
+      console.error("Error checking files:", err);
+    }
+    return { done: false, notFound: true };
+  }, [downloadFileJob, inputCode, transferCode, transferType, toast]);
 
   const handleReceiveFile = async () => {
     const normalized = inputCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -428,167 +520,120 @@ export default function Home() {
       return;
     }
 
-    // Clear any existing retry timeout
+    // Clear any existing timeouts or polling intervals
     if (receiveRetryTimeoutRef.current) {
       clearTimeout(receiveRetryTimeoutRef.current);
       receiveRetryTimeoutRef.current = null;
     }
+    if (receivePollIntervalRef.current) {
+      clearInterval(receivePollIntervalRef.current);
+      receivePollIntervalRef.current = null;
+    }
+
+    // Reset counters and refs
+    notFoundCountRef.current = 0;
+    receiveRequestCodeRef.current = upperCode;
+    receiveRetryCountRef.current = 0;
 
     setIsReceiving(true);
     setReceiveProgress(10);
     resetReceiveState();
 
-    // Safety valve: if stuck in receiving state for 30s, auto-reset to avoid deadlock
+    // Safety valve: 5 minutes max
     if (receiveSafetyTimerRef.current) clearTimeout(receiveSafetyTimerRef.current);
     receiveSafetyTimerRef.current = setTimeout(() => {
+      if (receivePollIntervalRef.current) {
+        clearInterval(receivePollIntervalRef.current);
+        receivePollIntervalRef.current = null;
+      }
       setIsReceiving(false);
       setReceiveProgress(0);
       receiveSafetyTimerRef.current = null;
       toast({
         title: "Transfer Timeout",
-        description: "No response from server. Please check the code and try again.",
+        description: "Transfer timed out after 5 minutes. Please try again.",
         variant: "destructive",
       });
-    }, 30000);
+    }, 5 * 60 * 1000);
 
     // Mark this request as pending
     pendingRequestRef.current.set(upperCode, now);
     lastRequestTimeRef.current = now;
 
-    // Fast-path REST check: query /files/:code directly for instant response
-    try {
-      const restRes = await fetch(`/files/${upperCode}`, {
-        headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
-      });
-      if (restRes.ok) {
-        const payload = await restRes.json();
-        const filesList = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload.files)
-            ? payload.files
-            : [];
-        const readyFiles = filesList.filter((f: any) => f.downloadUrl && f.isReady);
-        if (readyFiles.length > 0) {
-          setExpectedFilesCount(readyFiles.length);
-          for (const file of readyFiles) {
-            await downloadFileJob({
-              code: upperCode,
-              downloadUrl: file.downloadUrl,
-              fileName: file.fileName,
-              fileType: file.fileType,
-              fileIndex: file.fileIndex ?? 0,
-              totalFiles: readyFiles.length,
-              isLocal: transferType === 'local',
-            });
+    // Send WebSocket request if connected
+    if (isConnected) {
+      sendMessage({ type: 'request-file', code: upperCode });
+    }
+
+    // Check files immediately via REST
+    const immediateRes = await fetchAndReceiveFiles(upperCode);
+    if (immediateRes.done) {
+      if (receiveSafetyTimerRef.current) {
+        clearTimeout(receiveSafetyTimerRef.current);
+        receiveSafetyTimerRef.current = null;
+      }
+      if (!immediateRes.textFound) {
+        toast({
+          title: "Files Received",
+          description: `All files received successfully`,
+        });
+      }
+      return;
+    } else if (immediateRes.notFound) {
+      notFoundCountRef.current = 1;
+    }
+
+    // Start polling interval
+    let pollCount = 0;
+    receivePollIntervalRef.current = setInterval(async () => {
+      pollCount++;
+      const res = await fetchAndReceiveFiles(upperCode);
+
+      if (res.done) {
+        if (receivePollIntervalRef.current) {
+          clearInterval(receivePollIntervalRef.current);
+          receivePollIntervalRef.current = null;
+        }
+        if (receiveSafetyTimerRef.current) {
+          clearTimeout(receiveSafetyTimerRef.current);
+          receiveSafetyTimerRef.current = null;
+        }
+        setIsReceiving(false);
+        setReceiveProgress(0);
+      } else if (res.notFound) {
+        notFoundCountRef.current += 1;
+        // If code is not found after 10 consecutive seconds, stop loading and notify user
+        if (notFoundCountRef.current >= 10) {
+          if (receivePollIntervalRef.current) {
+            clearInterval(receivePollIntervalRef.current);
+            receivePollIntervalRef.current = null;
           }
           if (receiveSafetyTimerRef.current) {
             clearTimeout(receiveSafetyTimerRef.current);
             receiveSafetyTimerRef.current = null;
           }
+          receiveRequestCodeRef.current = null;
+          pendingRequestRef.current.delete(upperCode);
           setIsReceiving(false);
           setReceiveProgress(0);
-          if (isConnected) {
-            sendMessage({ type: 'request-file', code: upperCode });
-          }
-          return;
-        }
-      }
-    } catch {
-      // Continue to WebSocket logic below if REST check fails
-    }
-
-    // Handle local network transfer
-    if (transferType === 'local') {
-      try {
-        console.log(`Looking for files with code: ${upperCode}`);
-        setReceiveProgress(30);
-
-        // Try to get files directly from current server (local network)
-        const response = await fetch(`/files/${upperCode}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
-
-        if (response.ok) {
-          const payload = await response.json();
-          const files = Array.isArray(payload)
-            ? payload
-            : Array.isArray(payload.files)
-              ? payload.files
-              : [];
-
-          const readyFiles = files.filter((file: any) => file.downloadUrl);
-          if (readyFiles.length === 0) {
-            throw new Error('No ready files found');
-          }
-
-          setExpectedFilesCount(readyFiles.length);
-          for (const file of readyFiles) {
-            await downloadFileJob({
-              code: upperCode,
-              downloadUrl: file.downloadUrl,
-              fileName: file.fileName,
-              fileType: file.fileType,
-              fileIndex: file.fileIndex,
-              totalFiles: readyFiles.length,
-              isLocal: true,
-            });
-          }
-
           toast({
-            title: "Files Received Locally",
-            description: `${readyFiles.length} file(s) received from local network`,
+            title: "File Not Found",
+            description: `No file found with code ${upperCode}. Please check the code and ensure sender has shared files.`,
+            variant: "destructive",
           });
-          setIsReceiving(false);
-          setReceiveProgress(0);
-          return;
-        } else {
-          const errorText = await response.text();
-          console.error(`Server responded with ${response.status}: ${errorText}`);
-          throw new Error(`File not found on local network`);
         }
-      } catch (error) {
-        console.error('Failed to get local files:', error);
-        setIsReceiving(false);
-        setReceiveProgress(0);
-        toast({
-          title: "File Not Found",
-          description: `No files found with code ${upperCode} on local network`,
-          variant: "destructive",
-        });
-        return;
+      } else if (res.waiting) {
+        // Code exists on server (sender is uploading)
+        notFoundCountRef.current = 0;
       }
-    }
-
-    // Internet transfer - verify WebSocket connection first
-    if (!isConnected) {
-      setIsReceiving(false);
-      setReceiveProgress(0);
-      toast({
-        title: "Connection Lost",
-        description: "Reconnecting to server... Please wait a moment and try again.",
-        variant: "destructive",
-      });
-      reconnect(); // Force a reconnection attempt
-      return;
-    }
-
-    // Set refs so we can retry on file-not-found (cross-device race)
-    receiveRequestCodeRef.current = upperCode;
-    receiveRetryCountRef.current = 0;
-    console.log('Requesting file with code:', upperCode);
-    sendMessage({
-      type: 'request-file',
-      code: upperCode,
-    });
+    }, 1000);
 
     toast({
       title: "Requesting File",
-      description: "Looking for file with that code...",
+      description: "Looking for file with code " + upperCode + "...",
     });
   };
+
 
   const copyCode = async () => {
     if (!transferCode) return;
@@ -817,6 +862,10 @@ export default function Home() {
       }
 
       // Max retries reached or not our request - give up
+      if (receivePollIntervalRef.current) {
+        clearInterval(receivePollIntervalRef.current);
+        receivePollIntervalRef.current = null;
+      }
       receiveRequestCodeRef.current = null;
       receiveRetryCountRef.current = 0;
       pendingRequestRef.current.delete(normalizedCode);
@@ -2214,8 +2263,8 @@ export default function Home() {
                       <div className="space-y-3 mb-4">
                         <Button
                           onClick={downloadFiles}
-                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] focus-visible:ring-2"
-                          disabled={isDownloading || (expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount)}
+                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
+                          disabled={isDownloading}
                           aria-label={`Download all ${receivedFiles.length} files as ZIP`}
                         >
                           {isDownloading ? (
@@ -2223,15 +2272,10 @@ export default function Home() {
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Creating ZIP…
                             </>
-                          ) : (expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount) ? (
-                            <>
-                              <Clock className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                              Waiting for {expectedFilesCount - receivedFilesCount} more files…
-                            </>
                           ) : (
                             <>
                               <Archive className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                              Download All as ZIP ({receivedFiles.length} files)
+                              Download All as ZIP ({receivedFiles.length} {receivedFiles.length === 1 ? 'file' : 'files'})
                             </>
                           )}
                         </Button>
@@ -2245,38 +2289,35 @@ export default function Home() {
                             <Progress value={downloadProgress} className="h-2" />
                           </div>
                         )}
-                        {expectedFilesCount > 0 && receivedFilesCount < expectedFilesCount ? (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                            <p className="text-center text-xs md:text-sm text-yellow-700 font-medium">
-                              ⏳ Still receiving files… {receivedFilesCount}/{expectedFilesCount} completed
+                        {expectedFilesCount > 0 && receivedFiles.length < expectedFilesCount && (
+                          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center space-y-3 mt-4">
+                            <p className="text-xs md:text-sm text-amber-800 font-medium">
+                              ⏳ {receivedFiles.length} of {expectedFilesCount} files received. {expectedFilesCount - receivedFiles.length} file(s) still pending from sender.
                             </p>
-                            <p className="text-center text-xs text-yellow-600 mt-1">
-                              Download will be enabled when all files are received
-                            </p>
+                            <Button
+                              onClick={() => fetchAndReceiveFiles()}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-9 border-amber-300 text-amber-900 hover:bg-amber-100 font-semibold"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                              Check for Remaining Files
+                            </Button>
                           </div>
-                        ) : (
-                          <p className="text-center text-xs md:text-sm text-gray-600">
-                            Or download individual files using the buttons above
-                          </p>
                         )}
                       </div>
                     ) : (
                       <div className="space-y-3 mb-4">
                         <Button
                           onClick={downloadFiles}
-                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] focus-visible:ring-2"
-                          disabled={isDownloading || (expectedFilesCount > 1 && receivedFilesCount < expectedFilesCount)}
+                          className="w-full h-12 md:h-14 text-sm md:text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
+                          disabled={isDownloading}
                           aria-label={receivedFiles[0] ? `Download ${receivedFiles[0].name}` : "Download file"}
                         >
                           {isDownloading ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Downloading…
-                            </>
-                          ) : (expectedFilesCount > 1 && receivedFilesCount < expectedFilesCount) ? (
-                            <>
-                              <Clock className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                              Waiting for {expectedFilesCount - receivedFilesCount} more files…
                             </>
                           ) : (
                             <>
@@ -2292,6 +2333,22 @@ export default function Home() {
                               <span>{Math.round(downloadProgress)}%</span>
                             </div>
                             <Progress value={downloadProgress} className="h-2" />
+                          </div>
+                        )}
+                        {expectedFilesCount > 1 && receivedFiles.length < expectedFilesCount && (
+                          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center space-y-3 mt-4">
+                            <p className="text-xs md:text-sm text-amber-800 font-medium">
+                              ⏳ 1 of {expectedFilesCount} files received. {expectedFilesCount - 1} file(s) still pending from sender.
+                            </p>
+                            <Button
+                              onClick={() => fetchAndReceiveFiles()}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-9 border-amber-300 text-amber-900 hover:bg-amber-100 font-semibold"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                              Check for Remaining Files
+                            </Button>
                           </div>
                         )}
                       </div>

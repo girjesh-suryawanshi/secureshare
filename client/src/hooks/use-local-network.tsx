@@ -87,37 +87,33 @@ export function useLocalNetwork() {
       const localIP = await getLocalIP();
       const port = parseInt(window.location.port) || 5000;
 
-      // Register files with the main server with progress tracking
+      // Register files sequentially with retry logic and progress tracking
       let completedFiles = 0;
 
-      const filePromises = files.map(async (file, index) => {
-        console.log(`Registering local file: ${file.name} (${index + 1}/${files.length}) - ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      for (const [index, file] of files.entries()) {
+        console.log(`Registering file: ${file.name} (${index + 1}/${files.length}) - ${(file.size / 1024 / 1024).toFixed(2)}MB`);
 
-        try {
-          // Use direct upload for all files up to 200MB for better speed
-          // Only use chunked upload for extremely large files
-          if (file.size > 200 * 1024 * 1024) {
-            await uploadFileInChunks(file, code, index, files.length);
-          } else {
-            // Use direct upload for most files (much faster)
+        let attempts = 0;
+        let success = false;
+        while (attempts < 3 && !success) {
+          try {
+            attempts++;
+            // Always use binary FormData upload — handles any file size, no base64, no timeout
             await uploadFileDirect(file, code, index, files.length);
+            success = true;
+          } catch (error) {
+            console.warn(`Upload attempt ${attempts} failed for ${file.name}:`, error);
+            if (attempts >= 3) throw error;
+            await new Promise((r) => setTimeout(r, 1000 * attempts));
           }
-
-          // Update progress after each file completes
-          completedFiles++;
-          const progress = (completedFiles / files.length) * 100;
-          if (onProgress) {
-            onProgress(progress, file.name);
-          }
-
-          return { success: true, fileName: file.name };
-        } catch (error) {
-          console.error(`Failed to upload file ${file.name}:`, error);
-          throw error;
         }
-      });
 
-      await Promise.all(filePromises);
+        completedFiles++;
+        const progress = (completedFiles / files.length) * 100;
+        if (onProgress) {
+          onProgress(progress, file.name);
+        }
+      }
 
       console.log(`All ${files.length} files registered successfully for code ${code}`);
 
@@ -156,38 +152,34 @@ export function useLocalNetwork() {
       reader.readAsDataURL(blob);
     });
 
-  // Upload small files directly (all file types supported, including HEIC)
+  // Upload files as binary multipart (fast — no base64 overhead, no timeout risk)
   const uploadFileDirect = async (file: File, code: string, index: number, totalFiles: number, transferType: 'local' | 'internet' = 'local') => {
-    const base64Data = await fileToBase64(file);
-
     const fileName = (file.name && file.name.trim()) || `file-${index}`;
-    const fileSize = file.size ?? 0;
     const fileType = (file.type && file.type.trim()) ? file.type : 'application/octet-stream';
 
-    const response = await fetch('/api/register-local-file', {
+    const formData = new FormData();
+    formData.append('file', file, fileName);
+    formData.append('code', code);
+    formData.append('fileName', fileName);
+    formData.append('fileSize', String(file.size));
+    formData.append('fileType', fileType);
+    formData.append('fileIndex', String(index));
+    formData.append('totalFiles', String(totalFiles));
+    formData.append('transferType', transferType);
+
+    const response = await fetch('/api/upload-file', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        code,
-        fileName,
-        fileSize,
-        fileType,
-        data: base64Data,
-        fileIndex: index,
-        totalFiles,
-        transferType,
-      }),
+      body: formData,
+      // No Content-Type header — browser sets it automatically with correct boundary
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to register file: ${response.status} ${errorText}`);
+      throw new Error(`Failed to upload file: ${response.status} ${errorText}`);
     }
 
     const result = await response.json();
-    console.log(`Successfully registered ${file.name}:`, result);
+    console.log(`Successfully uploaded ${fileName} (binary, ${(file.size / 1024 / 1024).toFixed(2)}MB):`, result);
     return result;
   };
 

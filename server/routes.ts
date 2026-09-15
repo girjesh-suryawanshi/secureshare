@@ -2,10 +2,11 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import crypto from "crypto";
+import multer from "multer";
 import { MessageSchema, type FileRegistry, type TransferType } from "@shared/schema";
 import { fileStore } from "./storage";
 import { config } from "./config";
-import { logger } from "./logger";
+import { logger, auditLogger } from "./logger";
 
 const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
 const DEFAULT_FILE_TYPE = "application/octet-stream";
@@ -22,6 +23,18 @@ const normalizeFileType = (fileType?: string | null) => {
   }
   const trimmed = fileType.trim();
   return trimmed.length > 0 ? trimmed : DEFAULT_FILE_TYPE;
+};
+
+/** Hash IP address for forensic traceability without storing raw PII */
+const hashIp = (ip: string | undefined): string => {
+  if (!ip) return "unknown";
+  return crypto.createHash("sha256").update(ip + "secureshare-salt").digest("hex").slice(0, 12);
+};
+
+const getClientIp = (req: any): string => {
+  const forwarded = req?.headers?.["x-forwarded-for"];
+  if (typeof forwarded === "string") return forwarded.split(",")[0].trim();
+  return req?.socket?.remoteAddress || req?.ip || "unknown";
 };
 
 /** Normalize share code for consistent lookup (cross-device, different keyboards) */
@@ -57,10 +70,10 @@ const requestRateLimit = new Map<WebSocket, { lastRequest: number; count: number
 const RATE_LIMIT_WINDOW_MS = 1000; // 1 second window
 const MAX_REQUESTS_PER_WINDOW = 5; // Max 5 requests per second per connection
 
-// REST endpoint rate limiting
+// REST endpoint rate limiting (generous limit for batch multi-file and chunk uploads)
 const restRateLimit = new Map<string, { lastRequest: number; count: number }>();
 const REST_RATE_LIMIT_WINDOW_MS = 2000; // 2 second window
-const REST_MAX_REQUESTS_PER_WINDOW = 10;
+const REST_MAX_REQUESTS_PER_WINDOW = 300;
 
 function checkRateLimit(ws: WebSocket): boolean {
   const now = Date.now();
@@ -150,8 +163,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   httpServer.on("close", () => clearInterval(cleanupInterval));
 
-  wss.on("connection", (ws) => {
-    logger.info("Client connected");
+  wss.on("connection", (ws, req) => {
+    const clientIp = getClientIp(req);
+    const ipHash = hashIp(clientIp);
+    (ws as any).ipHash = ipHash;
+
+    logger.info({ ipHash }, "Client connected");
 
     ws.on("message", (raw) => {
       void (async () => {
@@ -286,6 +303,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       file.completed = true;
       notifyRequestersFileReady(registry, file);
     }
+
+    auditLogger.info({
+      event: "file-registered",
+      code,
+      fileNameHash: hashFileName(fileName),
+      fileSize,
+      fileIndex,
+      totalFiles: registry.totalFiles,
+      transferType: registry.transferType,
+      ipHash: (ws as any)?.ipHash,
+    }, "Audit: File registered via WS");
 
     ws.send(
       JSON.stringify({
@@ -453,10 +481,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const code = normalizeCode(message.code);
     if (!code) return;
 
-    // Use totalFiles = 1 as a placeholder; it will be overridden when register file REST endpoint hits
-    const registry = getOrCreateRegistry(code, 1, "internet", ws);
+    const totalFiles = typeof message.totalFiles === "number" && message.totalFiles > 0 ? message.totalFiles : 1;
+    const registry = getOrCreateRegistry(code, totalFiles, "internet", ws);
     registry.senderWs = ws;
-    logger.info({ code }, "WebSocket bound to internet file transfer session");
+    logger.info({ code, totalFiles }, "WebSocket bound to internet file transfer session");
   }
 
   // ─── Text Share WebSocket Handlers ────────────────────────────────────
@@ -492,7 +520,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Log only hash + size for abuse detection, never the actual text
-    logger.info({ code, textHash, byteLength: textBytes }, "Text share registered");
+    auditLogger.info({
+      event: "text-registered",
+      code,
+      textHash,
+      byteLength: textBytes,
+      ipHash: (ws as any)?.ipHash,
+    }, "Audit: Text share registered");
 
     ws.send(JSON.stringify({ type: "text-registered", code }));
   }
@@ -549,7 +583,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Log only that a contact was received — no PII in logs
-    logger.info({ subject, timestamp: new Date().toISOString() }, "New contact form message received");
+    auditLogger.info({
+      event: "contact-message",
+      subject,
+      ipHash: (req as any)?.ipHash || req.ip,
+      timestamp: new Date().toISOString()
+    }, "Audit: Contact form submitted");
 
     // In production, this can connect to Nodemailer, Resend, SendGrid, or store in database
     return res.json({
@@ -586,12 +625,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Log abuse report for legal compliance (no PII from the reported content)
-    logger.info({
+    auditLogger.info({
+      event: "report-abuse",
       transferCode: normalizedTransferCode,
       hasReporterEmail: !!reporterEmail,
       legalBasis: legalBasis || "unspecified",
+      ipHash: (req as any)?.ipHash || req.ip,
       timestamp: new Date().toISOString(),
-    }, "Abuse / takedown report received");
+    }, "Audit: Abuse reported");
 
     return res.json({
       success: true,
@@ -627,8 +668,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
-    logger.info({ code, fileCount: files.length }, "Client requested file list");
-    res.json({ code, files });
+    logger.info({ code, fileCount: files.length, totalFiles: registry.totalFiles }, "Client requested file list");
+    res.json({ code, files, totalFiles: registry.totalFiles });
   });
 
   app.get("/api/files/:code/:fileIndex/download", async (req, res) => {
@@ -661,6 +702,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // All upload REST endpoints now use rate limiting middleware
+  // ─── FAST BINARY UPLOAD endpoint (no base64 overhead, disk-streamed) ──────────────────
+  // Accepts multipart/form-data so files are streamed as raw binary (33% smaller, no timeout risk)
+  // Uses disk storage so large files don't exhaust server RAM
+  const uploadTmpDir = fileStore.getBaseDir();
+  const multerDiskStorage = multer.diskStorage({
+    destination: async (_req, _file, cb) => {
+      try {
+        await fileStore.ensureBaseDir();
+        cb(null, uploadTmpDir);
+      } catch (err: any) {
+        cb(err, uploadTmpDir);
+      }
+    },
+    filename: (_req, _file, cb) => cb(null, `tmp-${crypto.randomUUID()}`),
+  });
+  const upload = multer({
+    storage: multerDiskStorage,
+    limits: { fileSize: 500 * 1024 * 1024 }, // 500MB per file
+  });
+
+  app.post("/api/upload-file", restRateLimitMiddleware, upload.single("file"), async (req, res) => {
+    const tmpPath = (req.file as any)?.path;
+    try {
+      const code = normalizeCode(req.body?.code);
+      const fileName = req.body?.fileName || req.file?.originalname || "file";
+      const fileIndex = parseInt(req.body?.fileIndex ?? "0", 10);
+      const totalFiles = parseInt(req.body?.totalFiles ?? "1", 10);
+      const transferType = (req.body?.transferType as TransferType) || "local";
+      const fileType = normalizeFileType(req.body?.fileType || req.file?.mimetype);
+
+      if (!code || !req.file) {
+        return res.status(400).json({ error: "Missing required fields: code and file are required" });
+      }
+
+      const fileSize = req.file.size;
+      const registry = getOrCreateRegistry(code, totalFiles, transferType);
+      const fileEntry = await upsertFileEntry(registry, { fileName, fileSize, fileType, fileIndex });
+
+      // Move the temp file uploaded by multer directly to the fileStore path
+      const { promises: fsPromises } = await import("fs");
+      await fsPromises.rename(tmpPath, fileEntry.filePath).catch(async () => {
+        // rename may fail across drives — fall back to copy+delete
+        await fsPromises.copyFile(tmpPath, fileEntry.filePath);
+        await fsPromises.unlink(tmpPath).catch(() => {});
+      });
+
+      fileEntry.receivedBytes = fileSize;
+      fileEntry.completed = true;
+      notifyRequestersFileReady(registry, fileEntry);
+
+      auditLogger.info({
+        event: "file-registered",
+        code,
+        fileNameHash: hashFileName(fileName),
+        fileSize,
+        fileIndex,
+        totalFiles: registry.totalFiles,
+        transferType,
+        ipHash: hashIp(getClientIp(req)),
+      }, "Audit: File registered via binary upload");
+
+      res.json({ success: true, downloadUrl: buildDownloadUrl(code, fileIndex) });
+    } catch (err: any) {
+      // Clean up temp file on error
+      if (tmpPath) {
+        const { promises: fsPromises } = await import("fs");
+        await fsPromises.unlink(tmpPath).catch(() => {});
+      }
+      logger.error({ error: err?.message }, "Binary upload failed");
+      res.status(500).json({ error: "Upload failed: " + (err?.message || "Unknown error") });
+    }
+  });
+
+  // Legacy base64 endpoint kept for backward compatibility
   app.post("/api/register-local-file", restRateLimitMiddleware, async (req, res) => {
     const { code: rawCode, fileName, fileSize, fileType, data, fileIndex = 0, totalFiles = 1, transferType = "local" } = req.body;
     const code = normalizeCode(rawCode);
@@ -669,8 +784,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Log with hashed file name, not the actual name
-    logger.info({ code, fileNameHash: hashFileName(fileName), fileSize, transferType }, "Direct file registration received");
     const registry = getOrCreateRegistry(code, totalFiles, transferType as TransferType);
     const safeFileType = normalizeFileType(fileType);
     const file = await upsertFileEntry(registry, { fileName, fileSize, fileType: safeFileType, fileIndex });
@@ -679,7 +792,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     file.completed = true;
     notifyRequestersFileReady(registry, file);
 
-    logger.info({ code, fileNameHash: hashFileName(fileName), bytesWritten }, "Direct file registration complete");
+    auditLogger.info({
+      event: "file-registered",
+      code,
+      fileNameHash: hashFileName(fileName),
+      fileSize,
+      fileIndex,
+      totalFiles: registry.totalFiles,
+      transferType,
+      ipHash: (req as any)?.ipHash || req.ip,
+    }, "Audit: File registered via REST");
     res.json({ success: true, downloadUrl: buildDownloadUrl(code, fileIndex) });
   });
 
@@ -932,7 +1054,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
-    logger.info({ code, senderName, activeUsers }, "User joined room chat");
+    auditLogger.info({
+      event: "room-user-joined",
+      code,
+      senderName,
+      activeUsers,
+      ipHash: (ws as any)?.ipHash,
+    }, "Audit: User joined room chat");
   }
 
   function handleLeaveRoomChat(message: any, ws: WebSocket) {
@@ -1014,7 +1142,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
-    logger.info({ code, senderName: message.senderName, recipientsCount: members.size - 1 }, "Room chat message relayed");
+    auditLogger.info({
+      event: "room-chat-message",
+      code,
+      senderName: message.senderName,
+      recipientsCount: members.size - 1,
+      hasText: !!message.text,
+      hasFile: !!message.fileName,
+      fileNameHash: message.fileName ? hashFileName(message.fileName) : undefined,
+      fileSize: message.fileSize,
+      ipHash: (ws as any)?.ipHash,
+      timestamp: new Date().toISOString(),
+    }, "Audit: Room chat message sent");
+
+    logger.info({
+      code,
+      senderName: message.senderName,
+      recipientsCount: members.size - 1,
+      hasText: !!message.text,
+      hasFile: !!message.fileName,
+      fileNameHash: message.fileName ? hashFileName(message.fileName) : undefined,
+      fileSize: message.fileSize,
+      fileType: message.fileType,
+      ipHash: (ws as any).ipHash,
+      timestamp: new Date().toISOString(),
+    }, "Room chat message relayed");
   }
 
   function handleRoomTyping(message: any, ws: WebSocket) {

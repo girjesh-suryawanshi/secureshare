@@ -1,0 +1,58 @@
+
+> rest-express@1.0.0 dev
+> cross-env NODE_ENV=development tsx server/index.ts
+
+{"level":30,"time":1789455658557,"msg":"Server listening on http://0.0.0.0:5000"}
+{"level":30,"time":1789455658558,"msg":"WebSocket available at ws://0.0.0.0:5000/ws"}
+{"level":30,"time":1789455658589,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789455659570,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789455706976,"req":{"id":1,"method":"GET","url":"/api/files/TESTAB","query":{},"params":{},"headers":{"host":"localhost:5000","user-agent":"curl/8.21.0","accept":"*/*"},"remoteAddress":"127.0.0.1","remotePort":64417},"res":{"statusCode":200,"headers":{"cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"cross-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=31536000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","ratelimit-policy":"120;w=60","ratelimit":"limit=120, remaining=119, reset=60","vary":"Origin, Accept-Encoding","content-type":"text/html; charset=utf-8"}},"responseTime":69,"msg":"request completed"}
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+{"level":30,"time":1789455721748,"req":{"id":2,"method":"POST","url":"/api/upload-file","query":{},"params":{},"headers":{"host":"localhost:5000","user-agent":"curl/8.21.0","accept":"*/*"},"remoteAddress":"127.0.0.1","remotePort":64419},"res":{"statusCode":400,"headers":{"cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"cross-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=31536000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","ratelimit-policy":"120;w=60","ratelimit":"limit=120, remaining=118, reset=46","content-type":"application/json; charset=utf-8","content-length":"63","etag":"W/\"3f-IVrsxTsMv7WsOWlEbDNA31/Yu3Q\"","vary":"Accept-Encoding"}},"responseTime":10,"msg":"request completed"}
+{"level":30,"time":1789455728339,"req":{"id":3,"method":"POST","url":"/api/upload-file","query":{},"params":{},"headers":{"host":"localhost:5000","user-agent":"curl/8.21.0","accept":"*/*","content-length":"649","content-type":"multipart/form-data; boundary=------------------------EwDlGUFg1wExkX00KZRtMR"},"remoteAddress":"127.0.0.1","remotePort":64421},"res":{"statusCode":200,"headers":{"cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"cross-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=31536000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","ratelimit-policy":"120;w=60","ratelimit":"limit=120, remaining=117, reset=39","content-type":"application/json; charset=utf-8","content-length":"61","etag":"W/\"3d-JXYtVT78EQ+/qkNE07FnkZazW0E\"","vary":"Accept-Encoding"}},"responseTime":31,"msg":"request completed"}
+{"level":30,"time":1789455734010,"req":{"id":4,"method":"POST","url":"/api/upload-file","query":{},"params":{},"headers":{"host":"localhost:5000","user-agent":"curl/8.21.0","accept":"*/*","content-length":"657","content-type":"multipart/form-data; boundary=------------------------xy7hA12jyziF1qXC4ePm2T"},"remoteAddress":"127.0.0.1","remotePort":62898},"res":{"statusCode":200,"headers":{"cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"cross-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=31536000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","ratelimit-policy":"120;w=60","ratelimit":"limit=120, remaining=116, reset=33","content-type":"application/json; charset=utf-8","content-length":"61","etag":"W/\"3d-wlY9sd749zAb+aLX/1CNOxnEhYI\"","vary":"Accept-Encoding"}},"responseTime":24,"msg":"request completed"}
+{"level":30,"time":1789455734266,"code":"ABC123","fileCount":2,"totalFiles":2,"msg":"Client requested file list"}
+{"level":30,"time":1789455734268,"req":{"id":5,"method":"GET","url":"/files/ABC123","query":{},"params":{},"headers":{"host":"localhost:5000","user-agent":"curl/8.21.0","accept":"*/*"},"remoteAddress":"127.0.0.1","remotePort":62900},"res":{"statusCode":200,"headers":{"cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"cross-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=31536000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","ratelimit-policy":"120;w=60","ratelimit":"limit=120, remaining=115, reset=33","cache-control":"no-store, no-cache, must-revalidate, proxy-revalidate","pragma":"no-cache","expires":"0","surrogate-control":"no-store","content-type":"application/json; charset=utf-8","content-length":"329","etag":"W/\"149-Z9lbKpn6lxFXDO6ly5qJm4QdrpU\"","vary":"Accept-Encoding"}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1789455745267,"req":{"id":6,"method":"GET","url":"/api/files/ABC123/0/download","query":{},"params":{},"headers":{"host":"localhost:5000","user-agent":"curl/8.21.0","accept":"*/*"},"remoteAddress":"127.0.0.1","remotePort":62902},"res":{"statusCode":200,"headers":{"cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"cross-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=31536000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","ratelimit-policy":"120;w=60","ratelimit":"limit=120, remaining=114, reset=22","content-type":"text/plain","content-length":"16","content-disposition":"attachment; filename=\"test_upload.txt\"","vary":"Accept-Encoding"}},"responseTime":5,"msg":"request completed"}
+{"level":30,"time":1789455885731,"msg":"Client disconnected"}
+{"level":30,"time":1789455885732,"msg":"Client disconnected"}
+{"level":30,"time":1789455890032,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789455890046,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789456125727,"msg":"Client disconnected"}
+{"level":30,"time":1789456125727,"msg":"Client disconnected"}
+{"level":30,"time":1789456130040,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789456130056,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789456365717,"msg":"Client disconnected"}
+{"level":30,"time":1789456365717,"msg":"Client disconnected"}
+{"level":30,"time":1789456370033,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789456370050,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789456605716,"msg":"Client disconnected"}
+{"level":30,"time":1789456605716,"msg":"Client disconnected"}
+{"level":30,"time":1789456610030,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789456610045,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789456845726,"msg":"Client disconnected"}
+{"level":30,"time":1789456845728,"msg":"Client disconnected"}
+{"level":30,"time":1789456850040,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789456850056,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789457085712,"msg":"Client disconnected"}
+{"level":30,"time":1789457085727,"msg":"Client disconnected"}
+{"level":30,"time":1789457090040,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789457090057,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789457325717,"msg":"Client disconnected"}
+{"level":30,"time":1789457325718,"msg":"Client disconnected"}
+{"level":30,"time":1789457330030,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789457330047,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789457565721,"msg":"Client disconnected"}
+{"level":30,"time":1789457565721,"msg":"Client disconnected"}
+{"level":30,"time":1789457570052,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789457570070,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789457805716,"msg":"Client disconnected"}
+{"level":30,"time":1789457805717,"msg":"Client disconnected"}
+{"level":30,"time":1789457810033,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789457810055,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789458045726,"msg":"Client disconnected"}
+{"level":30,"time":1789458045727,"msg":"Client disconnected"}
+{"level":30,"time":1789458050032,"ipHash":"29514a6ad878","msg":"Client connected"}
+{"level":30,"time":1789458050047,"ipHash":"29514a6ad878","msg":"Client connected"}
