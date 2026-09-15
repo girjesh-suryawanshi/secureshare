@@ -1,8 +1,16 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Share, Menu, X, Download } from "lucide-react";
+import { Share, Menu, X, Download, ChevronDown, Shield, FileText, AlertTriangle, Flag } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -14,6 +22,13 @@ export default function Navbar() {
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact Us" },
     { href: "/blog", label: "Blog" },
+  ];
+
+  const legalItems = [
+    { href: "/privacy", label: "Privacy Policy", icon: Shield },
+    { href: "/terms", label: "Terms & Conditions", icon: FileText },
+    { href: "/disclaimer", label: "Disclaimer", icon: AlertTriangle },
+    { href: "/report-abuse", label: "Report Abuse / Take-down", icon: Flag },
   ];
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -72,6 +87,8 @@ export default function Navbar() {
     return false;
   };
 
+  const isLegalActive = legalItems.some(item => isActive(item.href));
+
   // Only show the button if the browser explicitly gave us the prompt,
   // OR if we know for a fact the browser inherently blocks it (iOS / Android-LAN)
   // This prevents race-conditions where Desktop users click the button before Chrome finishes loading
@@ -104,6 +121,38 @@ export default function Navbar() {
                 </Button>
               </Link>
             ))}
+
+            {/* Legal & Policies Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={isLegalActive ? "default" : "ghost"}
+                  size="sm"
+                  className={`flex items-center gap-1 ${isLegalActive ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+                >
+                  <span>Legal & Policies</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60 p-1.5 shadow-xl bg-white border border-gray-200 rounded-xl">
+                <DropdownMenuLabel className="text-[11px] font-bold text-gray-500 uppercase tracking-wider px-2.5 py-1">
+                  Compliance & Policies
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {legalItems.map((legal) => {
+                  const Icon = legal.icon;
+                  return (
+                    <DropdownMenuItem key={legal.href} asChild className="cursor-pointer rounded-lg px-2.5 py-2 hover:bg-blue-50 focus:bg-blue-50">
+                      <Link href={legal.href} className="flex items-center gap-2.5 w-full text-xs font-semibold text-gray-700">
+                        <Icon className="h-4 w-4 text-blue-600 shrink-0" />
+                        <span>{legal.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {shouldShowInstall && (
               <Button
                 variant="outline"
@@ -161,6 +210,28 @@ export default function Navbar() {
                   </Button>
                 </Link>
               ))}
+
+              <div className="pt-2 mt-2 border-t border-gray-200">
+                <div className="px-3 py-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Legal & Policies
+                </div>
+                {legalItems.map((legal) => {
+                  const Icon = legal.icon;
+                  return (
+                    <Link key={legal.href} href={legal.href}>
+                      <Button
+                        variant={isActive(legal.href) ? "default" : "ghost"}
+                        size="sm"
+                        className={`w-full justify-start text-xs font-medium pl-6 ${isActive(legal.href) ? "bg-blue-600 hover:bg-blue-700 text-white" : "text-gray-600"}`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Icon className="h-3.5 w-3.5 mr-2 text-blue-600 shrink-0" />
+                        {legal.label}
+                      </Button>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
