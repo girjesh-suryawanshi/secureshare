@@ -17,6 +17,7 @@ import RoomChat from "@/pages/room-chat";
 import NotFound from "@/pages/not-found";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
+import { CookieConsent } from "@/components/cookie-consent";
 
 function Router() {
   return (
@@ -41,6 +42,7 @@ function Router() {
         </Switch>
       </main>
       <Footer />
+      <CookieConsent />
     </div>
   );
 }

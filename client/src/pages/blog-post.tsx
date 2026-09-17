@@ -41,12 +41,39 @@ export default function BlogPost() {
     );
   }
 
+  const postUrl = `https://hexasend.com/blog/${post.slug}`;
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "description": post.excerpt,
+    "image": "https://hexasend.com/og-image.jpg",
+    "author": {
+      "@type": "Person",
+      "name": "Girjesh Suryawanshi",
+      "url": "https://hexasend.com/about"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "HexaSend",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://hexasend.com/pwa-512x512.png"
+      }
+    },
+    "datePublished": new Date(post.date).toISOString(),
+    "dateModified": new Date(post.date).toISOString()
+  };
+
   return (
     <>
       <SEOHead
         title={`${post.title} | HexaSend Blog`}
         description={post.excerpt}
         keywords={post.tags.join(', ')}
+        canonicalUrl={postUrl}
+        ogImage="https://hexasend.com/og-image.jpg"
+        structuredData={articleSchema}
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <div className="max-w-4xl mx-auto px-4 py-12">

@@ -4,9 +4,12 @@ interface SEOHeadProps {
     title: string;
     description: string;
     keywords?: string;
+    canonicalUrl?: string;
+    ogImage?: string;
+    structuredData?: object;
 }
 
-export function SEOHead({ title, description, keywords }: SEOHeadProps) {
+export function SEOHead({ title, description, keywords, canonicalUrl, ogImage, structuredData }: SEOHeadProps) {
     useEffect(() => {
         // Determine suffix
         const fullTitle = title.includes('HexaSend')
@@ -26,6 +29,16 @@ export function SEOHead({ title, description, keywords }: SEOHeadProps) {
 
         if (keywords) {
             metaTags['keywords'] = keywords;
+        }
+
+        if (ogImage) {
+            metaTags['og:image'] = ogImage;
+            metaTags['twitter:image'] = ogImage;
+        }
+
+        if (canonicalUrl) {
+            metaTags['og:url'] = canonicalUrl;
+            metaTags['twitter:url'] = canonicalUrl;
         }
 
         // Apply metadata
@@ -51,10 +64,35 @@ export function SEOHead({ title, description, keywords }: SEOHeadProps) {
             el.setAttribute('content', content);
         });
 
+        // Canonical Tag
+        if (canonicalUrl) {
+            let canonicalEl = document.querySelector('link[rel="canonical"]');
+            if (!canonicalEl) {
+                canonicalEl = document.createElement('link');
+                canonicalEl.setAttribute('rel', 'canonical');
+                document.head.appendChild(canonicalEl);
+            }
+            canonicalEl.setAttribute('href', canonicalUrl);
+        }
+
+        // Structured Data (JSON-LD)
+        let scriptEl = document.getElementById('dynamic-schema-script');
+        if (structuredData) {
+            if (!scriptEl) {
+                scriptEl = document.createElement('script');
+                scriptEl.id = 'dynamic-schema-script';
+                scriptEl.setAttribute('type', 'application/ld+json');
+                document.head.appendChild(scriptEl);
+            }
+            scriptEl.textContent = JSON.stringify(structuredData);
+        } else if (scriptEl) {
+            scriptEl.remove();
+        }
+
         // Cleanup isn't strictly necessary as the next page will overwrite,
         // but we leave this here as standard React practice
         return () => { };
-    }, [title, description, keywords]);
+    }, [title, description, keywords, canonicalUrl, ogImage, structuredData]);
 
     return null;
 }
