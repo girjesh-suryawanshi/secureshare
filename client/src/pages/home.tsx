@@ -1003,9 +1003,9 @@ export default function Home() {
     return (
       <>
         <SEOHead
-          title="HexaSend | Free File Sharing & 6-Digit Instant Room Chat (No Sign-up)"
+          title="HexaSend | Secure File Sharing & 6-Digit Instant Room Chat (No Sign-up)"
           description="HexaSend provides instant, zero-login 6-digit file sharing and ephemeral room chat. Transfer files securely between any device without registration."
-          keywords="free file transfer, no sign up file sharing, 6-digit code send, instant room chat, peer-to-peer file transfer, ephemeral chat online"
+          keywords="secure file transfer, no sign up file sharing, 6-digit code send, instant room chat, peer-to-peer file transfer, ephemeral chat online"
         />
 
         {/* ── JSON-LD Structured Data Schemas for SEO, GEO & AEO ── */}
@@ -1027,7 +1027,7 @@ export default function Home() {
                     "price": "0",
                     "priceCurrency": "USD"
                   },
-                  "description": "Free zero-signup peer-to-peer file transfer and 6-digit code instant chat application.",
+                  "description": "Secure zero-signup peer-to-peer file transfer and 6-digit code instant chat application.",
                   "featureList": [
                     "6-Digit Code File Transfer",
                     "Instant Ephemeral Room Chat",
@@ -1063,10 +1063,10 @@ export default function Home() {
                   "mainEntity": [
                     {
                       "@type": "Question",
-                      "name": "Is HexaSend free to use without an account?",
+                      "name": "Do I need an account to use HexaSend?",
                       "acceptedAnswer": {
                         "@type": "Answer",
-                        "text": "Yes, HexaSend is 100% free with zero registration, no email requirement, and no account setup."
+                        "text": "No, HexaSend requires zero registration, no email requirement, and no account setup."
                       }
                     },
                     {
@@ -1114,10 +1114,10 @@ export default function Home() {
 
                 <div className="space-y-8">
                   <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight">
-                    HexaSend
+                    Secure Instant File Sharing
                   </h1>
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-700 max-w-3xl mx-auto leading-relaxed">
-                    Share Any File in Seconds with Just a 6-Digit Code
+                    No Registration Required. Send large files securely using a 6-digit code with zero cloud limits.
                   </h2>
 
                   <div className="flex flex-wrap justify-center gap-3 text-sm md:text-base font-medium">
@@ -1155,10 +1155,10 @@ export default function Home() {
                         </div>
 
                         <h4 className="text-xl font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                          Instant File Transfer
+                          Instant P2P File Transfer
                         </h4>
                         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-                          Share large files, photos, videos & documents directly between any device using a simple 6-digit code.
+                          Send large files without an account, straight from your browser to theirs using a temporary 6-digit code.
                         </p>
 
                         <div className="space-y-2 mb-6">
@@ -1378,7 +1378,7 @@ export default function Home() {
                         </div>
                         <div>
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="text-xl md:text-2xl font-bold">💬 Instant Anonymous Room Chat</h3>
+                            <h3 className="text-xl md:text-2xl font-bold">💬 Instant chat Room</h3>
                             <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">LIVE CHAT</Badge>
                           </div>
                           <p className="text-xs sm:text-sm text-slate-300">
@@ -1471,7 +1471,7 @@ export default function Home() {
 
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
                     <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Authentication</span>
-                    <p className="text-sm font-bold text-slate-800">Zero Signup (Anonymous)</p>
+                    <p className="text-sm font-bold text-slate-800">Zero Signup (Private)</p>
                     <p className="text-xs text-slate-500 mt-1">No email, phone number, or login account required to send or receive.</p>
                   </div>
 
@@ -1523,7 +1523,7 @@ export default function Home() {
                       <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
                     </summary>
                     <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> No. HexaSend is 100% free and requires zero setup, zero email, and no account creation.
+                      <strong>Direct Answer:</strong> No, HexaSend requires zero registration, no email requirement, and no account setup.
                     </div>
                   </details>
 

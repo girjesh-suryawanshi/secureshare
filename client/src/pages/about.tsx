@@ -85,6 +85,18 @@ export default function About() {
             </div>
           </div>
 
+          <Card className="shadow-lg mb-12 border-indigo-200">
+            <CardContent className="p-8 bg-indigo-50/50">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Why Choose Browser-Based P2P Transfer in 2026?</h2>
+              <p className="text-gray-700 leading-relaxed mb-4">
+                As digital privacy concerns grow, users are moving away from traditional cloud storage. Traditional cloud services require you to upload your personal files to their servers, creating a centralized honeypot of data. 
+              </p>
+              <p className="text-gray-700 leading-relaxed">
+                HexaSend utilizes <strong>direct browser-to-browser WebRTC data channels</strong>. This means we employ a <em>zero-knowledge architecture</em>—your files stream directly from your device to the receiver's device. We never store, scan, or index your data, ensuring true end-to-end encryption and absolute anonymity without requiring a user account.
+              </p>
+            </CardContent>
+          </Card>
+
           <Card className="shadow-lg">
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Technology</h2>
