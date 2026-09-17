@@ -13,6 +13,8 @@ import { TransferStats } from "@/components/transfer-stats";
 import { Upload, Download, Copy, CheckCircle, Share, Archive, ArrowLeft, Clock, Users, FileText, Zap, Loader2, Wifi, Globe, QrCode, Search, Trash2, Shield, Type, ClipboardCopy, MessageSquare, RefreshCw, BookOpen } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import JSZip from "jszip";
 import { Link, useRoute } from "wouter";
@@ -70,6 +72,7 @@ export default function Home() {
   const [mode, setMode] = useState<'select' | 'send' | 'receive'>(match ? 'receive' : 'select');
   const [transferType, setTransferType] = useState<TransferType>('internet');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [transferCode, setTransferCode] = useState<string>('');
   const [inputCode, setInputCode] = useState<string>(match && params.code ? params.code.toUpperCase() : '');
   const [filesReady, setFilesReady] = useState<boolean>(false);
@@ -289,6 +292,15 @@ export default function Home() {
   }, [addTransfer, expectedFilesCount, sendMessage, toast, transferType]);
 
   const handleFilesSelected = async (files: File[]) => {
+    if (!termsAgreed) {
+      toast({
+        title: "Action Required",
+        description: "Please agree to the Terms of Service to upload files.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (files.length > 0) {
       const validFiles: File[] = [];
       for (const file of files) {
@@ -1090,7 +1102,7 @@ export default function Home() {
                       "name": "Are my files stored securely?",
                       "acceptedAnswer": {
                         "@type": "Answer",
-                        "text": "Files are streamed directly or stored temporarily in memory for active transfers and are automatically purged after download or expiration."
+                        "text": "Files are streamed directly or stored temporarily on our servers for active transfers and are automatically purged after 24 hours."
                       }
                     }
                   ]
@@ -1465,8 +1477,8 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
                     <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Architecture</span>
-                    <p className="text-sm font-bold text-slate-800">Peer-to-Peer & Memory Stream</p>
-                    <p className="text-xs text-slate-500 mt-1">Direct binary multipart upload with zero persistent database storage.</p>
+                    <p className="text-sm font-bold text-slate-800">Direct & Temporary Storage</p>
+                    <p className="text-xs text-slate-500 mt-1">Files are temporarily stored to facilitate the transfer and auto-deleted within 24h.</p>
                   </div>
 
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
@@ -1533,7 +1545,7 @@ export default function Home() {
                       <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
                     </summary>
                     <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> No. Transferred files are held temporarily in secure RAM stream memory during active transfer and are automatically deleted. Room chat messages exist only during active sessions and are zero-logged.
+                      <strong>Direct Answer:</strong> No. Transferred files are held temporarily on our servers during active transfer and are automatically deleted after 24 hours. Room chat messages exist only during active sessions and are zero-logged.
                     </div>
                   </details>
 
@@ -1734,13 +1746,20 @@ export default function Home() {
                               All file types (images, documents, videos, HEIC, etc.) • Internet & local network • Multiple files auto ZIP
                             </p>
                             <div className="flex justify-center space-x-4 text-sm font-medium">
-                              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">✓ Secure</span>
-                              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">✓ Fast</span>
-                              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full">✓ Private</span>
+                              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">⚡ Fast</span>
+                              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">🛡️ Secure</span>
+                              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full">🔒 Private</span>
                             </div>
                           </div>
                         </div>
                       </DragDropZone>
+
+                      <div className="flex items-center space-x-2 mt-4 justify-center bg-white/50 p-4 rounded-xl border border-blue-100 mx-auto max-w-lg shadow-sm">
+                        <Checkbox id="terms" checked={termsAgreed} onCheckedChange={(checked) => setTermsAgreed(checked as boolean)} />
+                        <Label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700">
+                          I agree to the <Link href="/terms"><span className="text-blue-600 underline cursor-pointer">Terms of Service</span></Link> and confirm I have the legal right to share these files.
+                        </Label>
+                      </div>
 
                       <div className="mt-8 p-4 md:p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
                         <h4 className="font-bold text-gray-900 mb-3 text-sm md:text-base">💡 Pro Tips</h4>

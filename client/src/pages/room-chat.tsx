@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { SEOHead } from "@/components/seo-head";
@@ -126,7 +128,8 @@ export default function RoomChat() {
 
   const [roomCode, setRoomCode] = useState(urlCode);
   const [entryCode, setEntryCode] = useState(urlCode);
-  const [inRoom, setInRoom] = useState(urlCode.length === 6);
+  const [inRoom, setInRoom] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
   const [activeUsers, setActiveUsers] = useState(1);
   const [wsReady, setWsReady] = useState(false);
@@ -348,6 +351,10 @@ export default function RoomChat() {
 
   // ─── Room join / leave ────────────────────────────────────────────────
   const handleJoin = useCallback((target?: string) => {
+    if (!termsAgreed) {
+      toast({ title: "Action Required", description: "Please agree to the Terms of Service first.", variant: "destructive" });
+      return;
+    }
     const code = (target ?? entryCode).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
     if (code.length !== 6) {
       toast({ title: "Invalid Code", description: "Enter exactly 6 alphanumeric characters.", variant: "destructive" });
@@ -359,7 +366,7 @@ export default function RoomChat() {
     setMessages([]);
     setTypingUsers(new Map());
     setLocation(`/room/${code}`, { replace: true });
-  }, [entryCode, setLocation, toast]);
+  }, [entryCode, setLocation, toast, termsAgreed]);
 
   const handleCreateRoom = useCallback(() => {
     handleJoin(genRoomCode());
@@ -688,6 +695,13 @@ export default function RoomChat() {
 
                 <div className="flex items-center gap-3 text-slate-600 text-xs">
                   <div className="flex-1 border-t border-slate-800" /><span>or</span><div className="flex-1 border-t border-slate-800" />
+                </div>
+
+                <div className="flex items-start space-x-2 bg-slate-950/60 border border-slate-800/80 p-3 rounded-xl mt-4">
+                  <Checkbox id="terms-chat" checked={termsAgreed} onCheckedChange={(c) => setTermsAgreed(c as boolean)} className="border-slate-600 mt-0.5 data-[state=checked]:bg-indigo-600 data-[state=checked]:text-white" />
+                  <Label htmlFor="terms-chat" className="text-xs text-slate-400 leading-tight">
+                    I agree to the <a href="/terms" target="_blank" className="text-indigo-400 hover:underline">Terms of Service</a> and confirm I will not share illegal or prohibited content.
+                  </Label>
                 </div>
 
                 <Button

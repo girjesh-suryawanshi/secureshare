@@ -200,32 +200,6 @@ export default function Contact() {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <Phone className="h-6 w-6 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Phone Support</h3>
-                  </div>
-                  <p className="text-gray-600 font-mono">
-                    +91 89899 97018
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Business hours only
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <MapPin className="h-6 w-6 text-orange-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Headquarters</h3>
-                  </div>
-                  <p className="text-gray-600">
-                    78 Shankar Bagh, Indore, Madhya Pradesh 452006, India
-                  </p>
-                </CardContent>
-              </Card>
             </div>
           </div>
 

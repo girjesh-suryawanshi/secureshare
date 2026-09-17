@@ -159,8 +159,7 @@ export default function Terms() {
                 </p>
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <p className="text-gray-700">
-                    Email: legal@hexasend.com<br />
-                    Address: 78 Shankar Bagh, Indore, Madhya Pradesh, India
+                    Email: legal@hexasend.com
                   </p>
                 </div>
               </div>

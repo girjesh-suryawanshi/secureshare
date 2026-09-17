@@ -9,10 +9,12 @@ services:
     image: hexasend-app:latest
     container_name: hexasend-app
     restart: always
+    user: root
     ports:
       - "${APP_PORT:-3001}:5000"
     volumes:
       - ${UPLOAD_DIR:-./uploads}:/tmp/secureshare
+      - ./logs:/app/logs
     env_file:
       - .env
     environment:

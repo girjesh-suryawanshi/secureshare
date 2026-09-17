@@ -6,7 +6,7 @@ export default function Privacy() {
     <>
       <SEOHead
         title="Privacy Policy | HexaSend Secure Transfers"
-        description="Read the HexaSend Privacy Policy. We believe in absolute data security. Understand why our file transfers are purely peer-to-peer and how we guarantee zero server logging for your shared documents."
+        description="Read the HexaSend Privacy Policy. Understand how our file transfers work and how we handle your data."
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-4xl mx-auto py-12">
@@ -33,9 +33,9 @@ export default function Privacy() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Files and Content</h3>
                     <p className="text-gray-600 leading-relaxed">
-                      When you use HexaSend to send files, your files are temporarily held in server memory only during the active transfer process.
-                      Files are automatically deleted from memory after 1 hour or once successfully downloaded, whichever comes first.
-                      We do not permanently store, access, or analyze your files.
+                      When you use HexaSend to send files, your files are temporarily stored on our servers to facilitate the transfer process.
+                      Files are automatically deleted from our servers after 24 hours or once successfully downloaded, whichever comes first.
+                      We do not permanently store or analyze your files.
                     </p>
                   </div>
 
@@ -51,8 +51,8 @@ export default function Privacy() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Transfer Codes</h3>
                     <p className="text-gray-600 leading-relaxed">
-                      Six-digit transfer codes are generated randomly and exist only in server memory during active transfers.
-                      Codes expire after 1 hour and cannot be reused.
+                      Six-digit transfer codes are generated randomly and exist only during active transfers.
+                      Codes expire after 24 hours and cannot be reused.
                     </p>
                   </div>
                 </div>
@@ -86,7 +86,7 @@ export default function Privacy() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Data Security</h2>
                 <p className="text-gray-600 leading-relaxed">
                   We implement industry-standard security measures to protect your information during transmission and temporary storage.
-                  All connections use HTTPS encryption, and files are processed securely in memory without permanent storage.
+                  All connections use HTTPS encryption. Files are temporarily stored to facilitate the transfer and then permanently deleted.
                   However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.
                 </p>
               </div>
@@ -94,7 +94,7 @@ export default function Privacy() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Data Retention</h2>
                 <p className="text-gray-600 leading-relaxed">
-                  Files and transfer codes are automatically deleted from our systems after 1 hour or upon successful download completion.
+                  Files and transfer codes are automatically deleted from our systems after 24 hours or upon successful download completion.
                   Technical logs are retained for up to 24 hours for security and performance monitoring purposes,
                   then permanently deleted.
                 </p>
@@ -175,8 +175,7 @@ export default function Privacy() {
                 </p>
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <p className="text-gray-700">
-                    Email: privacy@hexasend.com<br />
-                    Address: 78 Shankar Bagh, Indore, Madhya Pradesh, India
+                    Email: privacy@hexasend.com
                   </p>
                 </div>
               </div>

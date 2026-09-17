@@ -40,7 +40,7 @@ export default function About() {
                   To become the world's most trusted and user-friendly file sharing platform for individuals and businesses.
                   We envision a world where sharing files between any devices is as simple as sharing a code,
                   without compromising on security, privacy, or speed. Every file transfer should be direct,
-                  instant, and completely private with military-grade encryption.
+                  instant, and completely private over secure TLS connections.
                 </p>
               </CardContent>
             </Card>
@@ -92,7 +92,7 @@ export default function About() {
                 As digital privacy concerns grow, users are moving away from traditional cloud storage. Traditional cloud services require you to upload your personal files to their servers, creating a centralized honeypot of data. 
               </p>
               <p className="text-gray-700 leading-relaxed">
-                HexaSend utilizes <strong>direct browser-to-browser WebRTC data channels</strong>. This means we employ a <em>zero-knowledge architecture</em>—your files stream directly from your device to the receiver's device. We never store, scan, or index your data, ensuring true end-to-end encryption and absolute anonymity without requiring a user account.
+                HexaSend utilizes <strong>direct browser-to-browser WebRTC data channels</strong> when available. Files transferred over the internet are temporarily stored on our servers for up to 24 hours to facilitate the transfer before being permanently deleted, ensuring reliable delivery without requiring a user account.
               </p>
             </CardContent>
           </Card>
