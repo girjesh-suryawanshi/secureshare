@@ -5499,14 +5499,14 @@ export const blogPostsData: Record<string, BlogPost> = {
   </a>
 </div>`
   },
-  "secure TLS-file-sharing-explained": {
+  "secure-tls-file-sharing-explained": {
     id: 903,
-    title: "The Rise of secure TLS File Sharing: What You Need to Know",
+    title: "The Rise of Secure TLS File Sharing: What You Need to Know",
     excerpt: "Understand what 'secure TLS' actually means in the context of file sharing and why it is crucial for protecting your digital privacy in 2026.",
     category: "Privacy",
     readTime: "9 min read",
     date: "September 15, 2026",
-    slug: "secure TLS-file-sharing-explained",
+    slug: "secure-tls-file-sharing-explained",
     tags: ["secure TLS", "privacy", "encryption", "future"],
     iconName: "Shield",
     content: `<!-- AEO Executive Summary -->

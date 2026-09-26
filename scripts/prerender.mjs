@@ -45,10 +45,21 @@ async function prerender() {
     console.log(`Pre-rendering ${route} ...`);
     const page = await browser.newPage();
     
-    // Intercept API calls if necessary, or just block images to speed it up
+    // Block AdSense, GTM, analytics and images to keep prerendered HTML clean
     await page.setRequestInterception(true);
     page.on('request', req => {
-      if (req.resourceType() === 'image' || req.resourceType() === 'media') {
+      const url = req.url();
+      const blocked = [
+        'pagead2.googlesyndication.com',
+        'googleads.g.doubleclick.net',
+        'googletagmanager.com',
+        'google-analytics.com',
+        'adsbygoogle',
+        'recaptcha',
+        'fundingchoicesmessages.google.com',
+      ];
+      const type = req.resourceType();
+      if (type === 'image' || type === 'media' || blocked.some(b => url.includes(b))) {
         req.abort();
       } else {
         req.continue();
@@ -78,7 +89,24 @@ async function prerender() {
       fs.mkdirSync(dir, { recursive: true });
     }
     
-    fs.writeFileSync(filePath, `<!DOCTYPE html>\n<html lang="en">\n${html}\n</html>`);
+    // Post-process: strip all ad/tracking scripts from the saved HTML
+    const cleanedHtml = html
+      // Remove AdSense script tag
+      .replace(/<script[^>]*pagead2\.googlesyndication\.com[^>]*><\/script>/gi, '')
+      // Remove GTM script tags
+      .replace(/<script[^>]*googletagmanager\.com[^>]*>[\s\S]*?<\/script>/gi, '')
+      // Remove GA gtag script tags  
+      .replace(/<script[^>]*gtag[^>]*>[\s\S]*?<\/script>/gi, '')
+      // Remove any <ins class="adsbygoogle"> elements including their children
+      .replace(/<ins[^>]*adsbygoogle[^>]*>[\s\S]*?<\/ins>/gi, '')
+      // Remove GTM noscript iframe
+      .replace(/<noscript>[\s\S]*?googletagmanager[\s\S]*?<\/noscript>/gi, '')
+      // Remove google_esf iframe
+      .replace(/<iframe[^>]*google_esf[^>]*>[\s\S]*?<\/iframe>/gi, '')
+      // Remove recaptcha iframe
+      .replace(/<iframe[^>]*recaptcha[^>]*>[\s\S]*?<\/iframe>/gi, '');
+
+    fs.writeFileSync(filePath, `<!DOCTYPE html>\n${cleanedHtml}`);
     console.log(`Saved ${filePath}`);
   }
 

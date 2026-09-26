@@ -230,7 +230,19 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://hexasend.com/blog/future-of-digital-file-exchange-2026-beyond</loc>
+    <loc>https://hexasend.com/blog/secure-p2p-file-transfer-methods-2026</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hexasend.com/blog/how-to-bypass-email-attachment-limits</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hexasend.com/blog/secure-tls-file-sharing-explained</loc>
     <lastmod>2026-09-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
