@@ -13,6 +13,7 @@ export interface BlogPost {
   slug: string;
   tags: string[];
   iconName: string;
+  featureImage?: string;
   content: string;
 }
 
@@ -27,6 +28,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-transfer-files-from-pc-to-mobile-without-usb",
     tags: ["PC to mobile","no USB","WiFi transfer","file transfer"],
     iconName: "Zap",
+    featureImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -209,6 +211,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "share-large-files-online-without-registration",
     tags: ["large files","no registration","online sharing","no signup"],
     iconName: "Globe",
+    featureImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -391,6 +394,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "fastest-way-to-send-files-between-two-laptops-on-same-wifi",
     tags: ["same WiFi","laptop to laptop","fast transfer","local network"],
     iconName: "Zap",
+    featureImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -573,6 +577,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "secure-file-sharing-with-6-digit-code",
     tags: ["6 digit code","secure sharing","file transfer","privacy"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1614064641913-a538a5b20b24?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -755,6 +760,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "send-files-anonymously-without-email",
     tags: ["anonymous","no email","privacy","file sharing"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -937,6 +943,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "transfer-large-files-between-android-and-iphone-instantly",
     tags: ["Android","iPhone","cross-platform","large files"],
     iconName: "Globe",
+    featureImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1119,6 +1126,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "best-wetransfer-alternatives-for-small-files",
     tags: ["WeTransfer","alternatives","small files","no signup"],
     iconName: "FileText",
+    featureImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1301,6 +1309,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-send-files-to-another-computer-using-a-code",
     tags: ["code","computer","file send","simple"],
     iconName: "Share",
+    featureImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1483,6 +1492,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "temporary-file-sharing-for-one-time-use",
     tags: ["temporary","one-time","privacy","ephemeral"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1665,6 +1675,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "browser-to-browser-file-transfer-no-setup",
     tags: ["browser","no setup","web transfer","instant"],
     iconName: "Globe",
+    featureImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1847,6 +1858,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "share-files-without-signup-instant-send",
     tags: ["no signup","instant","file sharing","frictionless"],
     iconName: "Zap",
+    featureImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2029,6 +2041,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "send-files-using-6-digit-code-secure-way",
     tags: ["6-digit code","secure sharing","no login","file transfer"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1614064641913-a538a5b20b24?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2211,6 +2224,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "ultimate-guide-to-p2p-file-sharing-2026",
     tags: ["p2p","file sharing","2026","guide"],
     iconName: "FileText",
+    featureImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2393,6 +2407,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "security-trends-file-sharing-2026",
     tags: ["security","trends","2026","privacy"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2575,6 +2590,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "fastest-ways-to-transfer-large-files-2026",
     tags: ["speed","large files","2026","tech"],
     iconName: "Zap",
+    featureImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2757,6 +2773,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "best-free-file-transfer-no-registration-2026",
     tags: ["free","no registration","2026","reviews"],
     iconName: "Globe",
+    featureImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2939,6 +2956,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-share-files-securely-online-2025",
     tags: ["file sharing","security","privacy","encryption"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3121,6 +3139,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "peer-to-peer-vs-cloud-storage-comparison",
     tags: ["p2p","cloud storage","comparison","technology"],
     iconName: "Globe",
+    featureImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3303,6 +3322,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "best-free-file-sharing-no-registration",
     tags: ["free","no registration","file sharing","reviews"],
     iconName: "FileText",
+    featureImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3485,6 +3505,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "send-large-files-instantly-methods",
     tags: ["large files","instant","transfer","tips"],
     iconName: "Zap",
+    featureImage: "https://images.unsplash.com/photo-1614064641913-a538a5b20b24?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3667,6 +3688,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "6-digit-code-file-sharing-future",
     tags: ["6-digit code","innovation","simple","future"],
     iconName: "Share",
+    featureImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3849,6 +3871,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "share-files-iphone-android-cross-platform",
     tags: ["iphone","android","cross-platform","mobile"],
     iconName: "Globe",
+    featureImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4031,6 +4054,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "zip-file-sharing-compress-multiple-files",
     tags: ["zip files","compression","multiple files","tutorial"],
     iconName: "Archive",
+    featureImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4213,6 +4237,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-share-confidential-documents-2026",
     tags: ["confidential","security","documents","2026"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4395,6 +4420,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "p2p-vs-email-sharing-comparison-2026",
     tags: ["p2p","email","comparison","2026"],
     iconName: "FileText",
+    featureImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4577,6 +4603,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "cross-platform-file-sharing-guide-2026",
     tags: ["cross-platform","guide","2026","mobile"],
     iconName: "Globe",
+    featureImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4759,6 +4786,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "browser-based-file-sharing-benefits-2026",
     tags: ["browser","web-based","benefits","2026"],
     iconName: "BookOpen",
+    featureImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4941,6 +4969,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "anonymous-file-sharing-privacy-2026",
     tags: ["anonymous","privacy","file sharing","2026"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1614064641913-a538a5b20b24?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5123,6 +5152,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "future-of-digital-file-exchange-2026-beyond",
     tags: ["future","file exchange","tech","2026"],
     iconName: "Zap",
+    featureImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5307,6 +5337,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "secure-p2p-file-transfer-methods-2026",
     tags: ["P2P", "security", "secure TLS", "file transfer"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5409,6 +5440,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-bypass-email-attachment-limits",
     tags: ["email limit", "large files", "no signup", "productivity"],
     iconName: "FileText",
+    featureImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5509,6 +5541,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "secure-tls-file-sharing-explained",
     tags: ["secure TLS", "privacy", "encryption", "future"],
     iconName: "Shield",
+    featureImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
     content: `<!-- AEO Executive Summary -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">

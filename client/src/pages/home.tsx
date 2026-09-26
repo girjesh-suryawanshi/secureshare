@@ -108,6 +108,30 @@ export default function Home() {
   // Instant Chat room state for home page
   const [homeChatCode, setHomeChatCode] = useState<string>('');
 
+  // Hero animation state
+  const [heroVisible, setHeroVisible] = useState(false);
+  const [heroCode, setHeroCode] = useState(['4','7','3','9','2','1']);
+  const [codeFlipping, setCodeFlipping] = useState(false);
+
+  // Entrance animation on mount
+  useEffect(() => {
+    const t = setTimeout(() => setHeroVisible(true), 300);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Code shuffle every 5 seconds
+  useEffect(() => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const interval = setInterval(() => {
+      setCodeFlipping(true);
+      setTimeout(() => {
+        setHeroCode(Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]));
+        setCodeFlipping(false);
+      }, 300);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const { isConnected, reconnect, sendMessage, onFileAvailable, onFileReady, onFileNotFound, onFileRegistered, onDownloadAck, onSenderDisconnected, onTextAvailable, onTextNotFound, onTextRegistered } = useWebSocket();
   const {
     isScanning,
@@ -1020,7 +1044,7 @@ export default function Home() {
           keywords="secure file transfer, no sign up file sharing, 6-digit code send, instant room chat, peer-to-peer file transfer, ephemeral chat online"
         />
 
-        {/* ── JSON-LD Structured Data Schemas for SEO, GEO & AEO ── */}
+        {/* ── JSON-LD Structured Data ── */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -1034,634 +1058,648 @@ export default function Home() {
                   "url": "https://hexasend.com",
                   "applicationCategory": "UtilitiesApplication",
                   "operatingSystem": "All (Web Browser, iOS, Android, Windows, macOS, Linux)",
-                  "offers": {
-                    "@type": "Offer",
-                    "price": "0",
-                    "priceCurrency": "USD"
-                  },
+                  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                   "description": "Secure zero-signup peer-to-peer file transfer and 6-digit code instant chat application.",
-                  "featureList": [
-                    "6-Digit Code File Transfer",
-                    "Instant Ephemeral Room Chat",
-                    "Zero Account Registration",
-                    "Local WiFi Offline Transfer",
-                    "End-to-End Security & 24h Auto-Deletion"
-                  ]
+                  "featureList": ["6-Digit Code File Transfer","Instant Ephemeral Room Chat","Zero Account Registration","Local WiFi Offline Transfer","End-to-End Security & 24h Auto-Deletion"]
                 },
                 {
                   "@type": "HowTo",
                   "name": "How to Share Files Online using HexaSend 6-Digit Code",
                   "description": "Step-by-step guide to sending large files online without creating an account.",
                   "step": [
-                    {
-                      "@type": "HowToStep",
-                      "name": "Select Files",
-                      "text": "Drag and drop or select files on HexaSend."
-                    },
-                    {
-                      "@type": "HowToStep",
-                      "name": "Get 6-Digit Code",
-                      "text": "HexaSend automatically generates a unique 6-character transfer code."
-                    },
-                    {
-                      "@type": "HowToStep",
-                      "name": "Share & Download",
-                      "text": "Send the 6-digit code or QR link to your recipient to download instantly."
-                    }
+                    { "@type": "HowToStep", "name": "Select Files", "text": "Drag and drop or select files on HexaSend." },
+                    { "@type": "HowToStep", "name": "Get 6-Digit Code", "text": "HexaSend automatically generates a unique 6-character transfer code." },
+                    { "@type": "HowToStep", "name": "Share & Download", "text": "Send the 6-digit code or QR link to your recipient to download instantly." }
                   ]
                 },
                 {
                   "@type": "FAQPage",
                   "mainEntity": [
-                    {
-                      "@type": "Question",
-                      "name": "Do I need an account to use HexaSend?",
-                      "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "No, HexaSend requires zero registration, no email requirement, and no account setup."
-                      }
-                    },
-                    {
-                      "@type": "Question",
-                      "name": "How does 6-digit code file sharing work?",
-                      "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "When you upload files, HexaSend generates a temporary 6-digit alphanumeric code. The recipient enters this code on HexaSend to download files directly."
-                      }
-                    },
-                    {
-                      "@type": "Question",
-                      "name": "What is HexaSend 6-Digit Instant Room Chat?",
-                      "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "HexaSend Instant Room Chat is an ephemeral, zero-login chat room feature. Enter any 6-digit room code to text, paste images, and share files live with live typing indicators."
-                      }
-                    },
-                    {
-                      "@type": "Question",
-                      "name": "Are my files stored securely?",
-                      "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "Files are streamed directly or stored temporarily on our servers for active transfers and are automatically purged after 24 hours."
-                      }
-                    }
+                    { "@type": "Question", "name": "Do I need an account to use HexaSend?", "acceptedAnswer": { "@type": "Answer", "text": "No, HexaSend requires zero registration, no email requirement, and no account setup." } },
+                    { "@type": "Question", "name": "How does 6-digit code file sharing work?", "acceptedAnswer": { "@type": "Answer", "text": "When you upload files, HexaSend generates a temporary 6-digit alphanumeric code. The recipient enters this code on HexaSend to download files directly." } }
                   ]
                 }
               ]
             })
           }}
         />
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-          <div className="max-w-7xl mx-auto px-4 py-12">
-            <div className="text-center space-y-12">
 
-              {/* Clean Hero Section */}
-              <div className="space-y-12">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-3xl opacity-20 w-32 h-32 mx-auto"></div>
-                  <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl mb-6">
-                    <Share className="h-16 w-16 text-white" />
-                  </div>
-                </div>
+        <div className="bg-white">
 
-                <div className="space-y-8">
-                  <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent leading-tight">
-                    Secure Instant File Sharing
-                  </h1>
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-700 max-w-3xl mx-auto leading-relaxed">
-                    No Registration Required. Send large files securely using a 6-digit code with zero cloud limits.
-                  </h2>
+          {/* SECTION 1: HERO */}
+          <section className="bg-gradient-to-b from-slate-50 to-white border-b border-slate-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+              <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-                  <div className="flex flex-wrap justify-center gap-3 text-sm md:text-base font-medium">
-                    <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full">Zero Setup</span>
-                    <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full">Secure</span>
-                    <span className="px-4 py-2 bg-purple-100 text-purple-800 rounded-full">Lightning Fast</span>
-                  </div>
-                </div>
-
-                {/* 🚀 STUNNING CORE FEATURES SHOWCASE SECTION */}
-                <div className="max-w-4xl mx-auto mt-8 pt-4">
-                  <div className="text-center mb-6">
-                    <span className="px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-xs inline-flex items-center gap-1.5">
-                      <Zap className="h-3.5 w-3.5 text-indigo-600 animate-pulse" /> Core Capabilities
+                {/* Left: headline + transfer interface */}
+                <div>
+                  {/* Trust badges */}
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-semibold text-slate-600 shadow-sm">
+                      <Zap className="h-3 w-3 text-indigo-500" /> Fast
                     </span>
-                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-2">
-                      Two Powerful Features, Zero Sign-up Needed
-                    </h3>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-semibold text-slate-600 shadow-sm">
+                      <Shield className="h-3 w-3 text-indigo-500" /> Secure
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-semibold text-slate-600 shadow-sm">
+                      <Users className="h-3 w-3 text-indigo-500" /> No Registration
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                  <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.08] mb-4">
+                    Share files.<br />
+                    <span className="text-indigo-600">Instantly.</span>
+                  </h1>
+                  <p className="text-sm sm:text-lg text-slate-500 mb-6 sm:mb-8 max-w-lg leading-relaxed">
+                    Send large files securely using a simple 6-digit code. No account required.
+                  </p>
 
-                    {/* FEATURE 1: FILE TRANSFER */}
-                    <div className="group relative rounded-3xl p-6 bg-gradient-to-b from-white via-slate-50/80 to-blue-50/50 border border-blue-200/80 shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col justify-between">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all pointer-events-none"></div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform">
-                            <Upload className="h-7 w-7" />
-                          </div>
-                          <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-semibold px-2.5 py-0.5 text-[11px]">
-                            📁 FILE TRANSFER
-                          </Badge>
+                  {/* Transfer Mode Selector */}
+                  <div id="transfer-type-selector" className="mb-5">
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setTransferType('internet')}
+                        className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all ${transferType === 'internet' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'}`}
+                      >
+                        <Globe className={`h-4 w-4 shrink-0 ${transferType === 'internet' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                        <div className="text-left">
+                          <div className="font-semibold">Internet</div>
+                          <div className="text-[10px] sm:text-xs font-normal opacity-70">Works anywhere</div>
                         </div>
+                      </button>
+                      <button
+                        onClick={() => setTransferType('local')}
+                        className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all ${transferType === 'local' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'}`}
+                      >
+                        <Wifi className={`h-4 w-4 shrink-0 ${transferType === 'local' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                        <div className="text-left">
+                          <div className="font-semibold">Local Wi-Fi</div>
+                          <div className="text-[10px] sm:text-xs font-normal opacity-70">Faster on same network</div>
+                        </div>
+                      </button>
+                    </div>
+                    {transferType === 'local' && (
+                      <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-2 border border-green-100">
+                        Both devices must be on the same WiFi or hotspot.
+                      </p>
+                    )}
+                  </div>
 
-                        <h4 className="text-xl font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                          Instant P2P File Transfer
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-                          Send large files without an account, straight from your browser to theirs using a temporary 6-digit code.
-                        </p>
-
-                        <div className="space-y-2 mb-6">
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                            <span>No file size limits & fast P2P streaming</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                            <span>Internet & Local WiFi offline transfer modes</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                            <span>Auto-deleting 24h ephemeral storage</span>
-                          </div>
+                  {/* Send / Receive Cards */}
+                  <div id="receive-section" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 bg-indigo-100 rounded-lg shrink-0">
+                          <Upload className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <h2 className="font-bold text-slate-900 text-sm sm:text-base">Send Files</h2>
+                          <p className="text-xs text-slate-500">Select files and get a 6-digit code</p>
                         </div>
                       </div>
-
                       <Button
                         onClick={(e) => {
                           e.preventDefault();
-                          const el = document.getElementById("transfer-type-selector") || document.body;
-                          el.scrollIntoView({ behavior: "smooth" });
-                          setTimeout(() => setMode("send"), 100);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          setTimeout(() => setMode('send'), 100);
                         }}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-blue-600/25 group-hover:shadow-blue-600/40 transition-all flex items-center justify-center gap-2">
-                        <span>Start File Transfer</span>
-                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-10 rounded-xl text-sm"
+                        disabled={transferType === 'internet' && !isConnected}
+                        title={transferType === 'internet' && !isConnected ? 'Connect to the server first' : undefined}
+                      >
+                        Start Sending →
                       </Button>
                     </div>
 
-                    {/* FEATURE 2: INSTANT ROOM CHAT */}
-                    <div className="group relative rounded-3xl p-6 bg-gradient-to-b from-white via-slate-50/80 to-purple-50/50 border border-purple-200/80 shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col justify-between">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all pointer-events-none"></div>
+                    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 bg-purple-100 rounded-lg shrink-0">
+                          <Download className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h2 className="font-bold text-slate-900 text-sm sm:text-base">Receive Files</h2>
+                          <p className="text-xs text-slate-500">Enter 6-digit code to download</p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          setTimeout(() => setMode('receive'), 100);
+                        }}
+                        variant="outline"
+                        className="w-full border-2 border-slate-200 hover:border-purple-400 hover:bg-purple-50 text-slate-700 font-semibold h-10 rounded-xl text-sm"
+                        disabled={transferType === 'internet' && !isConnected}
+                        title={transferType === 'internet' && !isConnected ? 'Connect to the server first' : undefined}
+                      >
+                        Enter Code →
+                      </Button>
+                    </div>
+                  </div>
 
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform">
-                            <MessageSquare className="h-7 w-7" />
+                  {/* Trust indicators */}
+                  <div className="flex flex-wrap gap-x-5 gap-y-2">
+                    <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-500" /> End-to-end secure
+                    </span>
+                    <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <Clock className="h-3.5 w-3.5 text-slate-400" /> Temporary storage
+                    </span>
+                    <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <Users className="h-3.5 w-3.5 text-slate-400" /> No account required
+                    </span>
+                  </div>
+
+                  {transferType === 'internet' && !isConnected && (
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-3">
+                      <p className="text-sm text-amber-800">Connecting to servers…</p>
+                      <Button variant="outline" size="sm" className="border-amber-300 text-amber-800 hover:bg-amber-100 h-7 text-xs" onClick={reconnect}>
+                        Retry
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Animated Hero Illustration — Hidden on mobile */}
+                <div className="hidden lg:flex items-center justify-center">
+
+                  {/* ── Animation keyframes injected once ── */}
+                  <style>{`
+                    @keyframes heroSlideIn {
+                      from { opacity: 0; transform: translateX(40px); }
+                      to   { opacity: 1; transform: translateX(0); }
+                    }
+                    @keyframes fileFloat0 {
+                      0%,100% { transform: translateY(0px);   }
+                      50%      { transform: translateY(-6px);  }
+                    }
+                    @keyframes fileFloat1 {
+                      0%,100% { transform: translateY(0px);   }
+                      50%      { transform: translateY(-9px);  }
+                    }
+                    @keyframes fileFloat2 {
+                      0%,100% { transform: translateY(0px);   }
+                      50%      { transform: translateY(-7px);  }
+                    }
+                    @keyframes fileFloat3 {
+                      0%,100% { transform: translateY(0px);   }
+                      50%      { transform: translateY(-10px); }
+                    }
+                    @keyframes fileFloat4 {
+                      0%,100% { transform: translateY(0px);   }
+                      50%      { transform: translateY(-5px);  }
+                    }
+                    @keyframes fileEnter {
+                      from { opacity: 0; transform: translateY(-18px) scale(0.85); }
+                      to   { opacity: 1; transform: translateY(0)      scale(1);    }
+                    }
+                    @keyframes uploadPulse {
+                      0%   { box-shadow: 0 0 0 0px rgba(99,102,241,0.55); }
+                      70%  { box-shadow: 0 0 0 14px rgba(99,102,241,0);   }
+                      100% { box-shadow: 0 0 0 0px rgba(99,102,241,0);    }
+                    }
+                    @keyframes downloadBounce {
+                      0%,100% { transform: translateY(0);   }
+                      40%      { transform: translateY(-5px); }
+                      60%      { transform: translateY(-2px); }
+                    }
+                    @keyframes dotTravel {
+                      0%   { transform: translateX(-14px); opacity: 0; }
+                      20%  { opacity: 1; }
+                      80%  { opacity: 1; }
+                      100% { transform: translateX(14px);  opacity: 0; }
+                    }
+                    @keyframes codeFlip {
+                      0%   { transform: rotateX(0deg);   opacity: 1; }
+                      40%  { transform: rotateX(90deg);  opacity: 0; }
+                      60%  { transform: rotateX(-90deg); opacity: 0; }
+                      100% { transform: rotateX(0deg);   opacity: 1; }
+                    }
+                    @keyframes codeGlow {
+                      0%,100% { box-shadow: 0 0 0 0px rgba(99,102,241,0.18); }
+                      50%      { box-shadow: 0 0 0 6px rgba(99,102,241,0.10); }
+                    }
+                    @keyframes arrowDraw {
+                      from { opacity: 0; transform: translateX(-8px); }
+                      to   { opacity: 1; transform: translateX(0); }
+                    }
+                    @keyframes blink {
+                      0%,100% { opacity: 1; } 50% { opacity: 0; }
+                    }
+                  `}</style>
+
+                  <div
+                    className="relative w-full max-w-lg"
+                    style={{
+                      animation: heroVisible ? 'heroSlideIn 0.7s cubic-bezier(.22,1,.36,1) forwards' : 'none',
+                      opacity: heroVisible ? 1 : 0,
+                    }}
+                  >
+                    {/* Soft pulsing background glow */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-200/50 via-purple-100/40 to-blue-200/50 rounded-3xl blur-3xl opacity-70" />
+
+                    <div className="relative bg-white/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-2xl">
+
+                      {/* ── 1. File Type Icons — Staggered entrance + continuous float ── */}
+                      <div className="flex justify-center items-end gap-2 sm:gap-3 mb-8 flex-wrap">
+                        {([
+                          { emoji: '🖼️', label: 'Image',  border: 'border-blue-200',   bg: 'bg-blue-50',   text: 'text-blue-600',   fi: 0 },
+                          { emoji: '📄', label: 'PDF',    border: 'border-red-200',    bg: 'bg-red-50',    text: 'text-red-600',    fi: 1 },
+                          { emoji: '📝', label: 'Doc',    border: 'border-amber-200',  bg: 'bg-amber-50',  text: 'text-amber-600',  fi: 2 },
+                          { emoji: '📦', label: 'ZIP',    border: 'border-emerald-200',bg: 'bg-emerald-50',text: 'text-emerald-600',fi: 3 },
+                          { emoji: '▶️', label: 'Media',  border: 'border-purple-200', bg: 'bg-purple-50', text: 'text-purple-600', fi: 4 },
+                        ]).map((f, i) => (
+                          <div
+                            key={f.label}
+                            className={`px-3 py-1.5 rounded-xl border ${f.border} ${f.bg} ${f.text} text-xs font-bold shadow-sm flex items-center gap-1`}
+                            style={{
+                              animation: heroVisible
+                                ? `fileEnter 0.5s cubic-bezier(.22,1,.36,1) ${i * 120 + 200}ms both, fileFloat${f.fi} ${2.2 + i * 0.28}s ease-in-out ${i * 120 + 750}ms infinite`
+                                : 'none',
+                            }}
+                          >
+                            {f.emoji} <span>{f.label}</span>
                           </div>
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 font-semibold px-2.5 py-0.5 text-[11px]">
-                            💬 INSTANT CHAT
-                          </Badge>
+                        ))}
+                      </div>
+
+                      {/* ── 2. Laptops + Animated Transfer Dots + Code Badge ── */}
+                      <div className="flex items-center justify-between gap-3 mb-6">
+
+                        {/* Send Laptop with Upload Pulse Ring */}
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div
+                            className="w-20 sm:w-24 h-14 sm:h-16 bg-slate-900 rounded-xl p-1 border-2 border-slate-700 relative"
+                            style={{ animation: 'uploadPulse 2s ease-out 1s infinite' }}
+                          >
+                            <div className="bg-gradient-to-br from-indigo-500 to-blue-600 h-full rounded-lg flex items-center justify-center">
+                              <Upload className="h-6 w-6 text-white" style={{ animation: 'fileFloat0 1.8s ease-in-out infinite' }} />
+                            </div>
+                          </div>
+                          <span className="text-xs font-bold text-slate-700">Send</span>
                         </div>
 
-                        <h4 className="text-xl font-bold text-slate-900 mb-1.5 flex items-center gap-2">
-                          6-Digit Room Chat
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-                          Create temporary, zero-login chat rooms to text, drop code snippets, paste photos & exchange files live.
-                        </p>
+                        {/* Animated Transfer Dots Track */}
+                        <div className="flex-1 flex items-center justify-center relative h-6">
+                          <div className="w-full flex items-center justify-between px-1 relative">
+                            {/* Dashed line background */}
+                            <div className="absolute inset-y-1/2 left-0 right-0 border-t-2 border-dashed border-indigo-200" />
+                            {/* Travelling dots */}
+                            {[0, 1, 2].map((dot) => (
+                              <div
+                                key={dot}
+                                className="absolute w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-md shadow-indigo-300"
+                                style={{
+                                  top: '50%',
+                                  left: '10%',
+                                  transform: 'translateY(-50%)',
+                                  animation: `dotTravel 1.4s ease-in-out ${dot * 470}ms infinite`,
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
 
-                        <div className="space-y-2 mb-6">
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                            <span>WhatsApp-style live typing indicators</span>
+                        {/* 6-Digit Code Badge with shuffle & glow */}
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                          <div
+                            className="bg-white border-2 border-indigo-200 shadow-xl rounded-2xl p-2.5 sm:p-3 text-center"
+                            style={{ animation: 'codeGlow 2.5s ease-in-out infinite' }}
+                          >
+                            <div className="text-[9px] font-black uppercase tracking-widest text-indigo-600 mb-1.5 flex items-center justify-center gap-1">
+                              6-DIGIT CODE
+                              <span style={{ animation: 'blink 1s step-end infinite', color: '#6366f1', fontWeight: 900 }}>|</span>
+                            </div>
+                            <div className="flex gap-1 sm:gap-1.5">
+                              {heroCode.map((digit, idx) => (
+                                <span
+                                  key={idx}
+                                  className="w-5 sm:w-6 h-6 sm:h-7 bg-indigo-50 border border-indigo-200 rounded font-mono font-black text-slate-800 flex items-center justify-center text-xs sm:text-sm shadow-inner"
+                                  style={{
+                                    animation: codeFlipping
+                                      ? `codeFlip 0.6s ease-in-out ${idx * 60}ms both`
+                                      : `fileEnter 0.4s ease ${idx * 80 + 400}ms both`,
+                                    perspective: '400px',
+                                  }}
+                                >
+                                  {digit}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                            <span>Instant QR code & 1-tap room link sharing</span>
+                        </div>
+
+                        {/* Animated Transfer Dots Track (right side) */}
+                        <div className="flex-1 flex items-center justify-center relative h-6">
+                          <div className="w-full flex items-center justify-between px-1 relative">
+                            <div className="absolute inset-y-1/2 left-0 right-0 border-t-2 border-dashed border-indigo-200" />
+                            {[0, 1, 2].map((dot) => (
+                              <div
+                                key={dot}
+                                className="absolute w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-300"
+                                style={{
+                                  top: '50%',
+                                  left: '10%',
+                                  transform: 'translateY(-50%)',
+                                  animation: `dotTravel 1.4s ease-in-out ${dot * 470 + 200}ms infinite`,
+                                }}
+                              />
+                            ))}
                           </div>
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                            <span>100% ephemeral — zero database logs saved</span>
+                        </div>
+
+                        {/* Receive Laptop with Download Bounce */}
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-20 sm:w-24 h-14 sm:h-16 bg-slate-900 rounded-xl p-1 border-2 border-slate-700 shadow-lg">
+                            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 h-full rounded-lg flex items-center justify-center">
+                              <Download
+                                className="h-6 w-6 text-white"
+                                style={{ animation: 'downloadBounce 1.5s ease-in-out 0.8s infinite' }}
+                              />
+                            </div>
                           </div>
+                          <span className="text-xs font-bold text-slate-700">Receive</span>
                         </div>
                       </div>
 
-                      <Link href="/chat" className="w-full block">
-                        <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-purple-600/25 group-hover:shadow-purple-600/40 transition-all flex items-center justify-center gap-2">
-                          <span>Launch Instant Chat</span>
-                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      {/* ── 3. Annotated "Share this code" line with draw-on animation ── */}
+                      <p
+                        className="text-center text-xs sm:text-sm text-indigo-600 font-semibold italic flex items-center justify-center gap-1"
+                        style={{
+                          animation: heroVisible ? 'arrowDraw 0.8s cubic-bezier(.22,1,.36,1) 1.2s both' : 'none',
+                        }}
+                      >
+                        <span style={{ fontSize: '1rem' }}>↗</span>
+                        Share this code with anyone
+                      </p>
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 2: STATS */}
+          <section className="py-8 border-b border-slate-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <TransferStats stats={stats} />
+            </div>
+          </section>
+
+          {/* SECTION 3: WHY HEXASEND */}
+          <section className="py-14 border-b border-slate-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Why Choose HexaSend?</h2>
+                <p className="text-slate-500 text-sm sm:text-base">Simple, secure and powerful file sharing for everyone.</p>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { icon: Zap, iconBg: "bg-indigo-100", iconColor: "text-indigo-600", title: "Instant P2P Transfer", desc: "Send large files with a 6-digit code. No registration needed." },
+                  { icon: MessageSquare, iconBg: "bg-purple-100", iconColor: "text-purple-600", title: "6-Digit Room Chat", desc: "Create temporary chat rooms to share messages, photos and files." },
+                  { icon: Wifi, iconBg: "bg-green-100", iconColor: "text-green-600", title: "Local Wi-Fi Transfer", desc: "Super fast transfer on the same network. No internet needed." },
+                  { icon: Shield, iconBg: "bg-orange-100", iconColor: "text-orange-600", title: "Secure & Private", desc: "Files are temporary and automatically deleted after expiry." },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.title} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow text-center">
+                      <div className={`inline-flex items-center justify-center p-3 ${item.iconBg} rounded-xl mb-4`}>
+                        <Icon className={`h-6 w-6 ${item.iconColor}`} />
+                      </div>
+                      <h3 className="font-bold text-slate-900 text-sm mb-2">{item.title}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 4: INSTANT CHAT ROOM */}
+          <section className="py-14 border-b border-slate-100 bg-gradient-to-r from-indigo-50/70 via-white to-purple-50/70">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid md:grid-cols-2 gap-10 items-center">
+                {/* Chat UI Graphic Mockup matching reference image */}
+                <div className="hidden md:flex items-center justify-center">
+                  <div className="relative w-full max-w-sm bg-white rounded-3xl p-5 border border-slate-200 shadow-xl">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-400" />
+                        <div className="w-3 h-3 rounded-full bg-amber-400" />
+                        <div className="w-3 h-3 rounded-full bg-green-400" />
+                      </div>
+                      <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">💬 Live Chat: HX-8492</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* Received Message */}
+                      <div className="flex gap-2">
+                        <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">A</div>
+                        <div className="bg-slate-100 p-3 rounded-2xl rounded-tl-none text-xs text-slate-700 max-w-[80%]">
+                          Hey! Can you send over the presentation file?
+                        </div>
+                      </div>
+                      {/* Sent Message */}
+                      <div className="flex gap-2 justify-end">
+                        <div className="bg-indigo-600 p-3 rounded-2xl rounded-tr-none text-xs text-white max-w-[80%]">
+                          Sure! Use code <span className="font-mono font-bold bg-white/20 px-1 rounded">HX-8492</span> or download here 🚀
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                    REAL-TIME MESSAGING
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Instant Chat Room</h2>
+                  <p className="text-slate-500 mb-6 leading-relaxed text-sm sm:text-base">
+                    Create a temporary chat room with a 6-digit code. Share text, images and files in real-time. No login required — rooms vanish automatically.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Link href="/chat" className="flex-1">
+                      <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-11 rounded-xl text-sm flex items-center justify-center gap-2">
+                        <MessageSquare className="h-4 w-4" /> Create New Chat Room
+                      </Button>
+                    </Link>
+                    <div className="flex gap-2 flex-1">
+                      <Input
+                        type="text"
+                        placeholder="Room Code"
+                        value={homeChatCode}
+                        onChange={(e) => setHomeChatCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
+                        className="font-mono text-center tracking-widest border-slate-200 focus:border-indigo-400 h-11 text-sm"
+                        maxLength={6}
+                      />
+                      <Link href={homeChatCode.length === 6 ? `/room/${homeChatCode}` : `/chat`}>
+                        <Button
+                          disabled={homeChatCode.length !== 6}
+                          variant="outline"
+                          className="border-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-semibold h-11 px-4 whitespace-nowrap text-sm"
+                        >
+                          Join with Code
                         </Button>
                       </Link>
                     </div>
-
                   </div>
-                </div>
-              </div>
-
-              {/* Transfer Stats Dashboard */}
-              <div className="mb-12">
-                <TransferStats stats={stats} />
-              </div>
-
-              {/* Connection status pill – visible near transfer type */}
-              <div className="flex justify-center mb-4">
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${transferType === 'local' ? 'bg-green-100 text-green-800' :
-                  isConnected ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                  <span className={`w-2 h-2 rounded-full ${transferType === 'local' ? 'bg-green-500' :
-                    isConnected ? 'bg-green-500' : 'bg-amber-500 animate-pulse'
-                    }`} />
-                  {transferType === 'local' ? 'Local mode – no server needed' : isConnected ? 'Connected' : 'Connecting…'}
-                </div>
-              </div>
-
-              {/* Transfer Type Selection */}
-              <div id="transfer-type-selector" className="max-w-xl mx-auto mb-8">
-                <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-1 text-center">Choose Transfer Method</h3>
-                  <p className="text-sm text-gray-500 text-center mb-4">Internet works everywhere; Local is faster on the same WiFi.</p>
-                  {transferType === 'local' && (
-                    <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 mb-4 text-center">Both devices must be on the same WiFi or hotspot.</p>
-                  )}
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() => setTransferType('internet')}
-                      className={`p-4 rounded-xl border-2 transition-all ${transferType === 'internet'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                        }`}
-                    >
-                      <Globe className="h-8 w-8 mx-auto mb-2" />
-                      <div className="font-medium">Internet – works anywhere</div>
-                      <div className="text-xs mt-1">Uses server connection</div>
-                      <Badge variant={transferType === 'internet' ? 'default' : 'outline'} className="mt-2">
-                        {isConnected ? 'Ready' : 'Connecting...'}
-                      </Badge>
-                    </button>
-
-                    <button
-                      onClick={() => setTransferType('local')}
-                      className={`p-4 rounded-xl border-2 transition-all ${transferType === 'local'
-                        ? 'border-green-500 bg-green-50 text-green-700'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                        }`}
-                    >
-                      <Wifi className="h-8 w-8 mx-auto mb-2" />
-                      <div className="font-medium">Local WiFi – same network, faster</div>
-                      <div className="text-xs mt-1">No server needed</div>
-                      <Badge variant={transferType === 'local' ? 'default' : 'outline'} className="mt-2">
-                        High Speed
-                      </Badge>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Trust & Acceptable Use Banner */}
-                <div className="max-w-2xl mx-auto mb-6 p-3 bg-white/70 backdrop-blur-sm border border-slate-200 rounded-xl text-center shadow-sm">
-                  <p className="text-xs text-slate-600 flex items-center justify-center space-x-1.5 flex-wrap">
-                    <Shield className="h-4 w-4 text-emerald-600 inline shrink-0" />
-                    <span><strong>Encrypted & Temporary:</strong> Files stream directly between devices and auto-delete after download. Please adhere to our <Link href="/terms"><span className="text-blue-600 underline cursor-pointer">Terms of Service</span></Link> (do not share copyrighted or prohibited content).</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Premium Action Cards */}
-              <div className="max-w-2xl mx-auto">
-                <div className="grid md:grid-cols-2 gap-6">
-
-                  {/* Send Files Card */}
-                  <Card className="group hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <CardContent className="p-8 relative z-10">
-                      <div className="text-center space-y-6">
-                        <div className="bg-white/20 rounded-2xl p-4 w-fit mx-auto">
-                          <Upload className="h-12 w-12 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-2xl font-bold mb-2">Send Files</h3>
-                          <p className="text-blue-100">Share files instantly</p>
-                        </div>
-                        <Button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                            setTimeout(() => setMode('send'), 100);
-                          }}
-                          className="w-full h-12 text-base bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
-                          disabled={transferType === 'internet' && !isConnected}
-                          title={transferType === 'internet' && !isConnected ? 'Connect to the server first' : undefined}
-                        >
-                          Start Sending {transferType === 'local' ? '(Local)' : ''}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Receive Files Card */}
-                  <Card className="group hover:scale-105 transition-all duration-300 shadow-2xl border-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <CardContent className="p-8 relative z-10">
-                      <div className="text-center space-y-6">
-                        <div className="bg-white/20 rounded-2xl p-4 w-fit mx-auto">
-                          <Download className="h-12 w-12 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-2xl font-bold mb-2">Receive Files</h3>
-                          <p className="text-purple-100">Enter code and download</p>
-                        </div>
-                        <Button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                            setTimeout(() => setMode('receive'), 100);
-                          }}
-                          className="w-full h-12 text-base bg-white text-purple-600 hover:bg-purple-50 shadow-lg font-semibold min-h-[44px] focus-visible:ring-2"
-                          disabled={transferType === 'internet' && !isConnected}
-                          title={transferType === 'internet' && !isConnected ? 'Connect to the server first' : undefined}
-                        >
-                          Start Receiving {transferType === 'local' ? '(Local)' : ''}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Instant Room Chat Interactive Card */}
-                <div className="mt-6">
-                  <Card className="shadow-2xl border border-indigo-200/50 bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-950 text-white overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/10 pointer-events-none"></div>
-                    <CardContent className="p-6 md:p-8 relative z-10 text-left">
-                      <div className="flex items-center space-x-4 mb-6">
-                        <div className="bg-indigo-600/30 border border-indigo-400/30 rounded-2xl p-3 text-indigo-300 shrink-0">
-                          <MessageSquare className="h-8 w-8" />
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="text-xl md:text-2xl font-bold">💬 Instant chat Room</h3>
-                            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">LIVE CHAT</Badge>
-                          </div>
-                          <p className="text-xs sm:text-sm text-slate-300">
-                            Create or join a temporary chat room with a 6-digit code. Exchange messages, live typing indicators, photos & files in real-time.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/10 backdrop-blur-md p-4 md:p-6 rounded-2xl border border-white/10">
-                        {/* Join Chat Room */}
-                        <div className="space-y-3">
-                          <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Join Existing Room</label>
-                          <div className="flex gap-2">
-                            <Input
-                              type="text"
-                              placeholder="e.g. ROOM12"
-                              value={homeChatCode}
-                              onChange={(e) => setHomeChatCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
-                              className="font-mono text-center tracking-widest bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 focus:border-indigo-400 min-h-[44px]"
-                              maxLength={6}
-                            />
-                            <Link href={homeChatCode.length === 6 ? `/room/${homeChatCode}` : `/chat`}>
-                              <Button
-                                disabled={homeChatCode.length !== 6}
-                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold whitespace-nowrap min-h-[44px]"
-                              >
-                                Join 💬
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-
-                        {/* Create Chat Room */}
-                        <div className="space-y-3 flex flex-col justify-between">
-                          <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Start Fresh Room</label>
-                          <Link href="/chat">
-                            <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg font-semibold min-h-[44px]">
-                              ➕ Create New Chat Room
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {transferType === 'internet' && !isConnected && (
-                  <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                    <p className="text-amber-800 font-medium">🔄 Connecting to secure servers…</p>
-                    <p className="text-amber-700 text-sm mt-1">Check your internet or try again in a moment.</p>
-                    <Button variant="outline" size="sm" className="mt-3 border-amber-300 text-amber-800 hover:bg-amber-100" onClick={reconnect}>
-                      Retry connection
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Google AdSense Mid Banner Container (Policy Compliant) ── */}
-              <div id="adsense-mid-slot" className="my-8 min-h-[90px] w-full max-w-4xl mx-auto flex items-center justify-center bg-slate-100/70 border border-dashed border-slate-300 rounded-2xl p-3 text-center text-xs text-slate-400">
-                <div className="w-full">
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">Advertisement</span>
-                  {/* Google AdSense code will inject here */}
-                  <ins className="adsbygoogle"
-                    style={{ display: "block", textAlign: "center" }}
-                    data-ad-layout="in-article"
-                    data-ad-format="fluid"
-                    data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-                    data-ad-slot="1234567890" />
-                </div>
-              </div>
-
-              {/* ── GEO (Generative Engine Optimization) Factual Specification Block ── */}
-              <section className="max-w-4xl mx-auto mt-12 text-left bg-white/90 backdrop-blur-xl border border-indigo-100 rounded-3xl p-6 sm:p-8 shadow-xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl">
-                    <Shield className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900">HexaSend Technical Specifications & System Overview</h3>
-                    <p className="text-xs text-slate-500">Authoritative facts & security architecture for web crawlers and AI search engines.</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
-                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Architecture</span>
-                    <p className="text-sm font-bold text-slate-800">Direct & Temporary Storage</p>
-                    <p className="text-xs text-slate-500 mt-1">Files are temporarily stored to facilitate the transfer and auto-deleted within 24h.</p>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
-                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Authentication</span>
-                    <p className="text-sm font-bold text-slate-800">Zero Signup (Private)</p>
-                    <p className="text-xs text-slate-500 mt-1">No email, phone number, or login account required to send or receive.</p>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
-                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Security & TTL</span>
-                    <p className="text-sm font-bold text-slate-800">24h Auto-Expiry Purge</p>
-                    <p className="text-xs text-slate-500 mt-1">All temporary files and active chat rooms are completely wiped automatically.</p>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
-                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Transfer Modes</span>
-                    <p className="text-sm font-bold text-slate-800">Internet & Local WiFi</p>
-                    <p className="text-xs text-slate-500 mt-1">Supports global web streaming and direct offline LAN file transfer.</p>
-                  </div>
-                </div>
-              </section>
-
-              {/* ── AEO (Answer Engine Optimization) FAQ Section ── */}
-              <section className="max-w-4xl mx-auto mt-12 text-left">
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Frequently Asked Questions</h3>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">Everything you need to know about 6-digit code file sharing and instant chat.</p>
-                </div>
-
-                <div className="space-y-3.5">
-                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
-                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
-                      <span>How do I share files online using a 6-digit code?</span>
-                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> Select your files on HexaSend to generate a unique 6-character code (e.g. <code>WORK88</code>). Send this code to your recipient, who enters it on HexaSend to download files directly on any phone, tablet, or PC.
-                    </div>
-                  </details>
-
-                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
-                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
-                      <span>What is HexaSend 6-Digit Instant Room Chat?</span>
-                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> Instant Room Chat allows users to join or create temporary chat rooms using a 6-digit room code. Users can text, paste image attachments, and share files live with real-time typing indicators without creating an account or logging in.
-                    </div>
-                  </details>
-
-                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
-                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
-                      <span>Do I need an account or email registration to use HexaSend?</span>
-                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> No, HexaSend requires zero registration, no email requirement, and no account setup.
-                    </div>
-                  </details>
-
-                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
-                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
-                      <span>Are my transferred files and chat messages stored permanently?</span>
-                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> No. Transferred files are held temporarily on our servers during active transfer and are automatically deleted after 24 hours. Room chat messages exist only during active sessions and are zero-logged.
-                    </div>
-                  </details>
-
-                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
-                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
-                      <span>Can I send files from an iPhone or Android phone to a Windows or Mac PC?</span>
-                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> Yes! HexaSend is 100% web-based and platform agnostic. Open Safari on an iPhone or Chrome on Android/Windows/Mac, upload the file, and type the 6-digit code on the destination device to bridge cross-platform transfers instantly.
-                    </div>
-                  </details>
-
-                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
-                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
-                      <span>Can I transfer files offline over Local WiFi?</span>
-                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> Yes. Switch to "Local WiFi Mode" when both devices are connected to the same WiFi network or mobile hotspot for ultra-fast LAN file transfers without consuming external internet bandwidth.
-                    </div>
-                  </details>
-
-                  <details className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm group">
-                    <summary className="font-bold text-slate-900 cursor-pointer flex items-center justify-between text-base">
-                      <span>What happens if I close my browser before the recipient finishes downloading?</span>
-                      <span className="text-indigo-600 font-bold text-lg group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                      <strong>Direct Answer:</strong> For active peer-to-peer transfers, the sender browser tab must remain open until the receiver reaches 100%. If you close your browser tab or laptop lid mid-transfer, the stream connection is severed to protect your privacy.
-                    </div>
-                  </details>
-                </div>
-              </section>
-
-              {/* Simple How It Works */}
-              <div className="grid md:grid-cols-3 gap-8 mt-16 mx-4">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-                    <Upload className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Send Files</h3>
-                  <p className="text-gray-600">Select files and get a code</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
-                    <Share className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Share Code</h3>
-                  <p className="text-gray-600">Give the 6-digit code to anyone</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-full mb-4">
-                    <Download className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Download</h3>
-                  <p className="text-gray-600">Enter code and download files</p>
-                </div>
-              </div>
-
-              {/* Blog Section */}
-              <div className="mt-16">
-                <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">Latest from Our Blog</h3>
-                <div className="grid md:grid-cols-3 gap-8">
-                  {getLatestBlogPosts().map((post) => {
-                    const iconMap: Record<string, any> = { Zap, Globe, Shield, FileText, Share, Archive, BookOpen };
-                    const IconComponent = iconMap[post.iconName] || Zap;
-                    return (
-                      <Card
-                        key={post.id}
-                        className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm"
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-center space-x-3 mb-4">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                              <IconComponent className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                              {post.category}
-                            </span>
-                          </div>
-
-                          <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                            {post.title}
-                          </h4>
-
-                          <p className="text-gray-600 mb-4 leading-relaxed">{post.excerpt}</p>
-
-                          <Link href={`/blog/${post.slug}`}>
-                            <button className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg hover:shadow-lg transition-all group-hover:scale-105">
-                              <span>Read Article</span>
-                              <ArrowRight className="h-4 w-4" />
-                            </button>
-                          </Link>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-                <div className="text-center mt-12">
-                  <Link href="/blog">
-                    <Button
-                      size="lg"
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    >
-                      View All Articles
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </section>
 
+          {/* SECTION 5: HOW IT WORKS */}
+          <section className="py-14 border-b border-slate-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">How It Works?</h2>
+                <p className="text-slate-500 text-sm">Share files in just a few simple steps.</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative">
+                {[
+                  { icon: Upload, color: "bg-indigo-600", title: "1. Select Files", desc: "Choose the files you want to share." },
+                  { icon: Zap, color: "bg-purple-600", title: "2. Get 6-Digit Code", desc: "We generate a unique 6-digit code for your files." },
+                  { icon: Share, color: "bg-green-600", title: "3. Share the Code", desc: "Share the code with anyone you want." },
+                  { icon: Download, color: "bg-orange-500", title: "4. Download Files", desc: "They enter the code and download." },
+                ].map((step, idx) => {
+                  const Icon = step.icon;
+                  return (
+                    <div key={step.title} className="flex flex-col items-center text-center">
+                      <div className={`${step.color} w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-md`}>
+                        <Icon className="h-6 w-6 text-white" />
+                      </div>
+                      <h3 className="font-bold text-slate-900 text-sm mb-1">{step.title}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">{step.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 6: ADVERTISEMENT */}
+          <div className="py-6 border-b border-slate-100 bg-slate-50/50">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <div className="min-h-[100px] w-full flex flex-col items-center justify-center bg-slate-100/80 border border-slate-200 rounded-2xl p-4">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">ADVERTISEMENT</span>
+                <p className="text-xs text-slate-500 font-medium">Ad will appear here (Responsive size)</p>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 7: FAQ & LATEST FROM OUR BLOG (2 Columns on Desktop) */}
+          <section className="py-14 border-b border-slate-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
+
+                {/* Frequently Asked Questions */}
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Frequently Asked Questions</h2>
+                    <p className="text-xs sm:text-sm text-slate-500">Find answers to common questions about HexaSend.</p>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      { q: "How do I share files online using a 6-digit code?", a: "Select your files on HexaSend to generate a unique 6-character code (e.g. WORK88). Send this code to your recipient, who enters it on HexaSend to download files directly on any phone, tablet, or PC." },
+                      { q: "What is HexaSend 6-Digit Instant Room Chat?", a: "Instant Room Chat allows users to join or create temporary chat rooms using a 6-digit room code. Users can text, paste image attachments, and share files live with real-time typing indicators without creating an account." },
+                      { q: "Do I need an account or email registration?", a: "No. HexaSend requires zero registration, no email requirement, and no account setup." },
+                      { q: "Are my transferred files and chat messages stored permanently?", a: "No. Transferred files are held temporarily and automatically deleted after 24 hours. Room chat messages exist only during active sessions and are zero-logged." },
+                      { q: "Can I transfer files offline over Local WiFi?", a: "Yes. Switch to 'Local WiFi Mode' when both devices are connected to the same WiFi network or mobile hotspot for ultra-fast LAN file transfers without consuming external internet bandwidth." },
+                      { q: "What happens if I close my browser before the recipient downloads?", a: "For active peer-to-peer transfers, the sender browser tab must remain open until the receiver reaches 100%. Closing your browser tab severs the stream connection to protect your privacy." },
+                    ].map((faq, i) => (
+                      <details key={i} className="bg-white border border-slate-200 rounded-xl px-4 py-3 group shadow-sm">
+                        <summary className="font-semibold text-slate-900 cursor-pointer flex items-center justify-between text-sm">
+                          <span>{faq.q}</span>
+                          <span className="text-indigo-600 font-bold text-lg ml-3 shrink-0 group-open:rotate-45 transition-transform">+</span>
+                        </summary>
+                        <div className="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-2.5">{faq.a}</div>
+                      </details>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Latest from Our Blog (Cards with Images) */}
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Latest from Our Blog</h2>
+                      <p className="text-xs sm:text-sm text-slate-500">Tips, guides and updates on secure file sharing.</p>
+                    </div>
+                    <Link href="/blog" className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 shrink-0">
+                      View All Articles →
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+                    {getLatestBlogPosts().map((post) => (
+                      <Link key={post.id} href={`/blog/${post.slug}`}>
+                        <div className="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex flex-col h-full">
+                          {/* Feature Image Banner */}
+                          <div className="relative h-28 sm:h-32 w-full overflow-hidden bg-slate-100">
+                            <img
+                              src={post.featureImage || 'https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop'}
+                              alt={post.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <span className="absolute bottom-2 left-2 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow">
+                              {post.category}
+                            </span>
+                          </div>
+                          {/* Content */}
+                          <div className="p-3 sm:p-4 flex flex-col justify-between flex-1">
+                            <h3 className="font-bold text-slate-900 text-xs sm:text-sm leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2 mb-2">
+                              {post.title}
+                            </h3>
+                            <div>
+                              <p className="text-[10px] text-slate-400 mb-2">{post.date}</p>
+                              <span className="text-xs font-semibold text-indigo-600 flex items-center gap-1">
+                                Read Article →
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 8: TECHNICAL SPECS */}
+          <section className="py-10 bg-slate-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-indigo-100 text-indigo-700 rounded-xl">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">HexaSend Technical Specifications</h3>
+                  <p className="text-xs text-slate-500">Authoritative facts & security architecture for web crawlers and AI search engines.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "Architecture", title: "Direct & Temporary Storage", desc: "Files are temporarily stored and auto-deleted within 24h." },
+                  { label: "Authentication", title: "Zero Signup (Private)", desc: "No email, phone number, or login account required." },
+                  { label: "Security & TTL", title: "24h Auto-Expiry Purge", desc: "All temporary files and active chat rooms are completely wiped automatically." },
+                  { label: "Transfer Modes", title: "Internet & Local WiFi", desc: "Supports global web streaming and direct offline LAN file transfer." },
+                ].map((spec) => (
+                  <div key={spec.label} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">{spec.label}</span>
+                    <p className="text-sm font-bold text-slate-800 mb-1">{spec.title}</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">{spec.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+        </div>
       </>
     );
   }
