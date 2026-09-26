@@ -98,6 +98,7 @@ export default function Home() {
   const receiveRetryCountRef = useRef<number>(0);
   const receiveRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const receiveCodeInputRef = useRef<HTMLInputElement>(null);
+  const termsCheckboxRef = useRef<HTMLDivElement>(null);
   const pendingRequestRef = useRef<Map<string, number>>(new Map()); // Track pending requests with timestamps
   const lastRequestTimeRef = useRef<number>(0); // Rate limiting for request-file
   const pendingRegistrationsRef = useRef<Map<string, (value: unknown) => void>>(new Map());
@@ -107,10 +108,11 @@ export default function Home() {
 
   // Instant Chat room state for home page
   const [homeChatCode, setHomeChatCode] = useState<string>('');
+  const [termsShake, setTermsShake] = useState(false);
 
   // Hero animation state
   const [heroVisible, setHeroVisible] = useState(false);
-  const [heroCode, setHeroCode] = useState(['4','7','3','9','2','1']);
+  const [heroCode, setHeroCode] = useState(['4', '7', '3', '9', '2', '1']);
   const [codeFlipping, setCodeFlipping] = useState(false);
 
   // Entrance animation on mount
@@ -317,9 +319,15 @@ export default function Home() {
 
   const handleFilesSelected = async (files: File[]) => {
     if (!termsAgreed) {
+      // Scroll user to checkbox and shake it to draw attention
+      if (termsCheckboxRef.current) {
+        termsCheckboxRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      setTermsShake(true);
+      setTimeout(() => setTermsShake(false), 700);
       toast({
-        title: "Action Required",
-        description: "Please agree to the Terms of Service to upload files.",
+        title: "☝️ One quick step!",
+        description: "Please check the Terms of Service box below before uploading.",
         variant: "destructive",
       });
       return;
@@ -958,10 +966,16 @@ export default function Home() {
     };
   }, [downloadFileJob, expectedFilesCount, inputCode, mode, onDownloadAck, onFileAvailable, onFileNotFound, onFileReady, onFileRegistered, onSenderDisconnected, sendMessage, toast]);
 
-  // Auto-focus code input when entering receive mode
+  // Auto-focus AND scroll to code input when entering receive mode
   useEffect(() => {
-    if (mode === "receive" && receiveCodeInputRef.current && !match) {
-      receiveCodeInputRef.current.focus();
+    if (mode === "receive" && !match) {
+      const timer = setTimeout(() => {
+        if (receiveCodeInputRef.current) {
+          receiveCodeInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          receiveCodeInputRef.current.focus();
+        }
+      }, 350);
+      return () => clearTimeout(timer);
     }
   }, [mode, match]);
 
@@ -1060,7 +1074,7 @@ export default function Home() {
                   "operatingSystem": "All (Web Browser, iOS, Android, Windows, macOS, Linux)",
                   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                   "description": "Secure zero-signup peer-to-peer file transfer and 6-digit code instant chat application.",
-                  "featureList": ["6-Digit Code File Transfer","Instant Ephemeral Room Chat","Zero Account Registration","Local WiFi Offline Transfer","End-to-End Security & 24h Auto-Deletion"]
+                  "featureList": ["6-Digit Code File Transfer", "Instant Ephemeral Room Chat", "Zero Account Registration", "Local WiFi Offline Transfer", "End-to-End Security & 24h Auto-Deletion"]
                 },
                 {
                   "@type": "HowTo",
@@ -1303,11 +1317,11 @@ export default function Home() {
                       {/* ── 1. File Type Icons — Staggered entrance + continuous float ── */}
                       <div className="flex justify-center items-end gap-2 sm:gap-3 mb-8 flex-wrap">
                         {([
-                          { emoji: '🖼️', label: 'Image',  border: 'border-blue-200',   bg: 'bg-blue-50',   text: 'text-blue-600',   fi: 0 },
-                          { emoji: '📄', label: 'PDF',    border: 'border-red-200',    bg: 'bg-red-50',    text: 'text-red-600',    fi: 1 },
-                          { emoji: '📝', label: 'Doc',    border: 'border-amber-200',  bg: 'bg-amber-50',  text: 'text-amber-600',  fi: 2 },
-                          { emoji: '📦', label: 'ZIP',    border: 'border-emerald-200',bg: 'bg-emerald-50',text: 'text-emerald-600',fi: 3 },
-                          { emoji: '▶️', label: 'Media',  border: 'border-purple-200', bg: 'bg-purple-50', text: 'text-purple-600', fi: 4 },
+                          { emoji: '🖼️', label: 'Image', border: 'border-blue-200', bg: 'bg-blue-50', text: 'text-blue-600', fi: 0 },
+                          { emoji: '📄', label: 'PDF', border: 'border-red-200', bg: 'bg-red-50', text: 'text-red-600', fi: 1 },
+                          { emoji: '📝', label: 'Doc', border: 'border-amber-200', bg: 'bg-amber-50', text: 'text-amber-600', fi: 2 },
+                          { emoji: '📦', label: 'ZIP', border: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-600', fi: 3 },
+                          { emoji: '▶️', label: 'Media', border: 'border-purple-200', bg: 'bg-purple-50', text: 'text-purple-600', fi: 4 },
                         ]).map((f, i) => (
                           <div
                             key={f.label}
@@ -1736,19 +1750,19 @@ export default function Home() {
             <div className="text-center mb-12">
               <div className="relative mb-6">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-2xl opacity-30 w-24 h-24 mx-auto"></div>
-                <div className="relative inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl">
+                {/* <div className="relative inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl">
                   <Upload className="h-12 w-12 text-white" />
-                </div>
+                </div> */}
               </div>
               <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
                 Send Your Files {transferType === 'local' ? '(Local Network)' : ''}
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
+              {/* <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
                 {transferType === 'local'
                   ? 'Share files at high speed on your local network. Perfect for large files!'
                   : 'Share files instantly with military-grade security. Your files, your control, your privacy.'
                 }
-              </p>
+              </p> */}
               {transferType === 'local' && (
                 <div className="mt-4">
                   <Badge variant="secondary" className="text-sm">
@@ -1792,10 +1806,43 @@ export default function Home() {
                         </div>
                       </DragDropZone>
 
-                      <div className="flex items-center space-x-2 mt-4 justify-center bg-white/50 p-4 rounded-xl border border-blue-100 mx-auto max-w-lg shadow-sm">
-                        <Checkbox id="terms" checked={termsAgreed} onCheckedChange={(checked) => setTermsAgreed(checked as boolean)} />
-                        <Label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700">
-                          I agree to the <Link href="/terms"><span className="text-blue-600 underline cursor-pointer">Terms of Service</span></Link> and confirm I have the legal right to share these files.
+                      {/* Terms checkbox — ref used to scroll here when user forgets to check */}
+                      <style>{`
+                        @keyframes termsShake {
+                          0%,100% { transform: translateX(0); }
+                          15%     { transform: translateX(-7px); }
+                          30%     { transform: translateX(7px); }
+                          45%     { transform: translateX(-5px); }
+                          60%     { transform: translateX(5px); }
+                          75%     { transform: translateX(-3px); }
+                          90%     { transform: translateX(3px); }
+                        }
+                        .terms-shake { animation: termsShake 0.6s ease both; }
+                        .terms-shake-wrap { border-color: #ef4444 !important; background: #fef2f2 !important; }
+                      `}</style>
+                      <div
+                        ref={termsCheckboxRef}
+                        className={`flex items-start space-x-3 mt-4 p-4 rounded-xl border-2 mx-auto max-w-lg shadow-sm transition-all duration-300 ${termsShake
+                          ? 'terms-shake terms-shake-wrap border-red-400 bg-red-50'
+                          : termsAgreed
+                            ? 'border-green-300 bg-green-50'
+                            : 'border-blue-100 bg-white/50'
+                          }`}
+                      >
+                        <Checkbox
+                          id="terms"
+                          checked={termsAgreed}
+                          onCheckedChange={(checked) => setTermsAgreed(checked as boolean)}
+                          className="mt-0.5 flex-shrink-0"
+                        />
+                        <Label htmlFor="terms" className="text-sm font-medium leading-snug cursor-pointer text-gray-700">
+                          {!termsAgreed && termsShake && (
+                            <span className="block text-red-600 font-bold text-xs mb-1">⚠️ Please check this box to continue</span>
+                          )}
+                          I agree to the{' '}
+                          <Link href="/terms"><span className="text-blue-600 underline cursor-pointer">Terms of Service</span></Link>
+                          {' '}and confirm I have the legal right to share these files.
+                          {termsAgreed && <span className="ml-2 text-green-600 font-bold">✓ Ready to upload!</span>}
                         </Label>
                       </div>
 
@@ -2090,19 +2137,19 @@ export default function Home() {
             <div className="text-center mb-12">
               <div className="relative mb-6">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full blur-2xl opacity-30 w-24 h-24 mx-auto"></div>
-                <div className="relative inline-flex items-center justify-center p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-xl">
+                {/* <div className="relative inline-flex items-center justify-center p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-xl">
                   <Download className="h-12 w-12 text-white" />
-                </div>
+                </div> */}
               </div>
               <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
                 Receive Files {transferType === 'local' ? '(Local Network)' : ''}
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
+              {/* <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
                 {transferType === 'local'
                   ? 'Enter code to receive files from devices on your local network.'
                   : 'Enter your 6-digit secure code to instantly download files shared with you.'
                 }
-              </p>
+              </p> */}
               {transferType === 'local' && (
                 <div className="mt-4">
                   <Badge variant="secondary" className="text-sm">
@@ -2137,7 +2184,7 @@ export default function Home() {
                       }
                     </p>
 
-                    {transferType === 'local' && (
+                    {/* {transferType === 'local' && (
                       <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-semibold text-gray-800">Available Devices</h4>
@@ -2181,7 +2228,7 @@ export default function Home() {
                           </p>
                         )}
                       </div>
-                    )}
+                    )} */}
 
                     <div className="max-w-md mx-auto space-y-6">
                       <Input
