@@ -4,8 +4,20 @@ FROM node:20-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Install dependencies needed for building
-RUN apk add --no-cache libc6-compat
+# Install dependencies needed for building AND Chromium for Puppeteer prerendering
+RUN apk add --no-cache \
+    libc6-compat \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    font-noto-emoji
+
+# Tell Puppeteer to use the installed Chromium instead of downloading its own
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Copy package files first for better caching
 COPY package*.json ./
@@ -16,7 +28,7 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application (frontend + backend)
+# Build the application (frontend + backend + prerender)
 RUN npm run build
 
 # Production stage

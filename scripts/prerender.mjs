@@ -37,8 +37,15 @@ async function prerender() {
     console.log('Static server listening on port 3456');
   });
 
-  // 2. Launch Puppeteer
-  const browser = await puppeteer.launch({ headless: 'new' });
+  // 2. Launch Puppeteer - use system Chromium in Docker (Alpine), bundled Chrome locally
+  const launchOptions = {
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+  };
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+  const browser = await puppeteer.launch(launchOptions);
   
   // 3. Visit each route and capture HTML
   for (const route of routes) {
