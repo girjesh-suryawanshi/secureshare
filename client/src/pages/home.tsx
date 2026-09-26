@@ -24,6 +24,7 @@ import type { TransferType } from "@shared/schema";
 import { QRCodeSVG } from "qrcode.react";
 import { SEOHead } from "@/components/seo-head";
 import { isAllowedFile } from "@shared/file-validation";
+import { UploadEngager } from "@/components/upload-engager";
 
 const FILE_CHUNK_SIZE = 256 * 1024; // 256KB
 
@@ -1905,6 +1906,18 @@ export default function Home() {
                             />
                           )}
                         </div>
+                      )}
+
+                      {/* ── Upload Engager: visual progress + facts (purely decorative, no logic) ── */}
+                      {isUploading && !isPreparingLocal && (
+                        <UploadEngager
+                          progress={uploadProgress}
+                          fileIndex={uploadingFileIndex}
+                          totalFiles={selectedFiles.length}
+                          fileName={uploadingFileName || selectedFiles[0]?.name || ''}
+                          transferSpeed={transferSpeed}
+                          estimatedTime={estimatedTime}
+                        />
                       )}
 
                       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
