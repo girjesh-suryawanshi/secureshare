@@ -86,8 +86,18 @@ export default function Blog() {
             {filteredPosts.map((post: BlogPost) => {
               const IconComponent = iconMap[post.iconName] || Zap;
               return (
-                <Card key={post.id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
-                  <CardContent className="p-6">
+                <Card key={post.id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm overflow-hidden flex flex-col">
+                  {post.featureImage && (
+                    <div className="w-full h-48 bg-gray-100 overflow-hidden">
+                      <img 
+                        src={post.featureImage} 
+                        alt={post.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <CardContent className="p-6 flex-1 flex flex-col">
                     <div className="flex items-center space-x-3 mb-4">
                       <div className="p-2 bg-blue-100 rounded-lg">
                         <IconComponent className="h-5 w-5 text-blue-600" />
@@ -126,12 +136,14 @@ export default function Blog() {
                       ))}
                     </div>
 
-                    <Link href={`/blog/${post.slug}`}>
-                      <button className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg hover:shadow-lg transition-all group-hover:scale-105">
-                        <span>Read Article</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </button>
-                    </Link>
+                    <div className="mt-auto pt-4">
+                      <Link href={`/blog/${post.slug}`}>
+                        <button className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg hover:shadow-lg transition-all group-hover:scale-105">
+                          <span>Read Article</span>
+                          <ArrowRight className="h-4 w-4" />
+                        </button>
+                      </Link>
+                    </div>
                   </CardContent>
                 </Card>
               );

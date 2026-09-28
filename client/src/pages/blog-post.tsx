@@ -109,7 +109,7 @@ export default function BlogPost() {
                 {post.title}
               </h1>
 
-              <div className="flex flex-wrap gap-2 mb-6">
+              <div className="flex flex-wrap gap-2 mb-8">
                 {post.tags.map((tag: string) => (
                   <span key={tag} className="flex items-center space-x-1 text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
                     <Tag className="h-3 w-3" />
@@ -117,6 +117,17 @@ export default function BlogPost() {
                   </span>
                 ))}
               </div>
+
+              {post.featureImage && (
+                <div className="w-full h-[300px] sm:h-[400px] md:h-[450px] mb-10 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                  <img 
+                    src={post.featureImage} 
+                    alt={post.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              )}
 
               {/* Main Article HTML Content */}
               <div

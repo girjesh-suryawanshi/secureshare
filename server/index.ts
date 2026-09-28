@@ -65,7 +65,7 @@ app.use(helmet({
 app.use(compression());
 app.use(express.json({ limit: config.maxJsonBody }));
 app.use(express.urlencoded({ extended: false, limit: config.maxUrlEncodedBody }));
-app.use(limiter);
+app.use('/api', limiter);
 
 app.use((req, res, next) => {
   const start = Date.now();

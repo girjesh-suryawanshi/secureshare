@@ -28,7 +28,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-transfer-files-from-pc-to-mobile-without-usb",
     tags: ["PC to mobile","no USB","WiFi transfer","file transfer"],
     iconName: "Zap",
-    featureImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/how-to-transfer-files-from-pc-to-mobile-without-usb.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -211,7 +211,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "share-large-files-online-without-registration",
     tags: ["large files","no registration","online sharing","no signup"],
     iconName: "Globe",
-    featureImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/share-large-files-online-without-registration.jpg",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -394,7 +394,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "fastest-way-to-send-files-between-two-laptops-on-same-wifi",
     tags: ["same WiFi","laptop to laptop","fast transfer","local network"],
     iconName: "Zap",
-    featureImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/fastest-way-to-send-files-between-two-laptops-on-same-wifi.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -577,7 +577,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "secure-file-sharing-with-6-digit-code",
     tags: ["6 digit code","secure sharing","file transfer","privacy"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1614064641913-a538a5b20b24?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/secure-file-sharing-with-6-digit-code.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -760,7 +760,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "send-files-anonymously-without-email",
     tags: ["anonymous","no email","privacy","file sharing"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/send-files-anonymously-without-email.jpg",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -943,7 +943,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "transfer-large-files-between-android-and-iphone-instantly",
     tags: ["Android","iPhone","cross-platform","large files"],
     iconName: "Globe",
-    featureImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/transfer-large-files-between-android-and-iphone-instantly.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1126,7 +1126,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "best-wetransfer-alternatives-for-small-files",
     tags: ["WeTransfer","alternatives","small files","no signup"],
     iconName: "FileText",
-    featureImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/best-wetransfer-alternatives-for-small-files.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1309,7 +1309,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-send-files-to-another-computer-using-a-code",
     tags: ["code","computer","file send","simple"],
     iconName: "Share",
-    featureImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/how-to-send-files-to-another-computer-using-a-code.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1492,7 +1492,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "temporary-file-sharing-for-one-time-use",
     tags: ["temporary","one-time","privacy","ephemeral"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/temporary-file-sharing-for-one-time-use.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1675,7 +1675,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "browser-to-browser-file-transfer-no-setup",
     tags: ["browser","no setup","web transfer","instant"],
     iconName: "Globe",
-    featureImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/browser-to-browser-file-transfer-no-setup.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -1858,7 +1858,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "share-files-without-signup-instant-send",
     tags: ["no signup","instant","file sharing","frictionless"],
     iconName: "Zap",
-    featureImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/share-files-without-signup-instant-send.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2041,7 +2041,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "send-files-using-6-digit-code-secure-way",
     tags: ["6-digit code","secure sharing","no login","file transfer"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1614064641913-a538a5b20b24?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/send-files-using-6-digit-code-secure-way.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2224,7 +2224,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "ultimate-guide-to-p2p-file-sharing-2026",
     tags: ["p2p","file sharing","2026","guide"],
     iconName: "FileText",
-    featureImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/ultimate-guide-to-p2p-file-sharing-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2407,7 +2407,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "security-trends-file-sharing-2026",
     tags: ["security","trends","2026","privacy"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/security-trends-file-sharing-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2590,7 +2590,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "fastest-ways-to-transfer-large-files-2026",
     tags: ["speed","large files","2026","tech"],
     iconName: "Zap",
-    featureImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/fastest-ways-to-transfer-large-files-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2773,7 +2773,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "best-free-file-transfer-no-registration-2026",
     tags: ["free","no registration","2026","reviews"],
     iconName: "Globe",
-    featureImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/best-free-file-transfer-no-registration-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -2956,7 +2956,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-share-files-securely-online-2025",
     tags: ["file sharing","security","privacy","encryption"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/how-to-share-files-securely-online-2025.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3139,7 +3139,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "peer-to-peer-vs-cloud-storage-comparison",
     tags: ["p2p","cloud storage","comparison","technology"],
     iconName: "Globe",
-    featureImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/peer-to-peer-vs-cloud-storage-comparison.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3322,7 +3322,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "best-free-file-sharing-no-registration",
     tags: ["free","no registration","file sharing","reviews"],
     iconName: "FileText",
-    featureImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/best-free-file-sharing-no-registration.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3505,7 +3505,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "send-large-files-instantly-methods",
     tags: ["large files","instant","transfer","tips"],
     iconName: "Zap",
-    featureImage: "https://images.unsplash.com/photo-1614064641913-a538a5b20b24?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/send-large-files-instantly-methods.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3688,7 +3688,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "6-digit-code-file-sharing-future",
     tags: ["6-digit code","innovation","simple","future"],
     iconName: "Share",
-    featureImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/6-digit-code-file-sharing-future.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -3871,7 +3871,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "share-files-iphone-android-cross-platform",
     tags: ["iphone","android","cross-platform","mobile"],
     iconName: "Globe",
-    featureImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/share-files-iphone-android-cross-platform.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4054,7 +4054,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "zip-file-sharing-compress-multiple-files",
     tags: ["zip files","compression","multiple files","tutorial"],
     iconName: "Archive",
-    featureImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/zip-file-sharing-compress-multiple-files.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4237,7 +4237,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-share-confidential-documents-2026",
     tags: ["confidential","security","documents","2026"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/how-to-share-confidential-documents-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4420,7 +4420,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "p2p-vs-email-sharing-comparison-2026",
     tags: ["p2p","email","comparison","2026"],
     iconName: "FileText",
-    featureImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/p2p-vs-email-sharing-comparison-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4603,7 +4603,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "cross-platform-file-sharing-guide-2026",
     tags: ["cross-platform","guide","2026","mobile"],
     iconName: "Globe",
-    featureImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/cross-platform-file-sharing-guide-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4786,7 +4786,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "browser-based-file-sharing-benefits-2026",
     tags: ["browser","web-based","benefits","2026"],
     iconName: "BookOpen",
-    featureImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/browser-based-file-sharing-benefits-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -4969,7 +4969,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "anonymous-file-sharing-privacy-2026",
     tags: ["anonymous","privacy","file sharing","2026"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1614064641913-a538a5b20b24?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/anonymous-file-sharing-privacy-2026.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5152,7 +5152,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "future-of-digital-file-exchange-2026-beyond",
     tags: ["future","file exchange","tech","2026"],
     iconName: "Zap",
-    featureImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/future-of-digital-file-exchange-2026-beyond.png",
     content: `<!-- AEO Executive Summary / Direct Answer Box -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5337,7 +5337,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "secure-p2p-file-transfer-methods-2026",
     tags: ["P2P", "security", "secure TLS", "file transfer"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/secure-p2p-file-transfer-methods-2026.png",
     content: `<!-- AEO Executive Summary -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5440,7 +5440,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "how-to-bypass-email-attachment-limits",
     tags: ["email limit", "large files", "no signup", "productivity"],
     iconName: "FileText",
-    featureImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/how-to-bypass-email-attachment-limits.png",
     content: `<!-- AEO Executive Summary -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5541,7 +5541,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "secure-tls-file-sharing-explained",
     tags: ["secure TLS", "privacy", "encryption", "future"],
     iconName: "Shield",
-    featureImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
+    featureImage: "/images/blog/secure-tls-file-sharing-explained.png",
     content: `<!-- AEO Executive Summary -->
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
   <h4 class="text-blue-900 font-bold text-lg m-0 mb-2 flex items-center">
@@ -5635,6 +5635,7 @@ export const blogPostsData: Record<string, BlogPost> = {
     slug: "send-large-files-online-free",
     tags: ["send large files online free", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/send-large-files-online-free.png",
     content: `<p>You have a large file. You need to get it to someone. Email won&#39;t take it, and you&#39;d rather not create another account just to share one document or video.</p>
 <p>You&#39;re not alone. This is one of the most common file-sharing frustrations people face. The good news is there are several solid ways to send large files online for free, with and without registration.</p>
 <p>This guide covers the most practical options — clearly, without fluff.</p>
@@ -5792,6 +5793,7 @@ No. On HexaSend, the recipient only needs the 6-digit code and a web browser. Th
     slug: "large-file-transfer",
     tags: ["large file transfer", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/large-file-transfer.png",
     content: `<p>You have a large file — a video project, a batch of RAW photos, a set of design files, or a software build — and you need to get it to someone. Email is out. The question is: which method is actually best for your situation?</p>
 <p>Not every large file transfer method works the same way. The right choice depends on file size, how quickly you need it delivered, whether both parties need accounts, and how much you care about privacy. This guide covers the most practical options clearly, so you can make an informed decision.</p>
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
@@ -5989,6 +5991,7 @@ Not always. Browser-based tools like HexaSend require no account from either par
     slug: "secure-file-transfer",
     tags: ["secure file transfer", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/secure-file-transfer.png",
     content: `<p>Sending a file online feels simple enough. But if that file contains a contract, a passport scan, financial records, or medical documents, &quot;simple&quot; is not good enough. You need confidence that the file arrives only where you intend — and is not stored, intercepted, or accessed by anyone else.</p>
 <p>This guide explains what secure file transfer actually means, what risks exist when sending files online, and what to look for when choosing a method you can trust.</p>
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
@@ -6131,6 +6134,7 @@ Yes. Browser-based tools like HexaSend allow secure transfers without an account
     slug: "send-files-larger-than-25mb",
     tags: ["send files larger than 25MB", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/send-files-larger-than-25mb.png",
     content: `<p>You have a file ready to send. You attach it to an email. Then you get the message: <em>&quot;Attachment exceeds maximum size.&quot;</em></p>
 <p>This happens because major email providers cap attachment sizes. Gmail stops you at 25 MB. Outlook at 20 MB. A single high-resolution photo, a short video clip, or a zipped folder of documents can easily exceed that.</p>
 <p>The good news: there are several straightforward ways to send files larger than 25 MB, and most of them take less time than composing the email itself.</p>
@@ -6280,6 +6284,7 @@ Tools like HexaSend allow you to select multiple files in a single upload. They 
     slug: "send-large-videos-without-losing-quality",
     tags: ["send large videos without losing quality", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/send-large-videos-without-losing-quality.png",
     content: `<p>You spend hours filming and editing a video. Then you try to send it — and what arrives at the other end is blurry, choppy, or noticeably degraded. Sometimes the file is rejected entirely for being too large.</p>
 <p>This is one of the most common frustrations in video sharing. The problem is not the internet — it is the method. Many platforms compress video automatically before sending, reducing quality to save bandwidth or storage. Some simply block large files outright.</p>
 <p>This guide explains exactly what happens to video quality in transit, and which methods preserve the original quality of your file.</p>
@@ -6439,6 +6444,7 @@ GoPro and DSLR footage is typically in MP4, MOV, or HEVC format and can be very 
     slug: "transfer-large-files-phone-pc",
     tags: ["transfer large files between phone and PC", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/transfer-large-files-phone-pc.png",
     content: `<p>Your phone has a large file on it — a 4K video, a batch of RAW photos, a voice memo you recorded, or a document you need on your computer. Getting it from the phone to the PC (or the other way around) should be simple. But with so many options available — USB, Bluetooth, Wi-Fi, cloud, apps — it is not always clear which method is fastest or most reliable for large files.</p>
 <p>This guide covers six practical methods for transferring large files between phone and PC, with clear guidance on which suits different situations.</p>
 <div class="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl my-6 shadow-sm">
@@ -6592,6 +6598,7 @@ Use USB cable transfer or local Wi-Fi transfer — both send the original file w
     slug: "send-large-files-by-email",
     tags: ["send large files by email", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/send-large-files-by-email.png",
     content: `<p>Email is how most people communicate professionally. When you need to share a large file — a presentation, a high-resolution design, a contract, a video — keeping that delivery within the email thread makes sense. But attaching the file directly often does not work.</p>
 <p>Gmail caps attachments at 25 MB. Outlook stops you at 20 MB. Many enterprise mail servers apply even tighter limits. A single architectural drawing, a quarterly report with embedded charts, or a short video clip can easily exceed these thresholds.</p>
 <p>The solution is not to abandon email — it is to send the file separately and include a way to retrieve it directly in your email message. This guide covers the most practical approaches, from built-in platform integrations to browser-based tools.</p>
@@ -6764,6 +6771,7 @@ Sometimes. ZIP compression works for documents, spreadsheets and folders of text
     slug: "share-large-files-secure-link",
     tags: ["share large files with a secure link", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/share-large-files-secure-link.jpg",
     content: `<p>Sharing a file via a link is convenient. But a link shared carelessly — set to public, with no expiry, forwarded without your knowledge — can expose your file to anyone who comes across it, long after you intended the transfer to be complete.</p>
 <p>Not all file sharing links are equally secure. A Google Drive &quot;anyone with the link&quot; URL and a time-limited access code backed by a privacy-focused transfer tool are very different things.</p>
 <p>This guide explains what makes a file share link genuinely secure, how to generate one, and which situations call for which approach.</p>
@@ -6939,6 +6947,7 @@ Keep it active only as long as necessary for the recipient to download the file.
     slug: "free-file-transfer-without-registration",
     tags: ["free file transfer without registration", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/free-file-transfer-without-registration.jpg",
     content: `<p>You want to send a file online. You do not want to create another account. You search for a free file transfer service — and find dozens of options claiming &quot;no registration required.&quot;</p>
 <p>But what does &quot;no registration&quot; actually mean in practice? Does it mean the service collects nothing about you? Does it mean your file is handled anonymously? And how do you know which services are trustworthy when there is no account to review or delete?</p>
 <p>This guide answers those questions clearly, so you can use no-registration file transfer services with a realistic understanding of what they do and do not offer.</p>
@@ -7081,6 +7090,7 @@ Some services use your email address to send download notifications or access li
     slug: "wetransfer-alternatives",
     tags: ["WeTransfer alternatives", "file transfer", "HexaSend"],
     iconName: "FileText",
+    featureImage: "/images/blog/wetransfer-alternatives.jpg",
     content: `<p>WeTransfer is one of the most recognised names in large file sharing. Its straightforward upload-and-link workflow made it popular for designers, photographers, and anyone needing to send files too large for email. But its free tier has limitations — a 2 GB cap per transfer and email-based delivery — that do not suit every situation.</p>
 <p>If you are looking for a WeTransfer alternative, the reasons vary: you might want a higher (or no stated) size limit on the free tier, prefer not to send through email, want a service that requires no account for the recipient, or are looking for a tool with additional features like local network transfer or shorter-lived file sharing.</p>
 <p>This guide compares the most practical WeTransfer alternatives clearly, so you can pick the right one for your use case.</p>
