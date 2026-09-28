@@ -1890,21 +1890,12 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {(isUploading || isPreparingLocal) && (
+                      {isPreparingLocal && (
                         <div className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
-                          {isPreparingLocal ? (
-                            <div className="flex items-center gap-3">
-                              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                              <p className="text-sm font-medium text-gray-700">Preparing local server…</p>
-                            </div>
-                          ) : (
-                            <TransferProgress
-                              progress={uploadProgress}
-                              transferSpeed={transferSpeed}
-                              estimatedTime={estimatedTime}
-                              fileName={selectedFiles.length > 1 ? `File ${uploadingFileIndex + 1} of ${selectedFiles.length}: ${uploadingFileName}` : (selectedFiles[0]?.name ?? uploadingFileName)}
-                            />
-                          )}
+                          <div className="flex items-center gap-3">
+                            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                            <p className="text-sm font-medium text-gray-700">Preparing local server…</p>
+                          </div>
                         </div>
                       )}
 
