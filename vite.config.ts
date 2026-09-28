@@ -23,6 +23,15 @@ export default defineConfig({
         type: 'module',
         navigateFallback: 'index.html'
       },
+      workbox: {
+        // Do NOT intercept these static/SEO files — let the server serve them directly
+        navigateFallbackDenylist: [
+          /^\/sitemap\.xml/,
+          /^\/robots\.txt/,
+          /^\/ads\.txt/,
+          /\.(xml|txt|json)$/,
+        ],
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         id: '/',
