@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Prioritize important pages for crawling
-Crawl-delay: 1
+
 
 # Sitemap location
 Sitemap: https://hexasend.com/sitemap.xml
