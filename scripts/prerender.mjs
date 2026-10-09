@@ -89,7 +89,7 @@ async function prerender() {
     const isIndex = route === '/';
     const filePath = isIndex 
       ? path.join(distPath, 'index.html')
-      : path.join(distPath, route, 'index.html');
+      : path.join(distPath, `${route}.html`);
       
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
