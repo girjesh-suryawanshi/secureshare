@@ -16,6 +16,11 @@ export function CookieConsent() {
     setShowBanner(false);
   };
 
+  const declineCookies = () => {
+    localStorage.setItem("hexasend-cookie-consent", "declined");
+    setShowBanner(false);
+  };
+
   if (!showBanner) return null;
 
   return (
@@ -23,11 +28,14 @@ export function CookieConsent() {
       <div className="flex-1 text-sm text-gray-600 max-w-4xl">
         <h3 className="font-semibold text-gray-900 mb-1">We value your privacy</h3>
         <p>
-          We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking "Accept", you consent to our use of cookies as described in our <a href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</a>.
+          We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. You can choose to accept or decline non-essential cookies. Learn more in our <a href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</a>.
         </p>
       </div>
       <div className="flex gap-3 flex-shrink-0">
-        <Button onClick={acceptCookies} className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]">
+        <Button onClick={declineCookies} variant="outline" className="text-gray-700 hover:bg-gray-100 min-w-[100px]">
+          Decline
+        </Button>
+        <Button onClick={acceptCookies} className="bg-blue-600 hover:bg-blue-700 text-white min-w-[100px]">
           Accept
         </Button>
       </div>

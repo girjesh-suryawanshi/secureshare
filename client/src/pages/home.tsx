@@ -136,6 +136,19 @@ export default function Home() {
   }, []);
 
   const { isConnected, reconnect, sendMessage, onFileAvailable, onFileReady, onFileNotFound, onFileRegistered, onDownloadAck, onSenderDisconnected, onTextAvailable, onTextNotFound, onTextRegistered } = useWebSocket();
+  const [showConnectingBanner, setShowConnectingBanner] = useState(false);
+
+  useEffect(() => {
+    if (isConnected || transferType !== 'internet') {
+      setShowConnectingBanner(false);
+      return;
+    }
+    // Only show warning banner if connection takes longer than 2.5 seconds
+    const timer = setTimeout(() => {
+      setShowConnectingBanner(true);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [isConnected, transferType]);
   const {
     isScanning,
     availableDevices,
@@ -1225,7 +1238,7 @@ export default function Home() {
                     </span>
                   </div>
 
-                  {transferType === 'internet' && !isConnected && (
+                  {transferType === 'internet' && !isConnected && showConnectingBanner && (
                     <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-3">
                       <p className="text-sm text-amber-800">Connecting to servers…</p>
                       <Button variant="outline" size="sm" className="border-amber-300 text-amber-800 hover:bg-amber-100 h-7 text-xs" onClick={reconnect}>
@@ -1594,16 +1607,6 @@ export default function Home() {
               </div>
             </div>
           </section>
-
-          {/* SECTION 6: ADVERTISEMENT */}
-          <div className="py-6 border-b border-slate-100 bg-slate-50/50">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <div className="min-h-[100px] w-full flex flex-col items-center justify-center bg-slate-100/80 border border-slate-200 rounded-2xl p-4">
-                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">ADVERTISEMENT</span>
-                <p className="text-xs text-slate-500 font-medium">Ad will appear here (Responsive size)</p>
-              </div>
-            </div>
-          </div>
 
           {/* SECTION 7: FAQ & LATEST FROM OUR BLOG (2 Columns on Desktop) */}
           <section className="py-14 border-b border-slate-100">

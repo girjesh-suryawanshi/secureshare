@@ -1,6 +1,10 @@
 User-agent: *
 Allow: /
 
+# Google AdSense Crawler
+User-agent: Mediapartners-Google
+Allow: /
+
 # Prioritize important pages for crawling
 
 
@@ -22,6 +26,8 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /.git/
 Disallow: /node_modules/
+Disallow: /share/
+Disallow: /room/
 
 # SEO friendly directives
 # Encourage crawling of main content areas

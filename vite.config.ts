@@ -24,11 +24,18 @@ export default defineConfig({
         navigateFallback: 'index.html'
       },
       workbox: {
-        // Do NOT intercept these static/SEO files — let the server serve them directly
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        // Do NOT intercept these static/SEO/API/WebSocket paths — let the server serve them directly
         navigateFallbackDenylist: [
           /^\/sitemap\.xml/,
           /^\/robots\.txt/,
           /^\/ads\.txt/,
+          /^\/api/,
+          /^\/ws/,
+          /^\/share\//,
+          /^\/room\//,
           /\.(xml|txt|json)$/,
         ],
       },

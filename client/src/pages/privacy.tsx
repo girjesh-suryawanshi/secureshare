@@ -128,15 +128,54 @@ export default function Privacy() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Advertising and Analytics</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Google AdSense and Third-Party Advertising</h2>
                 <p className="text-gray-600 leading-relaxed mb-4">
-                  We may use third-party analytics and advertising partners, including Google, to help us understand usage
-                  patterns and to show ads on HexaSend or other websites. These partners may use cookies or similar technologies
-                  to collect information about your use of the service and other sites over time.
+                  HexaSend works with third-party advertising vendors, including Google, to serve relevant advertisements to visitors.
+                  Third-party vendors, including Google, use cookies (such as the DoubleClick cookie) to serve ads based on a user&apos;s prior visits
+                  to our website or other websites across the Internet.
+                </p>
+                <p className="text-gray-600 leading-relaxed mb-4">
+                  Google&apos;s use of advertising cookies enables it and its partners to serve ads to our users based on their visit to HexaSend
+                  and/or other sites on the Internet.
+                </p>
+                <p className="text-gray-600 leading-relaxed mb-4">
+                  To learn more about how Google uses information from sites or apps that use their services, please review the{" "}
+                  <a
+                    href="https://policies.google.com/technologies/partner-sites"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Google Privacy &amp; Terms Partner Policy
+                  </a>.
                 </p>
                 <p className="text-gray-600 leading-relaxed">
-                  For more information about how Google uses data from partner sites and how you can manage your ad
-                  personalisation settings, please review Google&apos;s privacy and advertising policies.
+                  Users may opt out of personalized advertising by visiting{" "}
+                  <a
+                    href="https://adssettings.google.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Google Ads Settings
+                  </a>. Alternatively, you can opt out of third-party vendors&apos; use of cookies for personalized advertising by visiting{" "}
+                  <a
+                    href="https://www.aboutads.info/choices/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    www.aboutads.info/choices
+                  </a>{" "}
+                  or{" "}
+                  <a
+                    href="https://www.youronlinechoices.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Your Online Choices
+                  </a>.
                 </p>
               </div>
 

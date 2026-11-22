@@ -7,9 +7,10 @@ interface SEOHeadProps {
     canonicalUrl?: string;
     ogImage?: string;
     structuredData?: object;
+    noindex?: boolean;
 }
 
-export function SEOHead({ title, description, keywords, canonicalUrl, ogImage, structuredData }: SEOHeadProps) {
+export function SEOHead({ title, description, keywords, canonicalUrl, ogImage, structuredData, noindex }: SEOHeadProps) {
     useEffect(() => {
         // Determine suffix
         const fullTitle = title.includes('HexaSend')
@@ -25,6 +26,7 @@ export function SEOHead({ title, description, keywords, canonicalUrl, ogImage, s
             'twitter:description': description,
             'og:title': fullTitle,
             'og:description': description,
+            'robots': noindex ? 'noindex, nofollow' : 'index, follow',
         };
 
         if (keywords) {

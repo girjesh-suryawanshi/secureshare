@@ -74,6 +74,23 @@ export function useWebSocket(): WebSocketHook {
   };
 
   const connect = useCallback(() => {
+    // Avoid double-connecting if socket is already open or connecting
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    // Clean up previous socket if any
+    if (wsRef.current) {
+      wsRef.current.onopen = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onclose = null;
+      try {
+        wsRef.current.close();
+      } catch {}
+      wsRef.current = null;
+    }
+
     try {
       const wsUrl = resolveWebSocketUrl();
 
@@ -193,8 +210,18 @@ export function useWebSocket(): WebSocketHook {
         setIsConnected(false);
         wsRef.current = null;
 
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(connect, 3000);
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = null;
+        }
+
+        // Attempt to reconnect after 3 seconds if not already scheduled
+        if (!reconnectTimeoutRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = undefined;
+            connect();
+          }, 3000);
+        }
       };
 
       ws.onerror = (error) => {
@@ -204,10 +231,32 @@ export function useWebSocket(): WebSocketHook {
 
     } catch (error) {
       console.error('Failed to connect to WebSocket:', error);
-      // Attempt to reconnect after 3 seconds
-      reconnectTimeoutRef.current = setTimeout(connect, 3000);
+      if (!reconnectTimeoutRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          reconnectTimeoutRef.current = undefined;
+          connect();
+        }, 3000);
+      }
     }
   }, [toast]);
+
+  const reconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = undefined;
+    }
+    if (wsRef.current) {
+      wsRef.current.onopen = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onclose = null;
+      try {
+        wsRef.current.close();
+      } catch {}
+      wsRef.current = null;
+    }
+    connect();
+  }, [connect]);
 
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -257,7 +306,29 @@ export function useWebSocket(): WebSocketHook {
   useEffect(() => {
     connect();
 
+    // Auto-reconnect when user returns to this tab or computer wakes from sleep
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED || wsRef.current.readyState === WebSocket.CLOSING) {
+          console.log('Tab became visible, reconnecting WebSocket...');
+          reconnect();
+        }
+      }
+    };
+
+    // Auto-reconnect when network connectivity is restored
+    const handleOnline = () => {
+      console.log('Network back online, reconnecting WebSocket...');
+      reconnect();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
+
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = undefined;
@@ -267,23 +338,17 @@ export function useWebSocket(): WebSocketHook {
         pingIntervalRef.current = null;
       }
       if (wsRef.current) {
-        wsRef.current.close();
+        wsRef.current.onopen = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onclose = null;
+        try {
+          wsRef.current.close();
+        } catch {}
         wsRef.current = null;
       }
     };
-  }, [connect]);
-
-  const reconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = undefined;
-    }
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-    connect();
-  }, [connect]);
+  }, [connect, reconnect]);
 
   return {
     isConnected,

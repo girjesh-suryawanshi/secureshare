@@ -83,6 +83,33 @@ export default function About() {
             </CardContent>
           </Card>
 
+          {/* Founder & Leadership (E-E-A-T) */}
+          <Card className="shadow-lg mb-12 border-l-4 border-l-blue-600">
+            <CardContent className="p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Leadership & Editorial Authority</h2>
+              <div className="flex flex-col md:flex-row gap-6 items-start">
+                <div className="p-4 bg-blue-50 rounded-2xl flex-shrink-0 text-center w-full md:w-48">
+                  <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-2">
+                    GS
+                  </div>
+                  <h3 className="font-bold text-gray-900">Girjesh Suryawanshi</h3>
+                  <p className="text-xs text-blue-600 font-medium">Founder &amp; Lead Architect</p>
+                </div>
+                <div className="space-y-3 text-gray-600 leading-relaxed text-sm">
+                  <p>
+                    HexaSend is founded and maintained by <strong>Girjesh Suryawanshi</strong>, a software engineer specializing in distributed systems, real-time WebRTC communications, and peer-to-peer data transport security.
+                  </p>
+                  <p>
+                    All technical guides, benchmarks, and architectural documentation published on the HexaSend Blog are authored, fact-checked, and reviewed to ensure rigorous security standards, verifiable network transfer metrics, and direct adherence to modern web standards.
+                  </p>
+                  <p>
+                    For technical inquiries, security disclosures, or editorial corrections, you can reach Girjesh directly through our <Link href="/contact"><span className="text-blue-600 hover:underline cursor-pointer">Contact Page</span></Link> or by emailing <a href="mailto:contact@hexasend.com" className="text-blue-600 hover:underline">contact@hexasend.com</a>.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Technology */}
           <div className="bg-white rounded-2xl p-10 shadow-xl mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">The Technology Behind HexaSend</h2>

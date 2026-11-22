@@ -96,10 +96,8 @@ async function prerender() {
       fs.mkdirSync(dir, { recursive: true });
     }
     
-    // Post-process: strip all ad/tracking scripts from the saved HTML
+    // Post-process: strip tracking/analytics scripts and dynamic elements from saved HTML while preserving AdSense verification
     const cleanedHtml = html
-      // Remove AdSense script tag
-      .replace(/<script[^>]*pagead2\.googlesyndication\.com[^>]*><\/script>/gi, '')
       // Remove GTM script tags
       .replace(/<script[^>]*googletagmanager\.com[^>]*>[\s\S]*?<\/script>/gi, '')
       // Remove GA gtag script tags  

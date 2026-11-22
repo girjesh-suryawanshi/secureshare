@@ -76,10 +76,40 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath, { extensions: ["html"] }));
+  // Normalize trailing slashes (301 redirect /about/ -> /about) to prevent duplicate content in GSC
+  app.use((req, res, next) => {
+    if (req.path.length > 1 && req.path.endsWith("/")) {
+      const query = req.url.slice(req.path.length);
+      const safePath = req.path.slice(0, -1);
+      return res.redirect(301, safePath + query);
+    }
+    next();
+  });
+
+  app.use(express.static(distPath, {
+    extensions: ["html"],
+    setHeaders: (res, filePath) => {
+      // Never cache HTML files, Service Worker, or manifest so app updates take effect immediately
+      if (
+        filePath.endsWith(".html") ||
+        filePath.endsWith("sw.js") ||
+        filePath.endsWith("manifest.webmanifest")
+      ) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+      } else if (filePath.includes(path.sep + "assets" + path.sep) || filePath.includes("/assets/")) {
+        // Hashed static assets can be safely cached for 1 year
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    }
+  }));
 
   // fall through to index.html if the file doesn't exist
   app.use((_req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

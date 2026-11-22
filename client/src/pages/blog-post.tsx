@@ -10,6 +10,35 @@ const getBlogPost = (slug: string) => {
   return blogPostsData[slug] || null;
 };
 
+function extractFaqs(content: string): { question: string; answer: string }[] {
+  const faqs: { question: string; answer: string }[] = [];
+  
+  // Look for <h3>Q...: Question</h3> followed by <p>Answer</p>
+  const h3Regex = /<h3[^>]*>(?:Q\d*:\s*)?(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/gi;
+  let match;
+  while ((match = h3Regex.exec(content)) !== null) {
+    const q = match[1].replace(/<[^>]+>/g, '').trim();
+    const a = match[2].replace(/<[^>]+>/g, '').trim();
+    if (q && a && (match[0].toLowerCase().includes('q') || q.endsWith('?'))) {
+      faqs.push({ question: q, answer: a });
+    }
+  }
+
+  // Also check for <p><strong>Q...: Question</strong> Answer</p>
+  if (faqs.length === 0) {
+    const pRegex = /<p><strong>(?:Q\d*:\s*)?(.*?)<\/strong>\s*(.*?)<\/p>/gi;
+    while ((match = pRegex.exec(content)) !== null) {
+      const q = match[1].replace(/<[^>]+>/g, '').trim();
+      const a = match[2].replace(/<[^>]+>/g, '').trim();
+      if (q && a && (match[0].toLowerCase().includes('q') || q.endsWith('?'))) {
+        faqs.push({ question: q, answer: a });
+      }
+    }
+  }
+
+  return faqs;
+}
+
 export default function BlogPost() {
   const [match, params] = useRoute("/blog/:slug");
 
@@ -25,6 +54,7 @@ export default function BlogPost() {
         <SEOHead
           title="Article Not Found | HexaSend Blog"
           description="The requested blog post could not be found."
+          noindex={true}
         />
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
           <Card className="max-w-md w-full text-center">
@@ -42,12 +72,16 @@ export default function BlogPost() {
   }
 
   const postUrl = `https://hexasend.com/blog/${post.slug}`;
+  const postImageUrl = post.featureImage
+    ? (post.featureImage.startsWith('http') ? post.featureImage : `https://hexasend.com${post.featureImage}`)
+    : "https://hexasend.com/og-image.jpg";
+  const faqs = extractFaqs(post.content);
+
   const articleSchema = {
-    "@context": "https://schema.org",
     "@type": "Article",
     "headline": post.title,
     "description": post.excerpt,
-    "image": "https://hexasend.com/og-image.jpg",
+    "image": postImageUrl,
     "author": {
       "@type": "Person",
       "name": "Girjesh Suryawanshi",
@@ -62,7 +96,31 @@ export default function BlogPost() {
       }
     },
     "datePublished": new Date(post.date).toISOString(),
-    "dateModified": new Date(post.date).toISOString()
+    "dateModified": new Date(post.date).toISOString(),
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": postUrl
+    }
+  };
+
+  const faqSchema = faqs.length > 0 ? {
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.answer
+      }
+    }))
+  } : null;
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      articleSchema,
+      ...(faqSchema ? [faqSchema] : [])
+    ]
   };
 
   return (
@@ -72,8 +130,8 @@ export default function BlogPost() {
         description={post.excerpt}
         keywords={post.tags.join(', ')}
         canonicalUrl={postUrl}
-        ogImage="https://hexasend.com/og-image.jpg"
-        structuredData={articleSchema}
+        ogImage={postImageUrl}
+        structuredData={structuredData}
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <div className="max-w-4xl mx-auto px-4 py-12">
